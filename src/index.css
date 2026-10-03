@@ -1,0 +1,72 @@
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/jetbrains-mono';
+@import 'tailwindcss';
+
+/*
+ * Tema de TodoPernos. Los colores salen de la imagen de referencia (ver docs/DISENO.md).
+ * Tailwind genera las clases a partir de estas variables: bg-marca, text-tinta-suave, bg-crema, etc.
+ */
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', monospace;
+
+  /* Naranja principal */
+  --color-marca: #f5761a;
+  --color-marca-oscuro: #dc6410;
+  --color-marca-claro: #fdebdc;
+
+  /* Barra lateral */
+  --color-lateral: #141414;
+  --color-lateral-activo: #2a1e15;
+  --color-lateral-hover: #1f1f1f;
+  --color-lateral-texto: #b5b0a8;
+
+  /* Fondos y bordes */
+  --color-crema: #faf7f2;
+  --color-beige: #f0ede8;
+  --color-borde: #e8e3db;
+  --color-borde-fuerte: #d6cfc4;
+
+  /* Texto */
+  --color-tinta: #1c1917;
+  --color-tinta-suave: #6b645c;
+  --color-tinta-tenue: #9a938a;
+
+  /* Estados */
+  --color-exito: #16a34a;
+  --color-exito-claro: #e8f6ec;
+  --color-alerta: #d97706;
+  --color-alerta-claro: #fdf3e2;
+  --color-peligro: #dc2626;
+  --color-peligro-claro: #fdecec;
+  --color-info: #2563eb;
+  --color-info-claro: #e8effd;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-crema font-sans text-tinta antialiased;
+  }
+
+  /* Numeros alineados en las tablas */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-marca);
+    outline-offset: 2px;
+  }
+}
