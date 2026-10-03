@@ -78,3 +78,26 @@ Los colores están definidos una sola vez en `src/index.css` (bloque `@theme` de
 | `EncabezadoPagina`, `Pestanas` | Título con acciones y pestañas de sección |
 | `FotoProducto` | Miniatura de la foto o icono si no tiene |
 | Avisos (`useAvisos`) | Notificaciones breves de éxito o error |
+
+## Comparación con la imagen de referencia
+
+La captura `docs/capturas/03-productos.png` se comparó con la imagen de referencia. Diferencias encontradas y cómo
+se resolvieron:
+
+| Diferencia encontrada | Corrección |
+|-----------------------|------------|
+| El filtro “Todos los estados” bajaba a otra fila | Los tres filtros van en una sola fila (rejilla `1fr 13rem 13rem`) |
+| El icono de nube de “Sincronizado” era verde | Nube naranja y punto verde, como en la imagen |
+| El selector de ubicación cortaba “Todas las ubicaciones” | Ancho máximo mayor |
+| La barra lateral no llegaba al final al desplazar la página | El contenedor usa `min-h-full` y la barra queda fija |
+| Los productos de demostración no tenían foto | Ilustraciones subidas por la prueba de capturas |
+| “S/” y el monto podían quedar en líneas distintas | Espacio no separable en el formato de precios |
+| En el punto de venta el catálogo se perdía al bajar | Carrito y cobro fijos a la derecha con su propio desplazamiento |
+
+Diferencias que se mantienen a propósito:
+
+- Los encabezados de stock usan los nombres reales de las ubicaciones del backend (“Centro”, “Norte”, “Almacén”) en
+  lugar de “Romel” y “TodoPernos”, que son ejemplos de la imagen.
+- Se agregó la columna **Acciones** (editar, activar o desactivar) para el ADMIN, y el código del producto junto a la
+  unidad base.
+- Se agregó **Caja** al menú (lo pide el enunciado).

@@ -34,6 +34,45 @@ const MENSAJES_POR_ESTADO: Record<number, string> = {
   500: 'Ocurrió un error en el servidor. Inténtalo nuevamente.',
 }
 
+/**
+ * El backend escribe sus mensajes sin tildes ("contrasena", "ubicacion"). Para que la interfaz se lea en espanol
+ * correcto se corrigen las palabras mas frecuentes de esos mensajes. Solo se aplica a mensajes de error, nunca a datos.
+ */
+const TILDES: Record<string, string> = {
+  almacen: 'almacén',
+  anulacion: 'anulación',
+  categoria: 'categoría',
+  codigo: 'código',
+  condicion: 'condición',
+  contrasena: 'contraseña',
+  credito: 'crédito',
+  dia: 'día',
+  digitos: 'dígitos',
+  emision: 'emisión',
+  extranjeria: 'extranjería',
+  mas: 'más',
+  maximo: 'máximo',
+  metodo: 'método',
+  numero: 'número',
+  operacion: 'operación',
+  pequena: 'pequeña',
+  presentacion: 'presentación',
+  sesion: 'sesión',
+  telefono: 'teléfono',
+  ubicacion: 'ubicación',
+  validacion: 'validación',
+  valido: 'válido',
+  validos: 'válidos',
+}
+
+export function corregirTildes(texto: string): string {
+  return texto.replace(/[A-Za-z]+/g, (palabra) => {
+    const correccion = TILDES[palabra.toLowerCase()]
+    if (!correccion) return palabra
+    return palabra[0] === palabra[0]?.toUpperCase() ? correccion.charAt(0).toUpperCase() + correccion.slice(1) : correccion
+  })
+}
+
 /** Convierte cualquier error (Axios, red, codigo) en un ApiError con un mensaje claro en espanol. */
 export function aApiError(error: unknown): ApiError {
   if (error instanceof ApiError) {
@@ -48,7 +87,8 @@ export function aApiError(error: unknown): ApiError {
     }
     const { status, data } = error.response
     if (esErrorResponse(data)) {
-      return new ApiError(data.codigo, data.mensaje, Array.isArray(data.detalle) ? data.detalle : [], status)
+      const detalle = Array.isArray(data.detalle) ? data.detalle.map(corregirTildes) : []
+      return new ApiError(data.codigo, corregirTildes(data.mensaje), detalle, status)
     }
     return new ApiError(
       `HTTP_${status}`,

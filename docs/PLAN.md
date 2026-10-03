@@ -21,6 +21,6 @@ se corta. Rama de trabajo: `claude/loving-goodall-nr3163`.
 - [x] **Fase 8. Reportes, Usuarios, Configuracion e Inicio.** Reportes con filtros, usuarios, empresas,
       ubicaciones, categorias, cambio de contrasena y resumen del dia por rol.
 - [x] **Fase 9. Pruebas unitarias.** Carrito, pago mixto y vuelto, presentaciones, permisos, componentes.
-- [ ] **Fase 10. Pruebas de punta a punta y capturas.** Playwright contra el backend real; capturas en
+- [x] **Fase 10. Pruebas de punta a punta y capturas.** Playwright contra el backend real; capturas en
       `docs/capturas` comparadas con la imagen de referencia.
-- [ ] **Fase 11. Documentacion final.** README, COMO_EJECUTAR (Windows), EXPLICACION, PENDIENTES.
+- [x] **Fase 11. Documentacion final.** README, COMO_EJECUTAR (Windows), EXPLICACION, PENDIENTES.

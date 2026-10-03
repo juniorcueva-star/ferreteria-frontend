@@ -52,3 +52,44 @@ Registro de las decisiones del frontend (qué se decidió y por qué). Las decis
 - **F15. Nombres de métodos de pago con tildes.** El catálogo de la base de datos está sin tildes (“Deposito bancario”);
   como los códigos son fijos (migración V2), el frontend muestra el nombre correcto (“Depósito bancario”). Los demás
   datos (nombres de tiendas, productos) se muestran tal como están guardados.
+- **F15b. Tildes en los mensajes de error del backend.** El backend escribe sus mensajes sin tildes (“Usuario o
+  contrasena incorrectos”). Sin tocar el backend, `corregirTildes` (en `src/api/errores.ts`) corrige las palabras más
+  frecuentes de esos mensajes (contraseña, ubicación, número, operación, crédito...). Solo se aplica a mensajes de
+  error, nunca a datos, y el código del error se muestra tal cual.
+
+## Pantallas
+
+- **F16. Caja en el menú** entre Movimientos y Ventas (no está en la imagen, pero el enunciado la pide). El punto de
+  venta avisa si no hay caja abierta y enlaza a la apertura.
+- **F17. Deudas pendientes del Inicio** se calculan con el reporte “ventas por tienda” desde el 1 de enero de 2000
+  hasta hoy (`saldoPendiente` sumado por tienda): es un solo número exacto calculado en la base de datos, sin
+  recorrer todas las deudas.
+- **F18. Inicio por rol.** ADMIN y VENDEDOR ven ventas de hoy, caja y deudas; el ALMACENERO ve compras de hoy. Todos
+  ven stock bajo y traslados (el vendedor, los que llegan a su tienda).
+- **F19. Búsqueda global** de productos (todos), clientes (ADMIN y VENDEDOR) y proveedores (ADMIN y ALMACENERO).
+  El backend no tiene búsqueda de ventas por número, así que no se incluyen “órdenes”.
+- **F20. Columnas de stock con el nombre corto de cada ubicación** (“Centro”, “Norte”, “Almacén”), en el mismo orden
+  que la imagen (tiendas y luego almacén). El vendedor y el almacenero solo ven la columna de su ubicación, porque el
+  backend no les muestra el stock de las demás (decisión D39 del backend).
+- **F21. Edición de presentaciones.** El backend las actualiza una por una. Al guardar se envía primero la nueva
+  principal (el backend desmarca la anterior) y luego el resto, solo las que cambiaron. Una presentación ya guardada
+  no se borra: se desactiva (igual que en el backend).
+- **F22. Ventanas modales que se montan al abrirse.** Así cada formulario empieza limpio sin efectos que reinicien el
+  estado (lo exige la regla `react-hooks/set-state-in-effect`).
+- **F23. Formularios que dependen de listas** (categoría del producto, empresa de la tienda) esperan a que la lista
+  cargue antes de mostrarse; si no, el navegador mostraba la primera opción en lugar del valor guardado.
+- **F24. Carga diferida de pantallas** (`React.lazy`): cada módulo se descarga al visitarlo; la primera carga es más
+  liviana.
+
+## Pruebas
+
+- **F25. Contraseñas de las pruebas E2E en `.env.e2e`** (ignorado por Git, con plantilla `.env.e2e.example`):
+  no hay credenciales en el código.
+- **F26. Las pruebas E2E se pueden repetir** sobre la misma base: cada ejecución crea un producto y un comprobante con
+  un código único, y si el vendedor quedó con la caja abierta por una ejecución interrumpida, la prueba la cierra
+  primero. Dejan datos de prueba en la base de demostración (se puede reiniciar con `docker compose down -v`).
+- **F27. Las capturas son un proyecto aparte de Playwright** (`npm run e2e:capturas`) para no reescribir
+  `docs/capturas` cada vez que se corren las pruebas. Suben ilustraciones a los productos de demostración que no
+  tienen foto, para que la tabla se vea como la imagen de referencia.
+- **F28. Chromium en este entorno.** Playwright 1.63 busca su propia versión de Chromium; en el entorno de desarrollo
+  se usó uno ya instalado con la variable `CHROMIUM_PATH`. En la laptop basta `npx playwright install chromium`.
