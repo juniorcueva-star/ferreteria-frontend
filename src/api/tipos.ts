@@ -56,7 +56,8 @@ export interface PaginaResponse<T> {
 export interface Paginacion {
   page?: number
   size?: number
-  sort?: string
+  /** Uno o varios criterios: 'nombre,asc' */
+  sort?: string | string[]
 }
 
 export interface AnulacionRequest {

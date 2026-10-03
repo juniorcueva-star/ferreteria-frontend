@@ -7,7 +7,7 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { z } from 'zod'
 import { productosApi } from '@/api/catalogo'
 import { urlImagen } from '@/api/cliente'
-import type { PresentacionRequest, PresentacionResponse, ProductoResponse, UnidadBase } from '@/api/tipos'
+import type { CategoriaResponse, PresentacionRequest, PresentacionResponse, ProductoResponse, UnidadBase } from '@/api/tipos'
 import { Boton } from '@/componentes/ui/Boton'
 import { Casilla, CampoArea, CampoSelector, CampoTexto } from '@/componentes/ui/Campo'
 import { cn } from '@/componentes/ui/cn'
@@ -127,17 +127,19 @@ export default function FormularioProducto() {
     queryFn: () => productosApi.obtener(productoId ?? 0),
     enabled: productoId !== null,
   })
+  // Las categorias deben estar cargadas antes de armar el formulario para que la lista muestre la elegida
+  const categorias = useCategorias(true)
 
-  if (productoId !== null && producto.isPending) return <Cargando />
+  if (categorias.isPending || (productoId !== null && producto.isPending)) return <Cargando />
+  if (categorias.isError) return <MensajeError error={categorias.error} />
   if (productoId !== null && producto.isError) return <MensajeError error={producto.error} />
-  return <Formulario key={productoId ?? 'nuevo'} producto={producto.data ?? null} />
+  return <Formulario key={productoId ?? 'nuevo'} producto={producto.data ?? null} categorias={categorias.data ?? []} />
 }
 
-function Formulario({ producto }: { producto: ProductoResponse | null }) {
+function Formulario({ producto, categorias }: { producto: ProductoResponse | null; categorias: CategoriaResponse[] }) {
   const navegar = useNavigate()
   const queryClient = useQueryClient()
   const { avisar } = useAvisos()
-  const categorias = useCategorias(true)
   const [error, setError] = useState<unknown>(null)
   const [guardando, setGuardando] = useState(false)
   const [archivo, setArchivo] = useState<File | null>(null)
@@ -275,7 +277,7 @@ function Formulario({ producto }: { producto: ProductoResponse | null }) {
             <CampoTexto etiqueta="Nombre" obligatorio placeholder="Ej: Perno hexagonal M8" error={errors.nombre?.message} {...register('nombre')} />
             <CampoSelector etiqueta="Categoría" obligatorio error={errors.categoriaId?.message} {...register('categoriaId')}>
               <option value="">Elija una categoría</option>
-              {categorias.data?.map((c) => (
+              {categorias.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.nombre}
                 </option>
