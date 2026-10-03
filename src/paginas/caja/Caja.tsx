@@ -31,6 +31,8 @@ import { monto } from '@/logica/validaciones'
 export default function Caja() {
   const actual = useCajaActual()
   const [detalleId, setDetalleId] = useState<number | null>(null)
+  // El resultado del cierre vive aqui: al cerrar, la caja deja de estar abierta y CajaAbierta desaparece
+  const [cerrada, setCerrada] = useState<CajaResponse | null>(null)
 
   return (
     <div>
@@ -48,9 +50,14 @@ export default function Caja() {
       {actual.isPending && <Cargando />}
       {actual.isError && <MensajeError error={actual.error} />}
       {actual.data === null && <AbrirCaja />}
-      {actual.data && <CajaAbierta caja={actual.data} />}
+      {actual.data && <CajaAbierta caja={actual.data} onCerrada={setCerrada} />}
       <HistorialCajas onVer={setDetalleId} />
       {detalleId !== null && <DetalleCaja id={detalleId} onCerrar={() => setDetalleId(null)} />}
+      {cerrada && (
+        <Modal abierto titulo="Caja cerrada" onCerrar={() => setCerrada(null)} ancho="sm" pie={<Boton onClick={() => setCerrada(null)}>Entendido</Boton>}>
+          <ResultadoCuadre caja={cerrada} />
+        </Modal>
+      )}
     </div>
   )
 }
@@ -107,7 +114,7 @@ function AbrirCaja() {
           obligatorio
           inputMode="decimal"
           placeholder="0.00"
-          className="font-mono"
+          mono
           error={errors.montoApertura?.message}
           {...register('montoApertura')}
         />
@@ -121,10 +128,9 @@ function AbrirCaja() {
   )
 }
 
-function CajaAbierta({ caja }: { caja: CajaResponse }) {
+function CajaAbierta({ caja, onCerrada }: { caja: CajaResponse; onCerrada: (c: CajaResponse) => void }) {
   const navegar = useNavigate()
   const [cerrando, setCerrando] = useState(false)
-  const [cerrada, setCerrada] = useState<CajaResponse | null>(null)
   const r = caja.resumen
 
   return (
@@ -191,14 +197,9 @@ function CajaAbierta({ caja }: { caja: CajaResponse }) {
           onCerrar={() => setCerrando(false)}
           onCerrada={(c) => {
             setCerrando(false)
-            setCerrada(c)
+            onCerrada(c)
           }}
         />
-      )}
-      {cerrada && (
-        <Modal abierto titulo="Caja cerrada" onCerrar={() => setCerrada(null)} ancho="sm" pie={<Boton onClick={() => setCerrada(null)}>Entendido</Boton>}>
-          <ResultadoCuadre caja={cerrada} />
-        </Modal>
       )}
     </div>
   )
@@ -256,7 +257,7 @@ function CerrarCaja({ caja, onCerrar, onCerrada }: { caja: CajaResponse; onCerra
           obligatorio
           inputMode="decimal"
           placeholder="0.00"
-          className="font-mono"
+          mono
           error={errors.efectivoContado?.message}
           {...register('efectivoContado')}
         />

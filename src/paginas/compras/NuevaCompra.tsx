@@ -182,7 +182,7 @@ export default function NuevaCompra() {
               </option>
             ))}
           </CampoSelector>
-          <CampoTexto etiqueta="Serie y número" placeholder="Ej: F001-4589" className="font-mono" maxLength={30} value={serieNumero} onChange={(e) => setSerieNumero(e.target.value)} />
+          <CampoTexto etiqueta="Serie y número" placeholder="Ej: F001-4589" mono maxLength={30} value={serieNumero} onChange={(e) => setSerieNumero(e.target.value)} />
           <CampoTexto
             etiqueta="Fecha de emisión"
             type="date"

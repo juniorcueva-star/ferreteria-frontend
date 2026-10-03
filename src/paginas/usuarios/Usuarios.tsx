@@ -201,7 +201,7 @@ function ModalUsuario({ usuario, onCerrar }: { usuario: UsuarioResponse | null; 
         <CampoTexto etiqueta="Nombres" obligatorio className="sm:col-span-2" error={errors.nombres?.message} {...register('nombres')} />
         {!usuario && (
           <>
-            <CampoTexto etiqueta="Usuario" obligatorio autoComplete="off" className="font-mono" error={errors.username?.message} {...register('username')} />
+            <CampoTexto etiqueta="Usuario" obligatorio autoComplete="off" mono error={errors.username?.message} {...register('username')} />
             <CampoTexto
               etiqueta="Contraseña inicial"
               obligatorio

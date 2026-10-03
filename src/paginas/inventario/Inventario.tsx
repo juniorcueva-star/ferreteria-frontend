@@ -397,7 +397,7 @@ function ModalStockMinimo({ stock, onCerrar }: { stock: StockResponse; onCerrar:
           inputMode="decimal"
           ayuda="Cuando el stock llegue a este valor aparecerá en la campana de alertas. Use 0 para no avisar."
           error={errors.stockMinimo?.message}
-          className="font-mono"
+          mono
           {...register('stockMinimo')}
         />
       </form>

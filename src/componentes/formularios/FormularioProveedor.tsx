@@ -89,7 +89,7 @@ export function ModalProveedor({
       <form onSubmit={enviar} className="grid gap-4 sm:grid-cols-2" noValidate>
         {guardar.error && <MensajeError error={guardar.error} className="sm:col-span-2" />}
         <CampoTexto etiqueta="Razón social" obligatorio className="sm:col-span-2" error={errors.razonSocial?.message} {...register('razonSocial')} />
-        <CampoTexto etiqueta="RUC" inputMode="numeric" className="font-mono" error={errors.ruc?.message} {...register('ruc')} />
+        <CampoTexto etiqueta="RUC" inputMode="numeric" mono error={errors.ruc?.message} {...register('ruc')} />
         <CampoTexto etiqueta="Contacto" error={errors.contacto?.message} {...register('contacto')} />
         <CampoTexto etiqueta="Teléfono" inputMode="tel" error={errors.telefono?.message} {...register('telefono')} />
         <CampoTexto etiqueta="Correo" type="email" error={errors.email?.message} {...register('email')} />

@@ -62,12 +62,26 @@ interface PropsEtiquetadas {
   obligatorio?: boolean
 }
 
-/** Campo de texto con etiqueta. */
-export function CampoTexto({ etiqueta, error, ayuda, obligatorio, className, ...props }: ComponentProps<'input'> & PropsEtiquetadas) {
+/** Campo de texto con etiqueta. `className` va al contenedor; `mono` pone el valor en fuente monoespaciada. */
+export function CampoTexto({
+  etiqueta,
+  error,
+  ayuda,
+  obligatorio,
+  className,
+  mono,
+  ...props
+}: ComponentProps<'input'> & PropsEtiquetadas & { mono?: boolean }) {
   return (
     <Campo etiqueta={etiqueta} error={error} ayuda={ayuda} className={className} obligatorio={obligatorio}>
       {(id, descripcion) => (
-        <Entrada id={id} aria-invalid={error ? true : undefined} aria-describedby={descripcion} {...props} />
+        <Entrada
+          id={id}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={descripcion}
+          className={mono ? 'font-mono' : undefined}
+          {...props}
+        />
       )}
     </Campo>
   )

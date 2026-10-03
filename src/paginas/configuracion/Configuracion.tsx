@@ -176,7 +176,7 @@ function ModalEmpresa({ empresa, onCerrar }: { empresa: EmpresaResponse | null; 
     <Modal abierto onCerrar={onCerrar} titulo={empresa ? 'Editar empresa' : 'Nueva empresa'} pie={<PieGuardar onCerrar={onCerrar} onGuardar={enviar} cargando={guardar.isPending} />}>
       <form onSubmit={enviar} className="grid gap-4 sm:grid-cols-2" noValidate>
         {guardar.error && <MensajeError error={guardar.error} className="sm:col-span-2" />}
-        <CampoTexto etiqueta="RUC" obligatorio inputMode="numeric" className="font-mono" error={errors.ruc?.message} {...register('ruc')} />
+        <CampoTexto etiqueta="RUC" obligatorio inputMode="numeric" mono error={errors.ruc?.message} {...register('ruc')} />
         <CampoTexto etiqueta="Razón social" obligatorio error={errors.razonSocial?.message} {...register('razonSocial')} />
         <CampoTexto etiqueta="Nombre comercial" error={errors.nombreComercial?.message} {...register('nombreComercial')} />
         <CampoTexto etiqueta="Dirección" error={errors.direccion?.message} {...register('direccion')} />

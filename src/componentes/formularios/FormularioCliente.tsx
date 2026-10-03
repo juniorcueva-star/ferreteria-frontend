@@ -115,7 +115,7 @@ export function ModalCliente({
           etiqueta="Número de documento"
           inputMode={tipo === 'DNI' || tipo === 'RUC' ? 'numeric' : 'text'}
           disabled={tipo === 'NINGUNO'}
-          className="font-mono"
+          mono
           error={errors.numeroDocumento?.message}
           {...register('numeroDocumento')}
         />

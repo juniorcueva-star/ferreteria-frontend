@@ -1,8 +1,15 @@
+import { existsSync } from 'node:fs'
 import { defineConfig, devices } from '@playwright/test'
+
+// Contrasenas de los usuarios de prueba: archivo .env.e2e (no se sube a Git; ver .env.e2e.example)
+if (existsSync('.env.e2e')) {
+  process.loadEnvFile('.env.e2e')
+}
 
 /**
  * Pruebas de punta a punta contra el backend REAL (debe estar levantado con el perfil dev y sus datos
  * de demostracion). Playwright levanta el frontend con "npm run dev" si no esta corriendo.
+ * Variables obligatorias (en .env.e2e): E2E_ADMIN_PASSWORD y E2E_DEMO_PASSWORD.
  * Variables opcionales:
  *  - E2E_URL: URL del frontend (por defecto http://localhost:5173)
  *  - CHROMIUM_PATH: ruta a un Chromium ya instalado (si no, usa el de "npx playwright install chromium")

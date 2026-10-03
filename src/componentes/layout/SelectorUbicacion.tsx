@@ -13,7 +13,7 @@ export function SelectorUbicacion() {
         value={seleccionadaId ?? ''}
         onChange={(e) => seleccionar(e.target.value === '' ? null : Number(e.target.value))}
         disabled={!puedeCambiar}
-        className="h-8 max-w-56 cursor-pointer rounded-md border border-borde-fuerte/70 bg-white px-2 text-sm font-medium text-tinta focus:outline-none disabled:cursor-default disabled:border-transparent disabled:bg-transparent"
+        className="h-8 max-w-56 cursor-pointer rounded-md border border-borde-fuerte/70 bg-white px-2 text-sm font-medium text-tinta focus:outline-none disabled:cursor-default disabled:appearance-none disabled:border-transparent disabled:bg-transparent"
         data-testid="selector-ubicacion"
       >
         {puedeCambiar && <option value="">Todas las ubicaciones</option>}

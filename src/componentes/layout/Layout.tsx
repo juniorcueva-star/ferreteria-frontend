@@ -28,7 +28,7 @@ export function Layout() {
   }
 
   return (
-    <div className="flex h-full">
+    <div className="flex min-h-full">
       {/* Laptop: barra lateral fija (se puede ocultar) */}
       <div className={cn('hidden shrink-0 lg:block', !lateralAbierta && 'lg:hidden')}>
         <div className="sticky top-0 h-screen">
