@@ -77,7 +77,7 @@ test('ALMACENERO registra una compra con factura y la mercadería entra al almac
   await expect(page.getByTestId('total-compra')).toHaveText('S/ 100.00')
 
   await page.getByRole('button', { name: 'Registrar compra' }).click()
-  await expect(page.getByText(/Compra N\.° \d+ registrada por S\/ 100\.00/)).toBeVisible()
+  await expect(page.getByText(/Compra N\.° \d+ registrada por S\/\s100\.00/)).toBeVisible()
   await expect(page).toHaveURL(/\/compras$/)
 
   await irA(page, 'Inventario')

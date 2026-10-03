@@ -105,7 +105,7 @@ export default function Productos() {
         }
       />
 
-      <Tarjeta className="mb-5 grid gap-3 p-5 md:grid-cols-[minmax(0,1fr)_13rem_11rem]">
+      <Tarjeta className="mb-5 grid gap-3 p-5 md:grid-cols-[minmax(0,1fr)_13rem_13rem]">
         <Buscador
           valor={texto}
           onCambiar={(v) => {

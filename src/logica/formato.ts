@@ -26,9 +26,12 @@ const DIA_ISO = new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
 })
 
-/** Precio con formato "S/ 0.35" (separador de miles con coma). */
+/**
+ * Precio con formato "S/ 0.35" (separador de miles con coma). El espacio es no separable para que
+ * "S/" nunca quede en una linea y el monto en otra.
+ */
 export function soles(valor: number | null | undefined): string {
-  return `S/ ${SOLES.format(valor ?? 0)}`
+  return `S/\u00a0${SOLES.format(valor ?? 0)}`
 }
 
 /** Monto en centimos con formato "S/ 0.35". */

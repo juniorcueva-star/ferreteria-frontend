@@ -34,7 +34,20 @@ export default defineConfig({
     trace: 'retain-on-failure',
     launchOptions: process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {},
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } }],
+  projects: [
+    // Pruebas funcionales (npm run e2e)
+    {
+      name: 'chromium',
+      testIgnore: /capturas\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+    },
+    // Capturas para docs/capturas (npm run e2e:capturas)
+    {
+      name: 'capturas',
+      testMatch: /capturas\.spec\.ts/,
+      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+    },
+  ],
   webServer: {
     command: 'npm run dev',
     url: URL_FRONTEND,

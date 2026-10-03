@@ -211,11 +211,11 @@ export default function PuntoVenta() {
           {productos.isPending && <Cargando />}
           {productos.isError && <MensajeError error={productos.error} className="m-4" />}
           {productos.data?.contenido.length === 0 && <EstadoVacio titulo="Sin resultados" descripcion="Prueba con otro nombre o código." />}
-          <ul className="grid gap-px bg-borde sm:grid-cols-2">
+          <ul className="grid sm:grid-cols-2">
             {productos.data?.contenido.map((producto) => {
               const disponible = stockDe(producto.id)
               return (
-                <li key={producto.id} className="flex flex-col gap-3 bg-white p-4" data-testid={`pos-producto-${producto.codigo}`}>
+                <li key={producto.id} className="flex flex-col gap-3 border-b border-borde p-4 sm:odd:border-r" data-testid={`pos-producto-${producto.codigo}`}>
                   <div className="flex items-start gap-3">
                     <FotoProducto url={producto.imagenUrl} nombre={producto.nombre} className="size-12" />
                     <div className="min-w-0 flex-1">
@@ -248,8 +248,8 @@ export default function PuntoVenta() {
           </ul>
         </Tarjeta>
 
-        {/* Carrito y cobro */}
-        <div className="flex flex-col gap-5">
+        {/* Carrito y cobro: en laptop queda fijo a la derecha con su propio desplazamiento */}
+        <div className="flex flex-col gap-5 xl:sticky xl:top-[5.5rem] xl:max-h-[calc(100vh-7rem)] xl:self-start xl:overflow-y-auto xl:pr-1">
           <Tarjeta>
             <TituloTarjeta
               titulo={`Carrito (${carrito.length})`}
@@ -303,7 +303,7 @@ export default function PuntoVenta() {
                             <Plus className="size-3.5" />
                           </button>
                         </div>
-                        <label className="flex items-center gap-1 text-xs text-tinta-suave">
+                        <label className="flex items-center gap-1.5 text-xs whitespace-nowrap text-tinta-suave">
                           Desc. S/
                           <Entrada
                             aria-label={`Descuento de ${linea.productoNombre}`}
@@ -311,7 +311,7 @@ export default function PuntoVenta() {
                             placeholder="0.00"
                             value={linea.descuento}
                             onChange={(e) => setCarrito((c) => actualizarLinea(c, linea.presentacionId, { descuento: e.target.value }))}
-                            className="h-8 w-20 font-mono"
+                            className="h-8 w-20! font-mono"
                           />
                         </label>
                         <button
