@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff, Layers, LogIn } from 'lucide-react'
+import { Eye, EyeOff, LogIn } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Navigate, useLocation, useNavigate } from 'react-router'
@@ -8,6 +8,7 @@ import { useAuth } from '@/auth/contexto'
 import { Boton } from '@/componentes/ui/Boton'
 import { Campo, Entrada } from '@/componentes/ui/Campo'
 import { MensajeError } from '@/componentes/ui/Estados'
+import { Logo } from '@/componentes/layout/Logo'
 
 const esquema = z.object({
   username: z.string().trim().min(1, 'Ingrese su usuario').max(50, 'Máximo 50 caracteres'),
@@ -45,18 +46,10 @@ export function Login() {
   return (
     <div className="flex min-h-full">
       <div className="hidden w-[42%] flex-col justify-between bg-lateral p-10 text-white lg:flex">
-        <div className="flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-marca">
-            <Layers className="size-6" strokeWidth={2.4} aria-hidden />
-          </div>
-          <div>
-            <p className="text-xl font-bold">TodoPernos</p>
-            <p className="text-sm text-tinta-tenue">Sistema ERP</p>
-          </div>
-        </div>
+        <Logo />
         <div>
           <p className="text-3xl leading-snug font-bold">
-            Ventas, inventario y caja de tus tiendas <span className="text-marca">en un solo lugar.</span>
+            Ventas, inventario y caja de tus tiendas <span className="text-[#f5cc28]">en un solo lugar.</span>
           </p>
           <p className="mt-4 max-w-md text-sm text-lateral-texto">
             Controla el stock de cada tienda y del almacén, registra compras, traslados y ventas al contado o al fiado.
@@ -67,12 +60,7 @@ export function Login() {
 
       <div className="flex flex-1 items-center justify-center p-6">
         <form onSubmit={handleSubmit(enviar)} className="w-full max-w-sm" noValidate>
-          <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-marca text-white">
-              <Layers className="size-5" aria-hidden />
-            </div>
-            <p className="text-lg font-bold">TodoPernos</p>
-          </div>
+          <div className="mb-8 lg:hidden"><Logo claro={false} /></div>
           <h1 className="text-2xl font-bold text-tinta">Iniciar sesión</h1>
           <p className="mt-1 mb-6 text-sm text-tinta-suave">Ingresa con tu usuario y contraseña.</p>
 

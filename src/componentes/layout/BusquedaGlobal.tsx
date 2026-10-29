@@ -75,10 +75,10 @@ export function BusquedaGlobal() {
         }}
         placeholder={verClientes ? 'Buscar productos, clientes…' : 'Buscar productos, proveedores…'}
         aria-label="Búsqueda global"
-        className="h-10 w-full rounded-xl border border-borde bg-crema/60 pr-3 pl-9 text-sm text-tinta placeholder:text-tinta-tenue focus:border-marca focus:bg-white focus:ring-2 focus:ring-marca/20 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
+        className="h-10 w-full rounded-xl border border-borde bg-crema/60 pr-3 pl-9 text-sm text-tinta placeholder:text-tinta-tenue focus:border-marca focus:bg-superficie focus:ring-2 focus:ring-marca/20 focus:outline-none [&::-webkit-search-cancel-button]:hidden"
       />
       {abierto && activa && (
-        <div className="absolute right-0 left-0 z-40 mt-2 max-h-[70vh] overflow-y-auto rounded-xl border border-borde bg-white py-2 shadow-xl">
+        <div className="absolute right-0 left-0 z-40 mt-2 max-h-[70vh] overflow-y-auto rounded-xl border border-borde bg-superficie py-2 shadow-xl">
           {productos.data && productos.data.contenido.length > 0 && (
             <Grupo titulo="Productos">
               {productos.data.contenido.map((p) => (

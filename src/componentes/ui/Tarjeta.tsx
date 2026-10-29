@@ -2,7 +2,7 @@ import type { HTMLAttributes, ReactNode } from 'react'
 import { cn } from './cn'
 
 export function Tarjeta({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn('rounded-2xl border border-borde bg-white shadow-xs', className)} {...props} />
+  return <div className={cn('rounded-2xl border border-borde bg-superficie shadow-xs', className)} {...props} />
 }
 
 export function TituloTarjeta({ titulo, accion, icono }: { titulo: string; accion?: ReactNode; icono?: ReactNode }) {

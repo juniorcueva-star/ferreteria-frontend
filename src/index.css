@@ -10,18 +10,19 @@
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', monospace;
 
-  /* Naranja principal */
-  --color-marca: #f5761a;
-  --color-marca-oscuro: #dc6410;
-  --color-marca-claro: #fdebdc;
+  /* Amarillo principal */
+  --color-marca: #edbc00;
+  --color-marca-oscuro: #c99900;
+  --color-marca-claro: #fff4cc;
 
   /* Barra lateral */
   --color-lateral: #141414;
-  --color-lateral-activo: #2a1e15;
+  --color-lateral-activo: #302800;
   --color-lateral-hover: #1f1f1f;
   --color-lateral-texto: #b5b0a8;
 
   /* Fondos y bordes */
+  --color-superficie: #ffffff;
   --color-crema: #faf7f2;
   --color-beige: #f0ede8;
   --color-borde: #e8e3db;
@@ -66,7 +67,36 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-marca);
+    outline: 2px solid #805c00;
     outline-offset: 2px;
   }
 }
+
+/* Enlaces oscuros sobre fondo claro para conservar contraste con el acento amarillo. */
+.text-marca, .text-marca-oscuro { color: #805c00; }
+:root[data-texto="grande"] { font-size: 112.5%; }
+:root[data-texto="muy-grande"] { font-size: 125%; }
+
+:root[data-tema="oscuro"] {
+  color-scheme: dark;
+  --color-superficie: #252525;
+  --color-crema: #171717;
+  --color-beige: #333333;
+  --color-borde: #474747;
+  --color-borde-fuerte: #626262;
+  --color-tinta: #f3f1ed;
+  --color-tinta-suave: #d4cec3;
+  --color-tinta-tenue: #bfb7a9;
+  --color-marca-claro: #403513;
+  --color-exito-claro: #143925;
+  --color-alerta-claro: #433115;
+  --color-peligro-claro: #452121;
+  --color-info-claro: #1c3251;
+}
+:root[data-tema="oscuro"] .text-marca,
+:root[data-tema="oscuro"] .text-marca-oscuro { color: #f5cc28; }
+:root[data-tema="oscuro"] .text-exito { color: #75df9a; }
+:root[data-tema="oscuro"] .text-alerta { color: #ffc56b; }
+:root[data-tema="oscuro"] .text-peligro { color: #ff9999; }
+:root[data-tema="oscuro"] .text-info { color: #a7caff; }
+:root[data-tema="oscuro"] :focus-visible { outline-color: #f5cc28; }

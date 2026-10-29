@@ -38,7 +38,7 @@ export function SelectorProducto({
 
   const consulta = useQuery({
     queryKey: ['productos', 'selector', busqueda],
-    queryFn: () => productosApi.listar({ texto: busqueda, activo: true, size: 8 }),
+    queryFn: ({ signal }) => productosApi.listar({ texto: busqueda, activo: true, size: 8 }, signal),
     enabled: abierto && valor === null,
   })
 
@@ -117,7 +117,7 @@ export function SelectorProducto({
         </p>
       )}
       {abierto && !valor && (
-        <ul role="listbox" className="absolute top-full right-0 left-0 z-30 mt-1 max-h-72 overflow-y-auto rounded-xl border border-borde bg-white py-1 shadow-xl">
+        <ul role="listbox" className="absolute top-full right-0 left-0 z-30 mt-1 max-h-72 overflow-y-auto rounded-xl border border-borde bg-superficie py-1 shadow-xl">
           {consulta.isFetching && resultados.length === 0 && <li className="px-3 py-2 text-sm text-tinta-suave">Buscando…</li>}
           {!consulta.isFetching && resultados.length === 0 && (
             <li className="px-3 py-2 text-sm text-tinta-suave">No se encontraron productos activos.</li>

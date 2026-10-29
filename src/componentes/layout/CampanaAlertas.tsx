@@ -40,7 +40,7 @@ export function CampanaAlertas() {
         {total > 0 && <span className="absolute top-1.5 right-1.5 size-2.5 rounded-full bg-peligro ring-2 ring-white" />}
       </button>
       {abierta && (
-        <div className="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-xl border border-borde bg-white shadow-xl">
+        <div className="absolute right-0 z-40 mt-2 w-80 overflow-hidden rounded-xl border border-borde bg-superficie shadow-xl">
           <div className="border-b border-borde px-4 py-3">
             <p className="text-sm font-bold text-tinta">Stock bajo</p>
             <p className="text-xs text-tinta-suave">

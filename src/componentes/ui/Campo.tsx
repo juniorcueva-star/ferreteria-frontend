@@ -2,7 +2,7 @@ import { useId, type ComponentProps, type ReactNode } from 'react'
 import { cn } from './cn'
 
 export const claseControl =
-  'w-full rounded-lg border border-borde bg-white px-3 text-sm text-tinta placeholder:text-tinta-tenue transition-colors focus:border-marca focus:ring-2 focus:ring-marca/20 focus:outline-none disabled:bg-beige disabled:text-tinta-suave aria-[invalid=true]:border-peligro'
+  'w-full rounded-lg border border-borde bg-superficie px-3 text-sm text-tinta placeholder:text-tinta-tenue transition-colors focus:border-marca focus:ring-2 focus:ring-marca/20 focus:outline-none disabled:bg-beige disabled:text-tinta-suave aria-[invalid=true]:border-peligro'
 
 interface CampoProps {
   etiqueta: string

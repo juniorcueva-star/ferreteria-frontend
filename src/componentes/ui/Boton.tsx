@@ -6,8 +6,8 @@ type Variante = 'primario' | 'secundario' | 'peligro' | 'fantasma' | 'exito'
 type Tamano = 'sm' | 'md' | 'lg'
 
 const VARIANTES: Record<Variante, string> = {
-  primario: 'bg-marca text-white shadow-sm hover:bg-marca-oscuro disabled:bg-marca/50',
-  secundario: 'border border-borde bg-white text-tinta hover:bg-crema disabled:text-tinta-tenue',
+  primario: 'bg-marca text-black shadow-sm hover:bg-marca-oscuro disabled:bg-marca/50',
+  secundario: 'border border-borde bg-superficie text-tinta hover:bg-crema disabled:text-tinta-tenue',
   peligro: 'bg-peligro text-white hover:bg-red-700 disabled:bg-peligro/50',
   exito: 'bg-exito text-white hover:bg-green-700 disabled:bg-exito/50',
   fantasma: 'text-tinta-suave hover:bg-beige hover:text-tinta disabled:text-tinta-tenue',

@@ -271,7 +271,7 @@ function Acceso({ a, icono, children }: { a: string; icono: ReactNode; children:
   return (
     <Link
       to={a}
-      className="inline-flex h-10 items-center gap-2 rounded-lg border border-borde bg-white px-4 text-sm font-semibold text-tinta hover:border-marca hover:text-marca"
+      className="inline-flex h-10 items-center gap-2 rounded-lg border border-borde bg-superficie px-4 text-sm font-semibold text-tinta hover:border-marca hover:text-marca"
     >
       {icono}
       {children}

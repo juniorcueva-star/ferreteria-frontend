@@ -21,6 +21,9 @@ const Caja = lazy(() => import('@/paginas/caja/Caja'))
 const PuntoVenta = lazy(() => import('@/paginas/ventas/PuntoVenta'))
 const HistorialVentas = lazy(() => import('@/paginas/ventas/HistorialVentas'))
 const DetalleVenta = lazy(() => import('@/paginas/ventas/DetalleVenta'))
+const Cotizaciones = lazy(() => import('@/paginas/cotizaciones/Cotizaciones'))
+const FormularioCotizacion = lazy(() => import('@/paginas/cotizaciones/FormularioCotizacion'))
+const DetalleCotizacion = lazy(() => import('@/paginas/cotizaciones/DetalleCotizacion'))
 const Clientes = lazy(() => import('@/paginas/clientes/Clientes'))
 const Compras = lazy(() => import('@/paginas/compras/Compras'))
 const NuevaCompra = lazy(() => import('@/paginas/compras/NuevaCompra'))
@@ -70,6 +73,10 @@ function Rutas() {
           <Route path="ventas" element={<RutaProtegida permiso="ventas.registrar"><PuntoVenta /></RutaProtegida>} />
           <Route path="ventas/historial" element={<RutaProtegida permiso="ventas.ver"><HistorialVentas /></RutaProtegida>} />
           <Route path="ventas/:id" element={<RutaProtegida permiso="ventas.ver"><DetalleVenta /></RutaProtegida>} />
+          <Route path="cotizaciones" element={<RutaProtegida permiso="cotizaciones.ver"><Cotizaciones /></RutaProtegida>} />
+          <Route path="cotizaciones/nueva" element={<RutaProtegida permiso="cotizaciones.gestionar"><FormularioCotizacion /></RutaProtegida>} />
+          <Route path="cotizaciones/:id" element={<RutaProtegida permiso="cotizaciones.ver"><DetalleCotizacion /></RutaProtegida>} />
+          <Route path="cotizaciones/:id/editar" element={<RutaProtegida permiso="cotizaciones.gestionar"><FormularioCotizacion /></RutaProtegida>} />
           <Route path="clientes" element={<RutaProtegida permiso="clientes.ver"><Clientes /></RutaProtegida>} />
           <Route path="compras" element={<RutaProtegida permiso="compras.ver"><Compras /></RutaProtegida>} />
           <Route path="compras/nueva" element={<RutaProtegida permiso="compras.registrar"><NuevaCompra /></RutaProtegida>} />

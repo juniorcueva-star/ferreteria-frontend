@@ -2,6 +2,7 @@ import { http } from './cliente'
 import type {
   CategoriaRequest,
   CategoriaResponse,
+  HistorialPrecioResponse,
   PaginaResponse,
   Paginacion,
   PresentacionRequest,
@@ -32,9 +33,11 @@ export const categoriasApi = {
 }
 
 export const productosApi = {
-  listar: (filtro: FiltroProductos) =>
-    http.get<PaginaResponse<ProductoResponse>>('/productos', { params: filtro }).then((r) => r.data),
+  listar: (filtro: FiltroProductos, signal?: AbortSignal) =>
+    http.get<PaginaResponse<ProductoResponse>>('/productos', { params: filtro, signal }).then((r) => r.data),
   obtener: (id: number) => http.get<ProductoResponse>(`/productos/${id}`).then((r) => r.data),
+  historialPrecios: (id: number) =>
+    http.get<HistorialPrecioResponse[]>(`/productos/${id}/historial-precios`).then((r) => r.data),
   porCodigoBarras: (codigo: string) =>
     http.get<ProductoResponse>(`/productos/codigo-barras/${encodeURIComponent(codigo)}`).then((r) => r.data),
   crear: (datos: ProductoCrearRequest) => http.post<ProductoResponse>('/productos', datos).then((r) => r.data),

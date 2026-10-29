@@ -56,7 +56,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={idTitulo}
         tabIndex={-1}
-        className={cn('relative my-8 w-full rounded-2xl bg-white shadow-xl focus:outline-none', ANCHOS[ancho])}
+        className={cn('relative my-8 w-full rounded-2xl bg-superficie shadow-xl focus:outline-none', ANCHOS[ancho])}
       >
         <div className="flex items-start justify-between gap-4 border-b border-borde px-6 py-4">
           <div>

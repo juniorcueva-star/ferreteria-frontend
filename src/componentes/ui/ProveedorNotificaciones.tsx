@@ -37,7 +37,7 @@ export function ProveedorNotificaciones({ children }: { children: ReactNode }) {
             key={aviso.id}
             role="status"
             className={cn(
-              'pointer-events-auto flex items-start gap-3 rounded-xl border bg-white px-4 py-3 text-sm shadow-lg',
+              'pointer-events-auto flex items-start gap-3 rounded-xl border bg-superficie px-4 py-3 text-sm shadow-lg',
               aviso.tipo === 'exito' && 'border-exito/30',
               aviso.tipo === 'error' && 'border-peligro/30',
               aviso.tipo === 'info' && 'border-info/30',

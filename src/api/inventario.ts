@@ -39,9 +39,13 @@ export interface FiltroTraslados extends Paginacion {
   hasta?: string
 }
 
+export interface DisponibilidadVenta { productoId: number; ubicacionId: number; ubicacionNombre: string; cantidad: number }
+
 export const inventarioApi = {
-  stock: (filtro: FiltroStock) =>
-    http.get<PaginaResponse<StockResponse>>('/inventario/stock', { params: filtro }).then((r) => r.data),
+  disponibilidad: (productoIds: number[], signal?: AbortSignal) =>
+    http.get<DisponibilidadVenta[]>('/inventario/disponibilidad', { params: { productoIds }, signal }).then((r) => r.data),
+  stock: (filtro: FiltroStock, signal?: AbortSignal) =>
+    http.get<PaginaResponse<StockResponse>>('/inventario/stock', { params: filtro, signal }).then((r) => r.data),
   definirMinimo: (datos: StockMinimoRequest) =>
     http.put<StockResponse>('/inventario/stock/minimo', datos).then((r) => r.data),
   ajustar: (datos: AjusteRequest) => http.post<KardexResponse[]>('/inventario/ajustes', datos).then((r) => r.data),

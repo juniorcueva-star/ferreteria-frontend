@@ -12,6 +12,7 @@ test.describe.configure({ mode: 'serial' })
 const sufijo = sufijoUnico()
 const CODIGO = `E2E-${sufijo}`
 const NOMBRE = `Perno hexagonal M8 E2E ${sufijo}`
+const CODIGO_BARRAS = `775${sufijo.replace(/\D/g, '').padStart(10, '0').slice(-10)}`
 let codigoTraslado = ''
 let numeroCredito = ''
 
@@ -37,7 +38,8 @@ test('ADMIN crea un producto con dos presentaciones y su foto', async ({ page })
   await page.getByRole('button', { name: 'Agregar presentación' }).click()
   const segunda = page.getByTestId('presentacion-1')
   await segunda.getByLabel('Nombre').fill('Caja x100')
-  await segunda.getByLabel('Factor (u)').fill('100')
+   await segunda.getByLabel('Factor (u)').fill('100')
+    await segunda.getByLabel('Código de barras').fill(CODIGO_BARRAS)
   await segunda.getByLabel('Precio (S/)').fill('30')
   await expect(segunda).toContainText('1 Caja x100 = 100 u')
 
@@ -147,16 +149,42 @@ test('VENDEDOR abre su caja', async ({ page }) => {
 test('VENDEDOR registra una venta al contado con vuelto', async ({ page }) => {
   await iniciarSesion(page, 'vendedor1')
   await irA(page, 'Ventas')
-  await page.getByLabel('Buscar producto para vender').fill(CODIGO)
-  await page.getByRole('button', { name: `Agregar ${NOMBRE} Caja x100` }).click()
+  const buscador = page.getByLabel('Escanear código de barras o buscar producto')
+  await buscador.fill('codigo-inexistente')
+  await buscador.press('Enter')
+  await expect(page.getByText('No hay un producto con el código de barras código-inexistente')).toBeVisible()
+  await buscador.fill(CODIGO_BARRAS)
+  await buscador.press('Enter')
+  await expect(page.getByTestId('escaneo-encontrado')).toContainText('Caja x100 · 100 u')
+  await expect(page.getByTestId('escaneo-encontrado')).toContainText('S/ 30.00')
+  await expect(page.getByTestId('escaneo-encontrado')).toContainText('Stock disponible: 300 u')
+  // Dos Enter consecutivos del lector HID acumulan la misma presentacion; no crean otra linea.
+  await buscador.fill(CODIGO_BARRAS)
+  await buscador.press('Enter')
+  const cantidadCaja = page.getByLabel(`Cantidad de ${NOMBRE} Caja x100`)
+  await expect(cantidadCaja).toHaveValue('2')
+  await cantidadCaja.fill('1')
+  const selectorPresentacion = page.getByLabel(`Presentación de ${NOMBRE}`)
+  await selectorPresentacion.selectOption({ index: 0 })
+  const confirmarCambio = page.getByRole('dialog', { name: 'Cambiar presentación' })
+  await expect(confirmarCambio).toContainText('Caja x100 a Unidad')
+  await expect(confirmarCambio).toContainText('1 presentación(es) = 1 u')
+  await confirmarCambio.getByRole('button', { name: 'Confirmar cambio' }).click()
+  await expect(page.getByLabel(`Cantidad de ${NOMBRE} Unidad`)).toHaveValue('1')
+  await expect(page.getByTestId('carrito-linea-1')).toContainText('Unidad · S/ 0.35')
+  await selectorPresentacion.selectOption({ index: 1 })
+  await page.getByRole('dialog', { name: 'Cambiar presentación' }).getByRole('button', { name: 'Confirmar cambio' }).click()
+  await expect(cantidadCaja).toHaveValue('1')
+  await expect(page.getByTestId('carrito-linea-1')).toContainText('Caja x100 · S/ 30.00')
+  await buscador.fill(CODIGO)
   await page.getByRole('button', { name: `Agregar ${NOMBRE} Unidad` }).click()
   await page.getByLabel(`Cantidad de ${NOMBRE} Unidad`).fill('15')
   // 1 caja x S/ 30.00 + 15 unidades x S/ 0.35 = S/ 35.25
   await expect(page.getByTestId('total-venta')).toHaveText('S/ 35.25')
 
-  // Las unidades no aceptan decimales
+  // Una fraccion de unidad no es valida porque no termina en unidad base entera.
   await page.getByLabel(`Cantidad de ${NOMBRE} Unidad`).fill('1.5')
-  await expect(page.getByText('Cantidad inválida (número entero mayor que 0)')).toBeVisible()
+  await expect(page.getByText('Cantidad inválida (debe convertirse en un número entero de unidades)')).toBeVisible()
   await page.getByLabel(`Cantidad de ${NOMBRE} Unidad`).fill('15')
 
   await page.getByLabel('Monto del pago 1').fill('50')
@@ -168,12 +196,14 @@ test('VENDEDOR registra una venta al contado con vuelto', async ({ page }) => {
   await expect(venta).toContainText('S/ 14.75')
   await page.getByRole('button', { name: 'Nueva venta' }).click()
   await expect(page.getByText('Carrito vacío')).toBeVisible()
+  await buscador.fill(CODIGO)
+  await expect(page.getByTestId(`pos-producto-${CODIGO}`)).toContainText('Stock: 185 u')
 })
 
 test('VENDEDOR registra una venta a crédito con adelanto por Yape', async ({ page }) => {
   await iniciarSesion(page, 'vendedor1')
   await page.goto('/ventas')
-  await page.getByLabel('Buscar producto para vender').fill(CODIGO)
+  await page.getByLabel('Escanear código de barras o buscar producto').fill(CODIGO)
   await page.getByRole('button', { name: `Agregar ${NOMBRE} Caja x100` }).click()
   await expect(page.getByTestId('total-venta')).toHaveText('S/ 30.00')
   await page.getByRole('radio', { name: 'Crédito (fiado)' }).click()

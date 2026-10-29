@@ -3,7 +3,9 @@ import {
   actualizarLinea,
   agregarAlCarrito,
   aDetallesVenta,
+  cambiarPresentacion,
   calcularLinea,
+  calcularAjusteGeneral,
   calcularTotales,
   quitarLinea,
   separarIgv,
@@ -37,9 +39,10 @@ const medioKilo = {
   factor: 0.5,
   precio: 3.8,
 }
+const millar = { ...ciento, presentacionId: 3, presentacionNombre: 'Millar', factor: 1000, precio: 70 }
 
 function linea(base: typeof ciento | typeof cableMetro | typeof medioKilo, cantidad: string, descuento = ''): LineaCarrito {
-  return { ...base, cantidad, descuento }
+  return { ...base, cantidad, descuento, descuentoPorcentaje: '', incrementoPorcentaje: '' }
 }
 
 describe('carrito del punto de venta', () => {
@@ -51,10 +54,11 @@ describe('carrito del punto de venta', () => {
     expect(c.error).toBeNull()
   })
 
-  it('acepta decimales en metros y kilos, pero no en unidades', () => {
+  it('acepta fracciones que terminan en unidades enteras y rechaza las ambiguas', () => {
     expect(calcularLinea(linea(cableMetro, '2.5')).importeCentimos).toBe(325)
     expect(calcularLinea(linea(medioKilo, '3')).cantidadBase).toBe(1.5)
-    expect(calcularLinea(linea(ciento, '1.5')).error).toMatch(/entero/)
+    expect(calcularLinea(linea(millar, '0.5')).cantidadBase).toBe(500)
+    expect(calcularLinea(linea(ciento, '0.005')).error).toMatch(/convertirse/)
     expect(calcularLinea(linea(ciento, '0')).error).not.toBeNull()
   })
 
@@ -104,11 +108,59 @@ describe('carrito del punto de venta', () => {
     expect(carrito.map((l) => l.presentacionId)).toEqual([2])
   })
 
+  it('calcula ajustes generales aislados sin habilitar su registro', () => {
+    expect(calcularAjusteGeneral(10000, '-5')).toEqual({ valido: true, ajusteCentimos: -500, totalCentimos: 9500 })
+    expect(calcularAjusteGeneral(10000, '10')).toEqual({ valido: true, ajusteCentimos: 1000, totalCentimos: 11000 })
+    expect(calcularAjusteGeneral(10000, '20')).toEqual({ valido: true, ajusteCentimos: 2000, totalCentimos: 12000 })
+    expect(calcularAjusteGeneral(10000, '-100.01').valido).toBe(false)
+  })
+
+  it.each([
+    ['5', 760],
+    ['10', 720],
+    ['20', 640],
+  ])('aplica descuento porcentual de %s %%', (porcentaje, subtotal) => {
+    expect(calcularLinea({ ...linea(ciento, '1'), descuentoPorcentaje: porcentaje }).subtotalCentimos).toBe(subtotal)
+  })
+
+  it.each([
+    ['5', 840],
+    ['10', 880],
+    ['20', 960],
+  ])('aplica incremento porcentual de %s %%', (porcentaje, subtotal) => {
+    expect(calcularLinea({ ...linea(ciento, '1'), incrementoPorcentaje: porcentaje }).subtotalCentimos).toBe(subtotal)
+  })
+
+  it('muestra error para porcentajes incompletos sin romper el carrito', () => {
+    for (const invalido of ['.', 'abc', '10.']) {
+      expect(calcularLinea({ ...linea(ciento, '1'), descuentoPorcentaje: invalido }).error).toContain('porcentual')
+      expect(calcularLinea({ ...linea(ciento, '1'), incrementoPorcentaje: invalido }).error).toContain('porcentual')
+    }
+  })
+
+  it('redondea ajustes porcentuales, conserva ajustes al cambiar presentacion y rechaza combinaciones', () => {
+    expect(calcularLinea({ ...linea(cableMetro, '1.235'), descuentoPorcentaje: '5' }).subtotalCentimos).toBe(153)
+    // S/ 1.00 con 0.5 % resulta S/ 0.995 y se redondea el subtotal final a S/ 1.00.
+    expect(calcularLinea({ ...linea(ciento, '1'), precio: 1, descuentoPorcentaje: '0.5' }).subtotalCentimos).toBe(100)
+    expect(calcularLinea({ ...linea(ciento, '1'), descuentoPorcentaje: '0' }).subtotalCentimos).toBe(800)
+    expect(calcularLinea({ ...linea(ciento, '1'), descuentoPorcentaje: '100.01' }).error).toMatch(/100/)
+    expect(calcularLinea({ ...linea(ciento, '1', '1'), incrementoPorcentaje: '5' }).error).toMatch(/combine/)
+    expect(cambiarPresentacion([{ ...linea(ciento, '0.5'), incrementoPorcentaje: '10' }], 2, millar)[0]?.incrementoPorcentaje).toBe('10')
+  })
+
+  it('cambia de presentacion conservando cantidad y descuento sin duplicar lineas', () => {
+    const carrito = [linea(ciento, '0.5', '1.50')]
+    const cambiado = cambiarPresentacion(carrito, 2, millar)
+    expect(cambiado).toEqual([linea(millar, '0.5', '1.50')])
+    expect(calcularLinea(cambiado[0]!).cantidadBase).toBe(500)
+    expect(cambiarPresentacion([...cambiado, linea(ciento, '1')], 3, ciento)).toHaveLength(2)
+  })
+
   it('arma el detalle para la API sin enviar el precio', () => {
     const detalle = aDetallesVenta([linea(ciento, '3', '1.50'), linea(cableMetro, '2,5')])
     expect(detalle).toEqual([
-      { presentacionId: 2, cantidad: 3, descuento: 1.5 },
-      { presentacionId: 22, cantidad: 2.5, descuento: null },
+      { presentacionId: 2, cantidad: 3, descuento: 1.5, ajustePorcentaje: null },
+      { presentacionId: 22, cantidad: 2.5, descuento: null, ajustePorcentaje: null },
     ])
   })
 })

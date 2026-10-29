@@ -18,7 +18,7 @@ import { useAvisos } from '@/componentes/ui/notificaciones'
 import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { useCategorias } from '@/hooks/useCatalogos'
 import { esDecimalValido, textoANumero } from '@/logica/decimales'
-import { cantidadAgrupada, nombreUnidad, soles, sufijoUnidad } from '@/logica/formato'
+import { cantidadAgrupada, fechaHora, nombreUnidad, soles, sufijoUnidad } from '@/logica/formato'
 import { factorValido } from '@/logica/presentaciones'
 import { monto, nulo, textoObligatorio, textoOpcional } from '@/logica/validaciones'
 
@@ -145,6 +145,11 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
   const [archivo, setArchivo] = useState<File | null>(null)
   const [quitarFoto, setQuitarFoto] = useState(false)
   const [errorFoto, setErrorFoto] = useState<string | null>(null)
+  const historialPrecios = useQuery({
+    queryKey: ['productos', 'historial-precios', producto?.id],
+    queryFn: () => productosApi.historialPrecios(producto?.id ?? 0),
+    enabled: producto !== null,
+  })
   const vistaPrevia = useMemo(() => (archivo ? URL.createObjectURL(archivo) : null), [archivo])
   useEffect(() => () => (vistaPrevia ? URL.revokeObjectURL(vistaPrevia) : undefined), [vistaPrevia])
 
@@ -315,7 +320,7 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
               )}
             </div>
             <div className="flex flex-wrap justify-center gap-2">
-              <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-borde bg-white px-4 text-sm font-semibold text-tinta hover:bg-crema">
+              <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-borde bg-superficie px-4 text-sm font-semibold text-tinta hover:bg-crema">
                 <ImageUp className="size-4" aria-hidden />
                 {fotoActual ? 'Cambiar foto' : 'Subir foto'}
                 <input
@@ -429,6 +434,31 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
           </div>
         </div>
       </Tarjeta>
+      {producto && (
+        <Tarjeta className="mt-5">
+          <TituloTarjeta titulo="Historial de precios" />
+          <div className="p-5">
+            <p className="mb-3 text-sm text-tinta-suave">Registra solo cambios efectuados desde que se habilitó este historial.</p>
+            {historialPrecios.isPending && <p className="text-sm text-tinta-suave">Cargando historial...</p>}
+            {historialPrecios.isError && <p className="text-sm text-peligro">No se pudo consultar el historial de precios.</p>}
+            {historialPrecios.data?.length === 0 && <p className="text-sm text-tinta-tenue">Aún no hay cambios de precio registrados.</p>}
+            {historialPrecios.data && historialPrecios.data.length > 0 && (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b border-borde text-xs text-tinta-suave">
+                    <tr><th className="pb-2">Presentación</th><th className="pb-2">Anterior</th><th className="pb-2">Nuevo</th><th className="pb-2">Fecha</th><th className="pb-2">Usuario</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-borde">
+                    {historialPrecios.data.map((h) => (
+                      <tr key={h.id}><td className="py-2">{h.presentacionNombre}</td><td className="py-2 font-mono">{soles(h.precioAnterior)}</td><td className="py-2 font-mono font-semibold">{soles(h.precioNuevo)}</td><td className="py-2">{fechaHora(h.fecha)}</td><td className="py-2">{h.usuario ?? 'No disponible'}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </Tarjeta>
+      )}
       <div className="mt-5 flex justify-end gap-2">
         <Boton variante="secundario" onClick={() => navegar('/productos')}>
           Cancelar

@@ -16,6 +16,10 @@ import type {
   Paginacion,
   VentaRequest,
   VentaResponse,
+  VentaDesdeCotizacionRequest,
+  CotizacionRequest,
+  CotizacionResponse,
+  EstadoCotizacion,
 } from './tipos'
 
 export interface FiltroClientes extends Paginacion {
@@ -80,11 +84,22 @@ export const cajasApi = {
 
 export const ventasApi = {
   registrar: (datos: VentaRequest) => http.post<VentaResponse>('/ventas', datos).then((r) => r.data),
+  registrarDesdeCotizacion: (cotizacionId: number, datos: VentaDesdeCotizacionRequest) =>
+    http.post<VentaResponse>(`/ventas/desde-cotizacion/${cotizacionId}`, datos).then((r) => r.data),
   obtener: (id: number) => http.get<VentaResponse>(`/ventas/${id}`).then((r) => r.data),
   listar: (filtro: FiltroVentas) =>
     http.get<PaginaResponse<VentaResponse>>('/ventas', { params: filtro }).then((r) => r.data),
   anular: (id: number, datos: AnulacionRequest) =>
     http.post<VentaResponse>(`/ventas/${id}/anular`, datos).then((r) => r.data),
+}
+
+export const cotizacionesApi = {
+  crear: (datos: CotizacionRequest) => http.post<CotizacionResponse>('/cotizaciones', datos).then((r) => r.data),
+  listar: (filtro: { ubicacionId?: number; estado?: EstadoCotizacion; page: number; size: number; sort?: string }) => http.get<PaginaResponse<CotizacionResponse>>('/cotizaciones', { params: filtro }).then((r) => r.data),
+  obtener: (id: number) => http.get<CotizacionResponse>(`/cotizaciones/${id}`).then((r) => r.data),
+  actualizar: (id: number, datos: CotizacionRequest) => http.put<CotizacionResponse>(`/cotizaciones/${id}`, datos).then((r) => r.data),
+  emitir: (id: number) => http.post<CotizacionResponse>(`/cotizaciones/${id}/emitir`).then((r) => r.data),
+  anular: (id: number) => http.post<CotizacionResponse>(`/cotizaciones/${id}/anular`).then((r) => r.data),
 }
 
 export const fiadoApi = {

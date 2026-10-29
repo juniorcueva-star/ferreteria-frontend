@@ -11,7 +11,7 @@ export function Tabla({ children, className }: { children: ReactNode; className?
 }
 
 export function Thead({ children }: { children: ReactNode }) {
-  return <thead className="border-b border-borde bg-white">{children}</thead>
+  return <thead className="border-b border-borde bg-superficie">{children}</thead>
 }
 
 export function Th({ className, alinear, ...props }: ThHTMLAttributes<HTMLTableCellElement> & { alinear?: 'derecha' | 'centro' }) {

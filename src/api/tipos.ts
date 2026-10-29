@@ -466,6 +466,29 @@ export interface VentaDetalleRequest {
   presentacionId: number
   cantidad: number
   descuento: number | null
+  ajustePorcentaje: number | null
+}
+export interface VentaDesdeCotizacionRequest {
+  condicion: CondicionVenta
+  fechaVencimiento: string | null
+  pagos: PagoRequest[]
+}
+
+export type EstadoCotizacion = 'BORRADOR' | 'EMITIDA' | 'ANULADA'
+export interface CotizacionDetalleRequest { presentacionId: number; cantidad: number; descuento: number | null; ajustePorcentaje: number | null }
+export interface CotizacionRequest { ubicacionId: number | null; clienteId: number; observacion: string | null; detalles: CotizacionDetalleRequest[] }
+export interface CotizacionDetalle extends CotizacionDetalleRequest { productoId: number; descripcion: string; factor: number; cantidadBase: number; unidadBase: UnidadBase; precioUnitario: number; subtotal: number }
+export interface CotizacionResponse { id: number; codigo: string; ubicacionId: number; ubicacionNombre: string; clienteId: number; clienteNombre: string; usuario: string; fecha: string; estado: EstadoCotizacion; moneda: 'PEN'; observacion: string | null; subtotal: number; igv: number; descuento: number; total: number; venta: { id: number; numeroDocumento: string; fecha: string; total: number; estado: EstadoVenta } | null; detalles: CotizacionDetalle[] }
+
+export interface HistorialPrecioResponse {
+  id: number
+  productoId: number
+  presentacionId: number
+  presentacionNombre: string
+  precioAnterior: number
+  precioNuevo: number
+  fecha: string
+  usuario: string | null
 }
 
 export interface VentaRequest {
@@ -485,6 +508,7 @@ export interface VentaDetalle {
   cantidadBase: number
   precioUnitario: number
   descuento: number
+  ajustePorcentaje: number | null
   subtotal: number
 }
 
@@ -510,6 +534,8 @@ export interface VentaResponse {
   saldoPendiente: number
   estado: EstadoVenta
   motivoAnulacion: string | null
+  cotizacionId?: number | null
+  cotizacionCodigo?: string | null
   vuelto: number
   /** vacio en los listados */
   detalles: VentaDetalle[]

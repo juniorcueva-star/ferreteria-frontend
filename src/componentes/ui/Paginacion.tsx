@@ -77,7 +77,7 @@ function BotonPagina({
       aria-current={activo ? 'page' : undefined}
       className={cn(
         'inline-flex h-8 min-w-8 items-center justify-center rounded-md px-2 font-mono text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40',
-        activo ? 'bg-marca text-white' : 'text-tinta hover:bg-beige',
+        activo ? 'bg-marca text-black' : 'text-black hover:bg-beige',
       )}
     >
       {children}

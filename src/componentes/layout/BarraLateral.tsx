@@ -33,7 +33,7 @@ export function BarraLateral({ onNavegar }: { onNavegar?: () => void }) {
                 className={({ isActive }) =>
                   cn(
                     'flex items-center gap-3 rounded-lg px-3 py-2.5 text-[15px] font-medium transition-colors',
-                    isActive ? 'bg-lateral-activo text-marca' : 'hover:bg-lateral-hover hover:text-white',
+                    isActive ? 'bg-lateral-activo text-[#f5cc28]' : 'hover:bg-lateral-hover hover:text-white',
                   )
                 }
               >
@@ -73,7 +73,7 @@ export function BarraLateral({ onNavegar }: { onNavegar?: () => void }) {
           aria-label="Opciones de usuario"
           className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-lateral-hover"
         >
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-marca text-sm font-bold text-white">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-marca text-sm font-bold text-black">
             {iniciales(usuario.nombres)}
           </span>
           <span className="min-w-0 leading-tight">

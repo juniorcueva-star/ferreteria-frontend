@@ -1,5 +1,5 @@
-import { CircleHelp, Menu } from 'lucide-react'
-import { useState } from 'react'
+import { CircleHelp, Menu, Moon, Sun } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Outlet, useLocation } from 'react-router'
 import { cn } from '@/componentes/ui/cn'
 import { Modal } from '@/componentes/ui/Modal'
@@ -17,6 +17,16 @@ export function Layout() {
   const [lateralAbierta, setLateralAbierta] = useState(true)
   const [lateralMovil, setLateralMovil] = useState(false)
   const [ayuda, setAyuda] = useState(false)
+  const [tema, setTema] = useState(() => localStorage.getItem('ivera-tema') === 'oscuro' ? 'oscuro' : 'claro')
+  useEffect(() => {
+    document.documentElement.dataset.tema = tema
+    localStorage.setItem('ivera-tema', tema)
+  }, [tema])
+  const [texto, setTexto] = useState(() => localStorage.getItem('ivera-tamano-texto') ?? 'normal')
+  useEffect(() => {
+    document.documentElement.dataset.texto = texto
+    localStorage.setItem('ivera-tamano-texto', texto)
+  }, [texto])
   const { pathname } = useLocation()
 
   const alternarMenu = () => {
@@ -46,7 +56,7 @@ export function Layout() {
       )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-borde bg-white px-4 lg:px-6">
+        <header className="sticky top-0 z-30 flex min-h-16 flex-wrap items-center gap-3 py-2 border-b border-borde bg-superficie px-4 lg:px-6">
           <button
             type="button"
             onClick={alternarMenu}
@@ -60,6 +70,15 @@ export function Layout() {
             <BusquedaGlobal />
           </div>
           <div className="ml-auto flex items-center gap-2">
+            <label className="flex items-center gap-1 text-sm text-tinta" htmlFor="tamano-texto">
+              <span className="hidden sm:inline">Texto</span>
+              <select id="tamano-texto" aria-label="Tamaño de texto" value={texto} onChange={(e) => setTexto(e.target.value)} className="rounded-lg border border-borde bg-superficie p-2 text-tinta">
+                <option value="normal">Normal</option><option value="grande">Grande</option><option value="muy-grande">Muy grande</option>
+              </select>
+            </label>
+            <button type="button" onClick={() => setTema(tema === 'claro' ? 'oscuro' : 'claro')} className="rounded-lg border border-borde bg-superficie p-2 text-tinta" aria-label={tema === 'claro' ? 'Activar modo oscuro' : 'Activar modo claro'} title={tema === 'claro' ? 'Activar modo oscuro' : 'Activar modo claro'}>
+              {tema === 'claro' ? <Moon className="size-5" aria-hidden /> : <Sun className="size-5" aria-hidden />}
+            </button>
             <IndicadorConexion />
             <CampanaAlertas />
           </div>

@@ -29,6 +29,7 @@ describe('permisos por rol (igual que SecurityConfig del backend)', () => {
       'Movimientos',
       'Caja',
       'Ventas',
+      'Cotizaciones',
       'Clientes',
       'Reportes',
     ])

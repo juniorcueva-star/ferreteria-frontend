@@ -31,6 +31,8 @@ export const PERMISOS = {
   'ventas.ver': ADMIN_VENDEDOR,
   'ventas.registrar': ADMIN_VENDEDOR,
   'ventas.anular': ADMIN_VENDEDOR,
+  'cotizaciones.ver': ADMIN_VENDEDOR,
+  'cotizaciones.gestionar': ADMIN_VENDEDOR,
   'clientes.ver': ADMIN_VENDEDOR,
   'fiado.ver': ADMIN_VENDEDOR,
   // Compras

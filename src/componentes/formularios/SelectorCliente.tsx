@@ -79,7 +79,7 @@ export function SelectorCliente({
           <button
             type="button"
             onClick={() => setNuevo(true)}
-            className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-borde bg-white px-3 text-sm font-semibold text-tinta hover:bg-crema"
+            className="inline-flex h-10 items-center gap-1.5 rounded-lg border border-borde bg-superficie px-3 text-sm font-semibold text-tinta hover:bg-crema"
           >
             <UserPlus className="size-4" aria-hidden /> Nuevo
           </button>
@@ -91,7 +91,7 @@ export function SelectorCliente({
         </p>
       )}
       {abierto && !valor && (
-        <ul role="listbox" className="absolute top-full right-0 left-0 z-30 mt-1 max-h-64 overflow-y-auto rounded-xl border border-borde bg-white py-1 shadow-xl">
+        <ul role="listbox" className="absolute top-full right-0 left-0 z-30 mt-1 max-h-64 overflow-y-auto rounded-xl border border-borde bg-superficie py-1 shadow-xl">
           {clientes.isFetching && !clientes.data && <li className="px-3 py-2 text-sm text-tinta-suave">Buscando…</li>}
           {clientes.data?.contenido.length === 0 && <li className="px-3 py-2 text-sm text-tinta-suave">Sin resultados. Use “Nuevo” para registrarlo.</li>}
           {clientes.data?.contenido.map((c) => (

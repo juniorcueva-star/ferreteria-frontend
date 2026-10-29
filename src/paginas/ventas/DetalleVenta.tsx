@@ -82,6 +82,7 @@ export default function DetalleVenta() {
         <Dato titulo="Vendedor">
           {v.vendedor} · caja N.° {v.cajaId}
         </Dato>
+        {v.cotizacionId && <Dato titulo="Cotización de origen"><Link className="text-marca underline" to={`/cotizaciones/${v.cotizacionId}`}>{v.cotizacionCodigo}</Link></Dato>}
         <Dato titulo="Cliente">{v.clienteNombre ?? 'Público general'}</Dato>
         <Dato titulo="Condición">{NOMBRE_CONDICION[v.condicion]}</Dato>
         {v.condicion === 'CREDITO' && <Dato titulo="Vencimiento">{fecha(v.fechaVencimiento)}</Dato>}
