@@ -7,6 +7,7 @@ import type {
   KardexResponse,
   PaginaResponse,
   Paginacion,
+  ResumenStockResponse,
   StockMinimoRequest,
   StockResponse,
   TipoMovimiento,
@@ -20,6 +21,12 @@ export interface FiltroStock extends Paginacion {
   productoIds?: number[]
   texto?: string
   soloBajo?: boolean
+}
+
+export interface FiltroResumen extends Paginacion {
+  productoIds?: number[]
+  texto?: string
+  categoriaId?: number
 }
 
 export interface FiltroKardex extends Paginacion {
@@ -42,6 +49,9 @@ export interface FiltroTraslados extends Paginacion {
 export const inventarioApi = {
   stock: (filtro: FiltroStock) =>
     http.get<PaginaResponse<StockResponse>>('/inventario/stock', { params: filtro }).then((r) => r.data),
+  /** Stock de todas las tiendas y el almacen por producto (solo lectura, para cualquier usuario). */
+  resumen: (filtro: FiltroResumen) =>
+    http.get<PaginaResponse<ResumenStockResponse>>('/inventario/resumen', { params: filtro }).then((r) => r.data),
   definirMinimo: (datos: StockMinimoRequest) =>
     http.put<StockResponse>('/inventario/stock/minimo', datos).then((r) => r.data),
   ajustar: (datos: AjusteRequest) => http.post<KardexResponse[]>('/inventario/ajustes', datos).then((r) => r.data),

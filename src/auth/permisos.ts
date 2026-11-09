@@ -17,6 +17,8 @@ export const PERMISOS = {
   'categorias.editar': ADMIN,
   // Inventario
   'inventario.ver': TODOS,
+  // Disponibilidad en todas las ubicaciones: lectura para todos (no permite operar otras tiendas)
+  'disponibilidad.ver': TODOS,
   'inventario.ajustar': ADMIN_ALMACENERO,
   'inventario.inicial': ADMIN,
   'inventario.minimo': ADMIN,

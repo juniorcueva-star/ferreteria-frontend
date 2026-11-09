@@ -32,6 +32,7 @@ import {
 import { esDecimalValido } from '@/logica/decimales'
 import { cantidad, cantidadConUnidad, hoyLima, soles, solesDeCentimos, sufijoUnidad } from '@/logica/formato'
 import { aPagosRequest, calcularCobro, type PagoFormulario } from '@/logica/pagos'
+import { otrasUbicacionesConStock } from '@/logica/disponibilidad'
 import { presentacionesActivas } from '@/logica/presentaciones'
 
 const PAGO_INICIAL: PagoFormulario = { metodoPago: 'EFECTIVO', monto: '', numeroOperacion: '' }
@@ -76,6 +77,18 @@ export default function PuntoVenta() {
     enabled: tiendaId !== undefined && idsStock.length > 0,
     placeholderData: keepPreviousData,
   })
+  // Disponibilidad en las otras tiendas y el almacen (solo lectura, para pedidos grandes)
+  const idsVisibles = useMemo(() => productos.data?.contenido.map((p) => p.id) ?? [], [productos.data])
+  const disponibilidad = useQuery({
+    queryKey: ['inventario', 'resumen', 'pos', idsVisibles],
+    queryFn: () => inventarioApi.resumen({ productoIds: idsVisibles, size: 100 }),
+    enabled: idsVisibles.length > 0,
+    placeholderData: keepPreviousData,
+  })
+  const otrasDe = (productoId: number) => {
+    const resumen = disponibilidad.data?.contenido.find((r) => r.productoId === productoId)
+    return resumen ? otrasUbicacionesConStock(resumen, tiendaId) : []
+  }
   const stockDe = (productoId: number) => stock.data?.contenido.find((s) => s.productoId === productoId)?.cantidad ?? 0
 
   const totales = calcularTotales(carrito)
@@ -225,6 +238,14 @@ export default function PuntoVenta() {
                       {tiendaId !== undefined && (
                         <p className={cn('mt-0.5 font-mono text-xs', disponible > 0 ? 'text-tinta-suave' : 'text-peligro')}>
                           Stock: {cantidadConUnidad(disponible, producto.unidadBase)}
+                        </p>
+                      )}
+                      {otrasDe(producto.id).length > 0 && (
+                        <p className="mt-0.5 text-xs text-tinta-tenue" data-testid={`pos-otras-${producto.codigo}`}>
+                          También en:{' '}
+                          {otrasDe(producto.id)
+                            .map((u) => `${u.ubicacionNombre} ${cantidad(u.cantidad)}`)
+                            .join(' · ')}
                         </p>
                       )}
                     </div>

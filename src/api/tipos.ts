@@ -271,6 +271,27 @@ export interface ProductoActualizarRequest {
 
 // ---------- Inventario y traslados ----------
 
+/** Stock de un producto en una ubicacion activa (solo lectura). */
+export interface StockUbicacion {
+  ubicacionId: number
+  ubicacionNombre: string
+  tipo: TipoUbicacion
+  cantidad: number
+  stockMinimo: number
+  bajo: boolean
+}
+
+/** Disponibilidad de un producto en todas las tiendas y el almacen, con su total. */
+export interface ResumenStockResponse {
+  productoId: number
+  productoCodigo: string
+  productoNombre: string
+  unidadBase: UnidadBase
+  categoriaNombre: string
+  ubicaciones: StockUbicacion[]
+  total: number
+}
+
 export interface StockResponse {
   productoId: number
   productoCodigo: string
