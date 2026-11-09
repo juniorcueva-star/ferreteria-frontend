@@ -46,7 +46,7 @@ export default function DetalleVenta() {
 
   return (
     <div>
-      <Link to="/ventas/historial" className="mb-3 inline-flex items-center gap-1 text-sm text-tinta-suave hover:text-marca">
+      <Link to="/ventas/historial" className="mb-3 inline-flex items-center gap-1 text-sm text-tinta-suave hover:text-marca-texto">
         <ArrowLeft className="size-4" /> Volver a ventas
       </Link>
       <EncabezadoPagina

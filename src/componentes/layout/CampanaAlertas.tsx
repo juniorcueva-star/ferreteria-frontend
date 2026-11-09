@@ -62,7 +62,7 @@ export function CampanaAlertas() {
           <Link
             to="/inventario?soloBajo=1"
             onClick={() => setAbierta(false)}
-            className="block border-t border-borde px-4 py-2.5 text-center text-sm font-semibold text-marca hover:bg-crema"
+            className="block border-t border-borde px-4 py-2.5 text-center text-sm font-semibold text-marca-texto hover:bg-crema"
           >
             Ver inventario con stock bajo
           </Link>

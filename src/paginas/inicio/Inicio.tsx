@@ -185,7 +185,7 @@ export default function Inicio() {
         </Tarjeta>
 
         <Tarjeta>
-          <TituloTarjeta titulo={rol === 'VENDEDOR' ? 'Traslados por recibir' : 'Traslados en camino'} icono={<ArrowLeftRight className="size-4 text-marca" />} />
+          <TituloTarjeta titulo={rol === 'VENDEDOR' ? 'Traslados por recibir' : 'Traslados en camino'} icono={<ArrowLeftRight className="size-4 text-marca-texto" />} />
           {porRecibir.isPending ? (
             <Cargando />
           ) : porRecibir.data?.contenido.length === 0 ? (
@@ -248,7 +248,7 @@ function Indicador({
     exito: 'bg-exito-claro text-exito',
     alerta: 'bg-alerta-claro text-alerta',
     peligro: 'bg-peligro-claro text-peligro',
-    neutro: 'bg-marca-claro text-marca',
+    neutro: 'bg-marca-claro text-marca-texto',
   }
   return (
     <Tarjeta className="flex flex-col p-5" data-testid={testid}>
@@ -260,7 +260,7 @@ function Indicador({
       </div>
       <p className={cn('mt-3 text-[26px] leading-none font-bold text-tinta', mono && 'font-mono')}>{valor}</p>
       <p className="mt-2 text-xs text-tinta-suave">{detalle}</p>
-      <Link to={enlace.a} className="mt-4 text-sm font-semibold text-marca hover:underline">
+      <Link to={enlace.a} className="mt-4 text-sm font-semibold text-marca-texto hover:underline">
         {enlace.texto} →
       </Link>
     </Tarjeta>
@@ -271,7 +271,7 @@ function Acceso({ a, icono, children }: { a: string; icono: ReactNode; children:
   return (
     <Link
       to={a}
-      className="inline-flex h-10 items-center gap-2 rounded-lg border border-borde bg-white px-4 text-sm font-semibold text-tinta hover:border-marca hover:text-marca"
+      className="inline-flex h-10 items-center gap-2 rounded-lg border border-borde bg-white px-4 text-sm font-semibold text-tinta hover:border-marca hover:text-marca-texto"
     >
       {icono}
       {children}

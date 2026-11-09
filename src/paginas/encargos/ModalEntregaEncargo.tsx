@@ -78,7 +78,7 @@ export function ModalEntregaEncargo({ encargo, onCerrar }: { encargo: EncargoRes
       <div className="flex flex-col gap-4">
         {caja.data === null && (
           <p className="rounded-xl bg-alerta-claro px-4 py-3 text-sm" role="alert">
-            Debes <Link to="/caja" className="font-semibold text-marca underline">abrir tu caja</Link> para entregar el encargo.
+            Debes <Link to="/caja" className="font-semibold text-marca-texto underline">abrir tu caja</Link> para entregar el encargo.
           </p>
         )}
         {otraTienda && (

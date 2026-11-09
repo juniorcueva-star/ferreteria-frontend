@@ -190,7 +190,7 @@ export default function Productos() {
       {puedeEditar && seleccion.size > 0 && (
         <Tarjeta className="mb-3 flex flex-wrap items-center gap-3 border-marca/40 bg-marca-claro/30 px-5 py-3" data-testid="barra-lote">
           <span className="inline-flex items-center gap-2 text-sm font-semibold text-tinta">
-            <CheckSquare className="size-4 text-marca" aria-hidden />
+            <CheckSquare className="size-4 text-marca-texto" aria-hidden />
             {seleccion.size === 1 ? '1 producto seleccionado' : `${seleccion.size} productos seleccionados`}
           </span>
           <div className="flex flex-wrap items-center gap-2">

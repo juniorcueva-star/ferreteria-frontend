@@ -57,7 +57,7 @@ export function IndicadorConexion() {
       aria-live="polite"
     >
       <span className="size-2 rounded-full bg-current" aria-hidden />
-      {estado === 'conectado' && <Cloud className="size-4 text-marca" aria-hidden />}
+      {estado === 'conectado' && <Cloud className="size-4 text-marca-texto" aria-hidden />}
       {estado === 'sin-conexion' && <CloudOff className="size-4" aria-hidden />}
       {estado === 'verificando' && <LoaderCircle className="size-4 animate-spin" aria-hidden />}
       <span className="hidden sm:inline">{textos[estado]}</span>

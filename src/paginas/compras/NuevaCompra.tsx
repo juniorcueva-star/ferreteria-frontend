@@ -110,7 +110,7 @@ export default function NuevaCompra() {
 
   return (
     <div>
-      <Link to="/compras" className="mb-3 inline-flex items-center gap-1 text-sm text-tinta-suave hover:text-marca">
+      <Link to="/compras" className="mb-3 inline-flex items-center gap-1 text-sm text-tinta-suave hover:text-marca-texto">
         <ArrowLeft className="size-4" /> Volver a compras
       </Link>
       <EncabezadoPagina

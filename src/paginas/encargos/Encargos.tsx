@@ -128,7 +128,7 @@ export default function Encargos() {
                 <Td>
                   <Insignia tono={TONO[e.estado]}>{NOMBRE[e.estado]}</Insignia>
                   {e.ventaId !== null && (
-                    <Link to={`/ventas/${e.ventaId}`} className="mt-1 block font-mono text-xs text-marca underline">
+                    <Link to={`/ventas/${e.ventaId}`} className="mt-1 block font-mono text-xs text-marca-texto underline">
                       {e.ventaNumero}
                     </Link>
                   )}

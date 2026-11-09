@@ -73,7 +73,7 @@ export function BarraLateral({ onNavegar }: { onNavegar?: () => void }) {
           aria-label="Opciones de usuario"
           className="flex w-full items-center gap-3 rounded-lg px-2 py-1.5 text-left hover:bg-lateral-hover"
         >
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-marca text-sm font-bold text-white">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-marca text-sm font-bold text-sobre-marca">
             {iniciales(usuario.nombres)}
           </span>
           <span className="min-w-0 leading-tight">

@@ -59,7 +59,7 @@ export default function NuevoTraslado() {
 
   return (
     <div>
-      <Link to="/movimientos?tab=traslados" className="mb-3 inline-flex items-center gap-1 text-sm text-tinta-suave hover:text-marca">
+      <Link to="/movimientos?tab=traslados" className="mb-3 inline-flex items-center gap-1 text-sm text-tinta-suave hover:text-marca-texto">
         <ArrowLeft className="size-4" /> Volver a traslados
       </Link>
       <EncabezadoPagina

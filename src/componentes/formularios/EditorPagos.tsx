@@ -58,7 +58,7 @@ export function EditorPagos({
                     const actual = Number(pago.monto.replace(',', '.')) || 0
                     actualizar(i, { monto: (actual + restanteCentimos / 100).toFixed(2) })
                   }}
-                  className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded-md bg-beige px-1.5 py-1 text-[11px] font-semibold text-tinta-suave hover:bg-marca-claro hover:text-marca"
+                  className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded-md bg-beige px-1.5 py-1 text-[11px] font-semibold text-tinta-suave hover:bg-marca-claro hover:text-marca-texto"
                   title="Completar el monto que falta"
                 >
                   Exacto

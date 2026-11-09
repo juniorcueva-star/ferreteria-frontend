@@ -196,7 +196,7 @@ export default function PuntoVenta() {
           <p className="text-sm text-tinta">
             <strong>Debes abrir tu caja antes de vender.</strong> Las ventas se registran en la caja abierta de tu usuario.
           </p>
-          <Link to="/caja" className="inline-flex h-9 items-center gap-2 rounded-lg bg-marca px-4 text-sm font-semibold text-white hover:bg-marca-oscuro">
+          <Link to="/caja" className="inline-flex h-9 items-center gap-2 rounded-lg bg-marca px-4 text-sm font-semibold text-sobre-marca hover:bg-marca-oscuro">
             <Wallet className="size-4" /> Abrir caja
           </Link>
         </div>
@@ -274,7 +274,7 @@ export default function PuntoVenta() {
                         aria-label={`Agregar ${producto.nombre} ${p.nombre}`}
                       >
                         <span className="text-xs font-semibold text-tinta">{p.nombre}</span>
-                        <span className="font-mono text-xs text-marca-oscuro">{soles(p.precioVenta)}</span>
+                        <span className="font-mono text-xs text-marca-texto">{soles(p.precioVenta)}</span>
                       </button>
                     ))}
                   </div>
@@ -289,7 +289,7 @@ export default function PuntoVenta() {
           <Tarjeta>
             <TituloTarjeta
               titulo={`Carrito (${carrito.length})`}
-              icono={<ShoppingCart className="size-4 text-marca" />}
+              icono={<ShoppingCart className="size-4 text-marca-texto" />}
               accion={
                 carrito.length > 0 && (
                   <Boton variante="fantasma" tamano="sm" onClick={() => setCarrito([])}>
@@ -371,7 +371,7 @@ export default function PuntoVenta() {
                         {sinStock && productoDe(linea.productoId) && (
                           <button
                             type="button"
-                            className="font-semibold text-marca underline"
+                            className="font-semibold text-marca-texto underline"
                             onClick={() => {
                               const producto = productoDe(linea.productoId)
                               if (producto) setEncargo({ producto, presentacionId: linea.presentacionId })
@@ -412,7 +412,7 @@ export default function PuntoVenta() {
           </Tarjeta>
 
           <Tarjeta>
-            <TituloTarjeta titulo="Cobro" icono={<Wallet className="size-4 text-marca" />} />
+            <TituloTarjeta titulo="Cobro" icono={<Wallet className="size-4 text-marca-texto" />} />
             <div className="flex flex-col gap-4 p-5">
               <div role="radiogroup" aria-label="Condición de la venta" className="grid grid-cols-2 gap-1 rounded-xl bg-beige p-1">
                 {(['CONTADO', 'CREDITO'] as const).map((c) => (

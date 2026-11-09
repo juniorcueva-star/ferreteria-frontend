@@ -107,7 +107,7 @@ export default function Cotizaciones() {
             {cotizaciones.data?.contenido.map((c) => (
               <Tr key={c.id} data-testid={`cotizacion-${c.codigo}`}>
                 <Td>
-                  <Link to={`/cotizaciones/${c.id}`} className="font-mono font-semibold text-marca underline">
+                  <Link to={`/cotizaciones/${c.id}`} className="font-mono font-semibold text-marca-texto underline">
                     {c.codigo}
                   </Link>
                   <p className="text-xs text-tinta-tenue">

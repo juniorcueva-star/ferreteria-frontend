@@ -3,34 +3,37 @@
 @import 'tailwindcss';
 
 /*
- * Tema de TodoPernos. Los colores salen de la imagen de referencia (ver docs/DISENO.md).
+ * Tema de TodoPernos: amarillo, negro y blanco (pedido del dueno; ver docs/DISENO.md).
  * Tailwind genera las clases a partir de estas variables: bg-marca, text-tinta-suave, bg-crema, etc.
  */
 @theme {
   --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', ui-monospace, 'Cascadia Mono', monospace;
 
-  /* Naranja principal */
-  --color-marca: #f5761a;
-  --color-marca-oscuro: #dc6410;
-  --color-marca-claro: #fdebdc;
+  /* Amarillo principal (pedido del dueno: amarillo, negro y blanco) */
+  --color-marca: #f5c400;
+  --color-marca-oscuro: #dcb000;
+  --color-marca-claro: #fff6cc;
+  /* Texto sobre amarillo y texto de acento sobre blanco: el amarillo no se lee sobre blanco */
+  --color-sobre-marca: #111111;
+  --color-marca-texto: #111111;
 
   /* Barra lateral */
-  --color-lateral: #141414;
-  --color-lateral-activo: #2a1e15;
+  --color-lateral: #111111;
+  --color-lateral-activo: #2b2507;
   --color-lateral-hover: #1f1f1f;
-  --color-lateral-texto: #b5b0a8;
+  --color-lateral-texto: #c4c4c4;
 
   /* Fondos y bordes */
-  --color-crema: #faf7f2;
-  --color-beige: #f0ede8;
-  --color-borde: #e8e3db;
-  --color-borde-fuerte: #d6cfc4;
+  --color-crema: #fafafa;
+  --color-beige: #f0f0f0;
+  --color-borde: #e5e5e5;
+  --color-borde-fuerte: #d4d4d4;
 
   /* Texto */
-  --color-tinta: #1c1917;
-  --color-tinta-suave: #6b645c;
-  --color-tinta-tenue: #9a938a;
+  --color-tinta: #111111;
+  --color-tinta-suave: #525252;
+  --color-tinta-tenue: #737373;
 
   /* Estados */
   --color-exito: #16a34a;
@@ -66,7 +69,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-marca);
+    outline: 2px solid var(--color-tinta);
     outline-offset: 2px;
   }
 }

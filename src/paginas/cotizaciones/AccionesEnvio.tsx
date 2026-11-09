@@ -126,7 +126,7 @@ export function ModalWhatsapp({ cotizacion, onCerrar }: { cotizacion: Cotizacion
         {enlace && (
           <div className="rounded-xl bg-crema p-4 text-sm">
             <p className="mb-2 whitespace-pre-line text-tinta-suave">{enlace.mensaje}</p>
-            <a href={enlace.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-marca underline" data-testid="enlace-whatsapp">
+            <a href={enlace.url} target="_blank" rel="noopener noreferrer" className="font-semibold text-marca-texto underline" data-testid="enlace-whatsapp">
               Abrir el chat de WhatsApp
             </a>
           </div>

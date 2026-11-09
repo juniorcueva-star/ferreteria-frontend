@@ -46,7 +46,7 @@ export function Login() {
     <div className="flex min-h-full">
       <div className="hidden w-[42%] flex-col justify-between bg-lateral p-10 text-white lg:flex">
         <div className="flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-marca">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-marca text-sobre-marca">
             <Layers className="size-6" strokeWidth={2.4} aria-hidden />
           </div>
           <div>
@@ -56,7 +56,7 @@ export function Login() {
         </div>
         <div>
           <p className="text-3xl leading-snug font-bold">
-            Ventas, inventario y caja de tus tiendas <span className="text-marca">en un solo lugar.</span>
+            Ventas, inventario y caja de tus tiendas <span className="text-marca-texto">en un solo lugar.</span>
           </p>
           <p className="mt-4 max-w-md text-sm text-lateral-texto">
             Controla el stock de cada tienda y del almacén, registra compras, traslados y ventas al contado o al fiado.
@@ -68,7 +68,7 @@ export function Login() {
       <div className="flex flex-1 items-center justify-center p-6">
         <form onSubmit={handleSubmit(enviar)} className="w-full max-w-sm" noValidate>
           <div className="mb-8 flex items-center gap-3 lg:hidden">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-marca text-white">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-marca text-sobre-marca">
               <Layers className="size-5" aria-hidden />
             </div>
             <p className="text-lg font-bold">TodoPernos</p>

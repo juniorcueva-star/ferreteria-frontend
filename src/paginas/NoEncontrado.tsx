@@ -9,7 +9,7 @@ export default function NoEncontrado() {
         titulo="Página no encontrada"
         descripcion="La dirección que abriste no existe."
         accion={
-          <Link to="/" className="text-sm font-semibold text-marca hover:underline">
+          <Link to="/" className="text-sm font-semibold text-marca-texto hover:underline">
             Volver al inicio
           </Link>
         }

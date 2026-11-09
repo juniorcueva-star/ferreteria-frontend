@@ -89,7 +89,7 @@ function Ficha({ c }: { c: CotizacionResponse }) {
 
   return (
     <div>
-      <Link to="/cotizaciones" className="mb-3 inline-flex items-center gap-1 text-sm text-tinta-suave hover:text-marca">
+      <Link to="/cotizaciones" className="mb-3 inline-flex items-center gap-1 text-sm text-tinta-suave hover:text-marca-texto">
         <ArrowLeft className="size-4" /> Volver a cotizaciones
       </Link>
       <EncabezadoPagina
@@ -146,7 +146,7 @@ function Ficha({ c }: { c: CotizacionResponse }) {
       {c.ventaId !== null && (
         <p className="mb-5 rounded-xl border border-exito/20 bg-exito-claro px-4 py-3 text-sm" role="status" data-testid="venta-de-cotizacion">
           Convertida en la nota de venta{' '}
-          <Link to={`/ventas/${c.ventaId}`} className="font-mono font-semibold text-marca underline">
+          <Link to={`/ventas/${c.ventaId}`} className="font-mono font-semibold text-marca-texto underline">
             {c.ventaNumero}
           </Link>
           .

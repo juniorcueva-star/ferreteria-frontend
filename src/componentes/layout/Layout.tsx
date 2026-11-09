@@ -6,6 +6,7 @@ import { Modal } from '@/componentes/ui/Modal'
 import { BarraLateral } from './BarraLateral'
 import { BusquedaGlobal } from './BusquedaGlobal'
 import { CampanaAlertas } from './CampanaAlertas'
+import { ControlZoom } from './ControlZoom'
 import { IndicadorConexion } from './IndicadorConexion'
 import { SelectorUbicacion } from './SelectorUbicacion'
 
@@ -60,6 +61,7 @@ export function Layout() {
             <BusquedaGlobal />
           </div>
           <div className="ml-auto flex items-center gap-2">
+            <ControlZoom />
             <IndicadorConexion />
             <CampanaAlertas />
           </div>

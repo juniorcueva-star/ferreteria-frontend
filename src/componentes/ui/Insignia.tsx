@@ -9,7 +9,7 @@ const TONOS: Record<TonoInsignia, string> = {
   peligro: 'bg-peligro-claro text-peligro ring-peligro/20',
   info: 'bg-info-claro text-info ring-info/20',
   neutro: 'bg-beige text-tinta-suave ring-borde',
-  marca: 'bg-marca-claro text-marca-oscuro ring-marca/20',
+  marca: 'bg-marca-claro text-marca-texto ring-marca/20',
 }
 
 /** Pastilla de estado (Activo, Anulada, En camino...). */

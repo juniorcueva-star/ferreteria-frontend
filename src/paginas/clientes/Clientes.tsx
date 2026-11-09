@@ -177,7 +177,7 @@ function Deudas() {
     <>
       <Tarjeta className="mb-5 flex flex-wrap items-center gap-4 p-5">
         {clienteId && (
-          <span className="inline-flex items-center gap-2 rounded-full bg-marca-claro px-3 py-1 text-sm text-marca-oscuro">
+          <span className="inline-flex items-center gap-2 rounded-full bg-marca-claro px-3 py-1 text-sm text-marca-texto">
             Cliente: <strong>{clienteNombre}</strong>
             <button type="button" className="font-bold" aria-label="Quitar filtro de cliente" onClick={() => setParametros({ tab: 'deudas' })}>
               ×
@@ -228,7 +228,7 @@ function Deudas() {
               return (
                 <Tr key={v.id} data-testid={`deuda-${v.numeroDocumento}`}>
                   <Td>
-                    <Link to={`/ventas/${v.id}`} className="font-mono font-semibold text-tinta hover:text-marca">
+                    <Link to={`/ventas/${v.id}`} className="font-mono font-semibold text-tinta hover:text-marca-texto">
                       {v.numeroDocumento}
                     </Link>
                   </Td>

@@ -8,8 +8,9 @@ Los colores están definidos una sola vez en `src/index.css` (bloque `@theme` de
 
 | Token (clase Tailwind) | Valor | Uso |
 |------------------------|-------|-----|
-| `marca` | `#F5761A` | Naranja principal: botones principales, logo, ítem activo del menú, foco de los campos |
-| `marca-oscuro` | `#DC6410` | Hover de los botones naranjas |
+| `marca` | `#F5C400` | Amarillo principal (pedido del dueño: amarillo, negro y blanco): botones principales, logo, ítem activo del menú |
+| `marca-oscuro` | `#DCB000` | Hover de los botones amarillos |
+| `sobre-marca` / `marca-texto` | `#111111` | Texto negro sobre amarillo y enlaces sobre blanco (el amarillo no se lee sobre blanco) |
 | `marca-claro` | `#FDEBDC` | Fondos suaves resaltados (presentación principal) |
 | `lateral` | `#141414` | Fondo de la barra lateral |
 | `lateral-activo` | `#2A1E15` | Fondo del ítem activo del menú (texto e icono en `marca`) |
@@ -101,3 +102,9 @@ Diferencias que se mantienen a propósito:
 - Se agregó la columna **Acciones** (editar, activar o desactivar) para el ADMIN, y el código del producto junto a la
   unidad base.
 - Se agregó **Caja** al menú (lo pide el enunciado).
+
+## Tamaño de letra (lupa)
+
+En la barra superior hay una lupa con − y + (`ControlZoom`) para agrandar o achicar la letra de todo el sistema
+(90 % a 160 %); el número vuelve al 100 %. Se cambia el tamaño de letra base de la página y, como Tailwind mide en
+`rem`, crecen letras, botones y espacios. El nivel se recuerda en el navegador. Pedido del dueño para lectura cómoda.

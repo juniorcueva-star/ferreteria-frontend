@@ -51,7 +51,7 @@ export function TablaDeudores({
               <Td>
                 <Link
                   to={`/clientes?tab=deudas&clienteId=${d.clienteId}&cliente=${encodeURIComponent(d.clienteNombre)}`}
-                  className="font-semibold text-tinta hover:text-marca"
+                  className="font-semibold text-tinta hover:text-marca-texto"
                 >
                   {d.clienteNombre}
                 </Link>

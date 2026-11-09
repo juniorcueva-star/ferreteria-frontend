@@ -11,7 +11,7 @@ export function SinPermiso() {
         titulo="No tienes permiso para ver esta sección"
         descripcion="Tu rol no tiene acceso a este módulo. Si lo necesitas, pídeselo al administrador."
         accion={
-          <Link to="/" className="text-sm font-semibold text-marca hover:underline">
+          <Link to="/" className="text-sm font-semibold text-marca-texto hover:underline">
             Volver al inicio
           </Link>
         }

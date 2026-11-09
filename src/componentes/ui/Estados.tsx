@@ -6,7 +6,7 @@ import { cn } from './cn'
 export function Cargando({ texto = 'Cargando…', className }: { texto?: string; className?: string }) {
   return (
     <div className={cn('flex items-center justify-center gap-2 py-6 text-sm text-tinta-suave', className)} role="status">
-      <LoaderCircle className="size-5 animate-spin text-marca" aria-hidden />
+      <LoaderCircle className="size-5 animate-spin text-marca-texto" aria-hidden />
       {texto}
     </div>
   )

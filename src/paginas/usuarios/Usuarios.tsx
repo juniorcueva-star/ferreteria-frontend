@@ -87,7 +87,7 @@ export default function Usuarios() {
               <Tr key={u.id}>
                 <Td>
                   <div className="flex items-center gap-3">
-                    <span className="flex size-9 items-center justify-center rounded-full bg-marca-claro text-sm font-bold text-marca-oscuro">{iniciales(u.nombres)}</span>
+                    <span className="flex size-9 items-center justify-center rounded-full bg-marca-claro text-sm font-bold text-marca-texto">{iniciales(u.nombres)}</span>
                     <div>
                       <p className="font-semibold">{u.nombres}</p>
                       <p className="font-mono text-xs text-tinta-tenue">{u.username}</p>

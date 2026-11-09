@@ -361,7 +361,7 @@ function Formulario({
 
   return (
     <form onSubmit={handleSubmit(guardar)} noValidate>
-      <Link to="/productos" className="mb-3 inline-flex items-center gap-1 text-sm text-tinta-suave hover:text-marca">
+      <Link to="/productos" className="mb-3 inline-flex items-center gap-1 text-sm text-tinta-suave hover:text-marca-texto">
         <ArrowLeft className="size-4" /> Volver a productos
       </Link>
       <EncabezadoPagina

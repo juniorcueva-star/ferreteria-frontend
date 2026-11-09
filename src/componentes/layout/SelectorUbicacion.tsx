@@ -7,7 +7,7 @@ export function SelectorUbicacion() {
   const Icono = seleccionada?.tipo === 'ALMACEN' ? Warehouse : Store
   return (
     <label className="flex h-10 items-center gap-2 rounded-xl border border-borde bg-crema/60 pr-1 pl-3 focus-within:border-marca">
-      <Icono className="size-4 shrink-0 text-marca" aria-hidden />
+      <Icono className="size-4 shrink-0 text-marca-texto" aria-hidden />
       <span className="sr-only">Ubicación de trabajo</span>
       <select
         value={seleccionadaId ?? ''}

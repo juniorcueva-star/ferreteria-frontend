@@ -63,7 +63,7 @@ export function ModalAbono({ venta, onCerrar }: { venta: VentaResponse; onCerrar
       <div className="flex flex-col gap-4">
         {caja.data === null && (
           <p className="rounded-xl bg-alerta-claro px-4 py-3 text-sm" role="alert">
-            Debes <Link to="/caja" className="font-semibold text-marca underline">abrir tu caja</Link> para cobrar el abono.
+            Debes <Link to="/caja" className="font-semibold text-marca-texto underline">abrir tu caja</Link> para cobrar el abono.
           </p>
         )}
         {otraTienda && (

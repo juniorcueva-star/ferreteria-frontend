@@ -93,7 +93,7 @@ function AbrirCaja() {
 
   return (
     <Tarjeta className="mb-6 max-w-xl">
-      <TituloTarjeta titulo="Abrir caja" icono={<LockOpen className="size-4 text-marca" />} />
+      <TituloTarjeta titulo="Abrir caja" icono={<LockOpen className="size-4 text-marca-texto" />} />
       <form onSubmit={handleSubmit((d) => abrir.mutate(d))} className="flex flex-col gap-4 p-5" noValidate>
         <p className="text-sm text-tinta-suave">No tienes una caja abierta. Ingresa el sencillo con el que empiezas el turno.</p>
         {abrir.error && <MensajeError error={abrir.error} />}

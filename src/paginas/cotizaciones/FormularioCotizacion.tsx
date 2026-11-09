@@ -142,7 +142,7 @@ function Editor({ inicial }: { inicial: DatosIniciales }) {
 
   return (
     <div>
-      <Link to={volver} className="mb-3 inline-flex items-center gap-1 text-sm text-tinta-suave hover:text-marca">
+      <Link to={volver} className="mb-3 inline-flex items-center gap-1 text-sm text-tinta-suave hover:text-marca-texto">
         <ArrowLeft className="size-4" /> {editando ? `Volver a ${editando.codigo}` : 'Volver a cotizaciones'}
       </Link>
       <EncabezadoPagina
