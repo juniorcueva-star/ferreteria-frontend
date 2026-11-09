@@ -1,12 +1,14 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
+import { FileSpreadsheet } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
-import { reportesApi } from '@/api/reportes'
+import { excelApi, reportesApi } from '@/api/reportes'
 import type { OrdenProductos } from '@/api/tipos'
 import { fiadoApi } from '@/api/ventas'
 import { useUsuario } from '@/auth/contexto'
 import { tienePermiso, type Permiso } from '@/auth/permisos'
 import { TablaDeudores } from '@/componentes/tablas/TablaDeudores'
+import { Boton } from '@/componentes/ui/Boton'
 import { CampoSelector, CampoTexto } from '@/componentes/ui/Campo'
 import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/ui/Estados'
@@ -15,6 +17,7 @@ import { Pestanas } from '@/componentes/ui/Pestanas'
 import { FilaCompleta, Tabla, Tbody, Td, Th, Thead, Tr } from '@/componentes/ui/Tabla'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { useUbicacion } from '@/contexto/ubicacion'
+import { guardarArchivo } from '@/hooks/useDocumentoPdf'
 import { cantidad, cantidadConUnidad, fecha, hoyLima, inicioMesLima, nombreUnidad, soles } from '@/logica/formato'
 
 type IdReporte = 'ventas' | 'productos' | 'traslados' | 'compras' | 'stock' | 'deudores'
@@ -43,7 +46,11 @@ export default function Reportes() {
 
   return (
     <div>
-      <EncabezadoPagina titulo="Reportes" subtitulo={`${activo.etiqueta} · ${seleccionada?.nombre ?? 'Todas las ubicaciones'}`} />
+      <EncabezadoPagina
+        titulo="Reportes"
+        subtitulo={`${activo.etiqueta} · ${seleccionada?.nombre ?? 'Todas las ubicaciones'}`}
+        acciones={<ExportarExcel desde={desde} hasta={hasta} rangoValido={Boolean(desde && hasta) && !rangoInvalido} />}
+      />
       <Pestanas<IdReporte>
         pestanas={disponibles.map((r) => ({ id: r.id, etiqueta: r.etiqueta }))}
         activa={activo.id}
@@ -84,6 +91,51 @@ export default function Reportes() {
 interface Rango {
   desde: string
   hasta: string
+}
+
+type Exportable = 'ventas' | 'stock' | 'deudores'
+
+/**
+ * Botones para descargar en Excel las ventas (rango de fechas elegido), el stock y los deudores de la ubicacion
+ * elegida arriba. Cada rol solo ve los que puede exportar.
+ */
+function ExportarExcel({ desde, hasta, rangoValido }: { desde: string; hasta: string; rangoValido: boolean }) {
+  const usuario = useUsuario()
+  const { seleccionadaId } = useUbicacion()
+  const ubicacionId = seleccionadaId ?? undefined
+  const exportar = useMutation({
+    mutationFn: async (que: Exportable) => {
+      if (que === 'ventas') return { archivo: await excelApi.ventas({ desde, hasta, ubicacionId }), nombre: `ventas-${desde}-a-${hasta}.xlsx` }
+      if (que === 'stock') return { archivo: await excelApi.stock({ ubicacionId }), nombre: `stock-${hoyLima()}.xlsx` }
+      return { archivo: await excelApi.deudores({ ubicacionId }), nombre: `deudores-${hoyLima()}.xlsx` }
+    },
+    onSuccess: ({ archivo, nombre }) => guardarArchivo(archivo, nombre),
+  })
+  const botones: { id: Exportable; etiqueta: string; permiso: Permiso }[] = [
+    { id: 'ventas', etiqueta: 'Ventas', permiso: 'reportes.ventas' },
+    { id: 'stock', etiqueta: 'Stock', permiso: 'reportes.stockBajo' },
+    { id: 'deudores', etiqueta: 'Deudores', permiso: 'reportes.deudores' },
+  ]
+  return (
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Exportar a Excel">
+      {botones
+        .filter((b) => tienePermiso(usuario.rol, b.permiso))
+        .map((b) => (
+          <Boton
+            key={b.id}
+            variante="secundario"
+            icono={<FileSpreadsheet className="size-4 text-exito" />}
+            cargando={exportar.isPending && exportar.variables === b.id}
+            disabled={b.id === 'ventas' && !rangoValido}
+            onClick={() => exportar.mutate(b.id)}
+            title={b.id === 'ventas' ? 'Ventas del rango de fechas elegido' : undefined}
+          >
+            {b.etiqueta} en Excel
+          </Boton>
+        ))}
+      {exportar.error && <MensajeError error={exportar.error} className="w-full" />}
+    </div>
+  )
 }
 
 function Estados({ columnas, consulta }: { columnas: number; consulta: { isPending: boolean; isError: boolean; error: unknown; data?: { contenido: unknown[] } } }) {

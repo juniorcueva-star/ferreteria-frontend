@@ -36,3 +36,13 @@ export const reportesApi = {
   stockBajo: (filtro: Paginacion & { ubicacionId?: number }) =>
     http.get<PaginaResponse<StockResponse>>('/reportes/stock-bajo', { params: filtro }).then((r) => r.data),
 }
+
+/** Reportes en Excel (.xlsx): llegan como archivo (Blob) porque se piden con el token de sesion. */
+export const excelApi = {
+  ventas: (filtro: RangoFechas & { ubicacionId?: number }) =>
+    http.get<Blob>('/reportes/excel/ventas', { params: filtro, responseType: 'blob' }).then((r) => r.data),
+  stock: (filtro: { ubicacionId?: number; soloBajo?: boolean }) =>
+    http.get<Blob>('/reportes/excel/stock', { params: filtro, responseType: 'blob' }).then((r) => r.data),
+  deudores: (filtro: { ubicacionId?: number }) =>
+    http.get<Blob>('/reportes/excel/deudores', { params: filtro, responseType: 'blob' }).then((r) => r.data),
+}

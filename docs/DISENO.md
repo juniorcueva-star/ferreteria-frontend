@@ -119,3 +119,8 @@ En el carrito del punto de venta, si lo que queda en la tienda después de la ve
 Logo de Bonifaz & Cia (`public/logo.png`, también favicon) con el lema "Pernos y afines" en el menú lateral y en el
 inicio de sesión. La cotización y la nota de venta (Descargar PDF / Imprimir en su detalle y al registrar la venta)
 salen con el mismo logo, los datos de la empresa y sus cuentas bancarias (Configuración → Empresas).
+
+## Exportar a Excel
+
+En **Reportes**, arriba a la derecha: "Ventas en Excel" (rango de fechas elegido), "Stock en Excel" y
+"Deudores en Excel", según el rol. Usan la ubicación elegida en la barra superior.
