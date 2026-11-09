@@ -32,6 +32,8 @@ export const PERMISOS = {
   'caja.usar': ADMIN_VENDEDOR,
   // Encargos de productos sin stock (se entregan como una venta)
   'encargos.ver': ADMIN_VENDEDOR,
+  // Cotizaciones: PDF, correo, WhatsApp y conversion en nota de venta
+  'cotizaciones.ver': ADMIN_VENDEDOR,
   'ventas.ver': ADMIN_VENDEDOR,
   'ventas.registrar': ADMIN_VENDEDOR,
   'ventas.anular': ADMIN_VENDEDOR,

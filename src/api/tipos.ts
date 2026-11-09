@@ -706,3 +706,74 @@ export interface EncargoResponse {
   createdAt: string
   updatedAt: string
 }
+
+// ---------- Cotizaciones ----------
+
+export type EstadoCotizacion = 'BORRADOR' | 'EMITIDA' | 'ANULADA'
+
+export interface CotizacionDetalleRequest {
+  presentacionId: number
+  cantidad: number
+  /** null = precio de lista */
+  precioUnitario: number | null
+  descuento: number | null
+}
+
+export interface CotizacionRequest {
+  /** Tienda; el VENDEDOR la omite (su tienda), el ADMIN la indica */
+  ubicacionId: number | null
+  clienteId: number | null
+  diasValidez: number | null
+  observacion: string | null
+  detalles: CotizacionDetalleRequest[]
+}
+
+export interface CotizacionDetalleResponse {
+  productoId: number
+  presentacionId: number
+  descripcion: string
+  cantidad: number
+  factor: number
+  cantidadBase: number
+  precioUnitario: number
+  descuento: number
+  subtotal: number
+  decimales: number
+}
+
+export interface CotizacionResponse {
+  id: number
+  codigo: string
+  ubicacionId: number
+  ubicacionNombre: string
+  empresaRuc: string
+  empresaRazonSocial: string
+  clienteId: number | null
+  clienteNombre: string | null
+  clienteDocumento: string | null
+  usuario: string
+  fecha: string
+  fechaValidez: string
+  estado: EstadoCotizacion
+  observacion: string | null
+  subtotal: number
+  igv: number
+  descuento: number
+  total: number
+  ventaId: number | null
+  ventaNumero: string | null
+  detalles: CotizacionDetalleResponse[]
+}
+
+export interface ConversionCotizacionRequest {
+  condicion: CondicionVenta
+  /** null = cliente de la cotizacion */
+  clienteId: number | null
+  fechaVencimiento: string | null
+  pagos: PagoRequest[]
+}
+
+export interface EnlaceWhatsappResponse {
+  url: string
+  mensaje: string
+}
