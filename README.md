@@ -46,6 +46,21 @@ La URL del backend se cambia con `VITE_API_URL` (ver `.env.example`). Guía comp
 
 Las contraseñas son las de `ADMIN_PASSWORD` y `DEMO_PASSWORD` del `.env` del backend.
 
+## Segunda fase (rama `catalogo-busqueda`)
+
+- **Productos:** búsqueda por palabras y abreviaturas, tipo/acabado/medida, decimales por presentación, acciones en lote,
+  precio sugerido e historial de precios (solo ADMIN).
+- **Disponibilidad:** stock de las dos tiendas y del almacén en una sola pantalla (solo lectura).
+- **Encargos:** productos sin stock con precio propio; se entregan desde la pantalla Encargos y recién ahí descuentan stock.
+- **Cotizaciones:** crear y editar (borrador), emitir, descargar PDF, imprimir, enviar por correo o WhatsApp y convertir
+  en nota de venta (necesita la caja abierta en la tienda de la cotización).
+
+## Despliegue en la nube
+
+Se publica en **Vercel** (o Netlify): comando `npm run build`, carpeta `dist` y variable `VITE_API_URL` con la URL
+pública del backend. En el backend, `CORS_ORIGENES` debe incluir la URL del frontend. Guía completa en
+`ferreteria-backend/docs/PENDIENTES.md`.
+
 ## Estructura
 
 ```
