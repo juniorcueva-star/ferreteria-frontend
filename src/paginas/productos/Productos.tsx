@@ -1,10 +1,10 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Pencil, Plus, Power } from 'lucide-react'
+import { CheckSquare, Pencil, Plus, Power, Tags, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { productosApi } from '@/api/catalogo'
 import { inventarioApi } from '@/api/inventario'
-import type { ProductoResponse, StockResponse } from '@/api/tipos'
+import type { AccionLote, ProductoResponse, StockResponse } from '@/api/tipos'
 import { usePermiso } from '@/auth/contexto'
 import { Boton } from '@/componentes/ui/Boton'
 import { Buscador } from '@/componentes/ui/Buscador'
@@ -15,6 +15,7 @@ import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/ui/Estados'
 import { FotoProducto } from '@/componentes/ui/FotoProducto'
 import { Insignia } from '@/componentes/ui/Insignia'
+import { Modal } from '@/componentes/ui/Modal'
 import { useAvisos } from '@/componentes/ui/notificaciones'
 import { Paginacion } from '@/componentes/ui/Paginacion'
 import { FilaCompleta, Tabla, Tbody, Td, Th, Thead, Tr } from '@/componentes/ui/Tabla'
@@ -24,8 +25,20 @@ import { useCategorias } from '@/hooks/useCatalogos'
 import { useRetraso } from '@/hooks/useRetraso'
 import { cantidad, nombreUnidad, soles } from '@/logica/formato'
 import { presentacionPrincipal, presentacionesActivas, textoChip } from '@/logica/presentaciones'
+import { alternar, alternarPagina, textoAccionLote, todosSeleccionados } from '@/logica/seleccion'
 
 type FiltroEstado = '' | 'activos' | 'inactivos'
+
+interface AccionPendiente {
+  accion: AccionLote
+  categoriaId: number | null
+  categoriaNombre?: string
+}
+
+/** Tipo, acabado y medida en una linea (Ej: "Hexagonal · Zincado · 1/4 X 1/2"). */
+function atributos(p: ProductoResponse): string {
+  return [p.tipo, p.acabado, p.medida].filter((x) => x && x.trim() !== '').join(' · ')
+}
 
 /** Listado de productos como la imagen de referencia: foto, presentaciones y stock por ubicacion. */
 export default function Productos() {
@@ -41,6 +54,9 @@ export default function Productos() {
   const [pagina, setPagina] = useState(0)
   const busqueda = useRetraso(texto.trim())
   const categorias = useCategorias(false)
+  const [seleccion, setSeleccion] = useState<Set<number>>(() => new Set())
+  const [categoriaLote, setCategoriaLote] = useState('')
+  const [pendiente, setPendiente] = useState<AccionPendiente | null>(null)
 
   const filtro = {
     texto: busqueda,
@@ -90,8 +106,30 @@ export default function Productos() {
     onError: (e) => avisar(e.message, 'error'),
   })
 
+  const accionLote = useMutation({
+    mutationFn: (a: AccionPendiente) =>
+      productosApi.accionLote({ productoIds: [...seleccion], accion: a.accion, categoriaId: a.categoriaId }),
+    onSuccess: (r) => {
+      avisar(r.productosActualizados === 1 ? '1 producto actualizado' : `${r.productosActualizados} productos actualizados`)
+      setSeleccion(new Set())
+      setPendiente(null)
+      void queryClient.invalidateQueries({ queryKey: ['productos'] })
+    },
+  })
+
+  const pedirAccion = (accion: AccionLote) => {
+    accionLote.reset()
+    if (accion !== 'ASIGNAR_CATEGORIA') {
+      setPendiente({ accion, categoriaId: null })
+      return
+    }
+    const categoria = categorias.data?.find((c) => c.id === Number(categoriaLote))
+    if (categoria) setPendiente({ accion, categoriaId: categoria.id, categoriaNombre: categoria.nombre })
+  }
+
   const ubicacionesStock = [...visibles].sort((a, b) => Number(a.tipo === 'ALMACEN') - Number(b.tipo === 'ALMACEN'))
-  const columnas = 5 + ubicacionesStock.length + (puedeEditar ? 1 : 0)
+  const columnas = 5 + ubicacionesStock.length + (puedeEditar ? 2 : 0)
+  const idsPagina = ids
   const total = productos.data?.totalElementos
 
   return (
@@ -115,7 +153,7 @@ export default function Productos() {
             setTexto(v)
             setPagina(0)
           }}
-          placeholder="Buscar producto…"
+          placeholder="Buscar por palabras: per hex zin…"
           aria-label="Buscar producto"
         />
         <Selector
@@ -149,10 +187,82 @@ export default function Productos() {
         </Selector>
       </Tarjeta>
 
+      {puedeEditar && seleccion.size > 0 && (
+        <Tarjeta className="mb-3 flex flex-wrap items-center gap-3 border-marca/40 bg-marca-claro/30 px-5 py-3" data-testid="barra-lote">
+          <span className="inline-flex items-center gap-2 text-sm font-semibold text-tinta">
+            <CheckSquare className="size-4 text-marca" aria-hidden />
+            {seleccion.size === 1 ? '1 producto seleccionado' : `${seleccion.size} productos seleccionados`}
+          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <Selector
+              value={categoriaLote}
+              onChange={(e) => setCategoriaLote(e.target.value)}
+              aria-label="Categoría a asignar"
+              className="h-9 w-48 rounded-lg"
+            >
+              <option value="">Elegir categoría…</option>
+              {categorias.data
+                ?.filter((c) => c.activo)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nombre}
+                  </option>
+                ))}
+            </Selector>
+            <Boton tamano="sm" variante="secundario" icono={<Tags className="size-4" />} disabled={!categoriaLote} onClick={() => pedirAccion('ASIGNAR_CATEGORIA')}>
+              Asignar categoría
+            </Boton>
+            <Boton tamano="sm" variante="secundario" onClick={() => pedirAccion('ACTIVAR')}>
+              Activar
+            </Boton>
+            <Boton tamano="sm" variante="secundario" onClick={() => pedirAccion('DESACTIVAR')}>
+              Desactivar
+            </Boton>
+            <Boton tamano="sm" variante="fantasma" icono={<X className="size-4" />} onClick={() => setSeleccion(new Set())}>
+              Quitar selección
+            </Boton>
+          </div>
+        </Tarjeta>
+      )}
+
+      <Modal
+        abierto={pendiente !== null}
+        onCerrar={() => setPendiente(null)}
+        titulo="Confirmar acción en lote"
+        pie={
+          <>
+            <Boton variante="secundario" onClick={() => setPendiente(null)}>
+              Cancelar
+            </Boton>
+            <Boton
+              variante={pendiente?.accion === 'DESACTIVAR' ? 'peligro' : 'primario'}
+              cargando={accionLote.isPending}
+              onClick={() => pendiente && accionLote.mutate(pendiente)}
+            >
+              Confirmar
+            </Boton>
+          </>
+        }
+      >
+        {pendiente && <p className="text-sm text-tinta">{textoAccionLote(pendiente.accion, seleccion.size, pendiente.categoriaNombre)}</p>}
+        {accionLote.isError && <MensajeError error={accionLote.error} className="mt-3" />}
+      </Modal>
+
       <Tarjeta className="overflow-hidden">
         <Tabla>
           <Thead>
             <tr>
+              {puedeEditar && (
+                <Th className="w-10">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-marca"
+                    aria-label="Seleccionar todos los productos de la página"
+                    checked={todosSeleccionados(seleccion, idsPagina)}
+                    onChange={() => setSeleccion((s) => alternarPagina(s, idsPagina))}
+                  />
+                </Th>
+              )}
               <Th>Producto</Th>
               <Th>Categoría</Th>
               <Th>Presentaciones</Th>
@@ -189,13 +299,26 @@ export default function Productos() {
               const principal = presentacionPrincipal(p)
               return (
                 <Tr key={p.id} className={cn(!p.activo && 'opacity-60')} data-testid={`producto-${p.codigo}`}>
+                  {puedeEditar && (
+                    <Td>
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-marca"
+                        aria-label={`Seleccionar ${p.nombre}`}
+                        checked={seleccion.has(p.id)}
+                        onChange={() => setSeleccion((s) => alternar(s, p.id))}
+                      />
+                    </Td>
+                  )}
                   <Td className="min-w-56">
                     <div className="flex items-center gap-3">
                       <FotoProducto url={p.imagenUrl} nombre={p.nombre} />
                       <div className="min-w-0">
                         <p className="font-semibold text-tinta">{p.nombre}</p>
+                        {atributos(p) && <p className="text-xs text-tinta-suave">{atributos(p)}</p>}
                         <p className="text-xs text-tinta-tenue">
                           {nombreUnidad(p.unidadBase)} · <span className="font-mono">{p.codigo}</span>
+                          {p.marca && p.marca !== 'VARIADO' && <> · {p.marca}</>}
                         </p>
                       </div>
                     </div>
