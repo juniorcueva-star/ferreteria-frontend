@@ -16,7 +16,7 @@ describe('zoom de la letra', () => {
   })
 
   it('aplica el tamano a la pagina y lo recuerda', () => {
-    expect(leerZoom()).toBe(100)
+    expect(leerZoom()).toBe(110)
     aplicarZoom(125)
     expect(document.documentElement.style.fontSize).toBe('125%')
     expect(leerZoom()).toBe(125)

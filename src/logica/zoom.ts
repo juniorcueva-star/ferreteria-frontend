@@ -4,6 +4,8 @@
  */
 export const NIVELES_ZOOM = [90, 100, 110, 125, 140, 160] as const
 export const ZOOM_NORMAL = 100
+/** Tamano con el que arranca el sistema (pedido del dueno: letra mas grande por defecto) */
+export const ZOOM_INICIAL = 110
 export const ZOOM_MINIMO = 90
 export const ZOOM_MAXIMO = 160
 const CLAVE = 'ferreteria.zoom'
@@ -20,13 +22,13 @@ export function alejar(nivel: number): number {
   return [...NIVELES_ZOOM].reverse().find((n) => n < nivel) ?? ZOOM_MINIMO
 }
 
-/** Nivel guardado en este navegador (100 si no hay o si el navegador no deja leerlo). */
+/** Nivel guardado en este navegador (110 si no hay o si el navegador no deja leerlo). */
 export function leerZoom(): number {
   try {
     const guardado = Number(localStorage.getItem(CLAVE))
-    return guardado > 0 ? ajustarNivel(guardado) : ZOOM_NORMAL
+    return guardado > 0 ? ajustarNivel(guardado) : ZOOM_INICIAL
   } catch {
-    return ZOOM_NORMAL
+    return ZOOM_INICIAL
   }
 }
 

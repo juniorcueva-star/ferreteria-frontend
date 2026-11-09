@@ -1,11 +1,11 @@
 import { ZoomIn, ZoomOut } from 'lucide-react'
 import { useState } from 'react'
-import { acercar, alejar, aplicarZoom, leerZoom, ZOOM_MAXIMO, ZOOM_MINIMO, ZOOM_NORMAL } from '@/logica/zoom'
+import { acercar, alejar, aplicarZoom, leerZoom, ZOOM_INICIAL, ZOOM_MAXIMO, ZOOM_MINIMO } from '@/logica/zoom'
 
 const claseBoton =
   'flex size-9 items-center justify-center rounded-lg text-tinta hover:bg-marca hover:text-sobre-marca disabled:opacity-40 disabled:hover:bg-transparent'
 
-/** Lupa con menos y mas para agrandar o achicar la letra de todo el sistema. El numero vuelve al 100 %. */
+/** Lupa con menos y mas para agrandar o achicar la letra de todo el sistema. El numero vuelve al tamano recomendado (110 %). */
 export function ControlZoom() {
   const [nivel, setNivel] = useState(leerZoom)
   const cambiar = (nuevo: number) => {
@@ -21,9 +21,9 @@ export function ControlZoom() {
       <button
         type="button"
         className="min-w-12 px-1 font-mono text-xs font-semibold text-tinta hover:underline"
-        onClick={() => cambiar(ZOOM_NORMAL)}
-        aria-label={`Letra al ${nivel} %. Volver al tamaño normal`}
-        title="Volver al tamaño normal"
+        onClick={() => cambiar(ZOOM_INICIAL)}
+        aria-label={`Letra al ${nivel} %. Volver al tamaño recomendado`}
+        title="Volver al tamaño recomendado (110 %)"
       >
         {nivel} %
       </button>

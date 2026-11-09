@@ -34,6 +34,7 @@ import { esDecimalValido } from '@/logica/decimales'
 import { cantidad, cantidadConUnidad, hoyLima, soles, solesDeCentimos, sufijoUnidad } from '@/logica/formato'
 import { aPagosRequest, calcularCobro, type PagoFormulario } from '@/logica/pagos'
 import { otrasUbicacionesConStock } from '@/logica/disponibilidad'
+import { avisoStockBajo } from '@/logica/stockBajo'
 import { presentacionesActivas } from '@/logica/presentaciones'
 
 const PAGO_INICIAL: PagoFormulario = { metodoPago: 'EFECTIVO', monto: '', numeroOperacion: '' }
@@ -93,6 +94,10 @@ export default function PuntoVenta() {
   }
   const productoDe = (productoId: number) => productos.data?.contenido.find((p) => p.id === productoId)
   const stockDe = (productoId: number) => stock.data?.contenido.find((s) => s.productoId === productoId)?.cantidad ?? 0
+  const minimoDe = (productoId: number) => stock.data?.contenido.find((s) => s.productoId === productoId)?.stockMinimo ?? 0
+  // Unidad base que se lleva de cada producto, sumando sus lineas (Ej: 1 docena + 3 unidades = 15)
+  const baseEnCarrito = (productoId: number) =>
+    carrito.reduce((suma, l, i) => suma + (l.productoId === productoId ? (totales.lineas[i]?.cantidadBase ?? 0) : 0), 0)
 
   const totales = calcularTotales(carrito)
   const cobro = calcularCobro(totales.totalCentimos, condicion, pagos, metodos.data ?? [])
@@ -307,6 +312,7 @@ export default function PuntoVenta() {
                   const decimales = linea.decimales > 0
                   const disponible = stockDe(linea.productoId)
                   const sinStock = tiendaId !== undefined && calculo !== undefined && calculo.cantidadBase > disponible
+                  const aviso = tiendaId !== undefined && stock.data ? avisoStockBajo(disponible, baseEnCarrito(linea.productoId), minimoDe(linea.productoId)) : null
                   const paso = (delta: number) => {
                     const actual = esDecimalValido(linea.cantidad, 3) ? Number(linea.cantidad.replace(',', '.')) : 0
                     const nuevo = Math.max(decimales ? 0.5 : 1, actual + delta)
@@ -362,6 +368,13 @@ export default function PuntoVenta() {
                       <div className="flex flex-wrap gap-x-3 text-xs">
                         {calculo && calculo.cantidadBase > 0 && linea.factor !== 1 && (
                           <span className="font-mono text-tinta-tenue">= {cantidadConUnidad(calculo.cantidadBase, linea.unidadBase)}</span>
+                        )}
+                        {aviso && !sinStock && (
+                          <span className="font-semibold text-alerta" role="status">
+                            {aviso.agotado
+                              ? 'Se agota con esta venta: pida reposición'
+                              : `Quedarán ${cantidad(aviso.restante)} ${sufijoUnidad(linea.unidadBase)}: pida reposición`}
+                          </span>
                         )}
                         {sinStock && (
                           <span className="text-peligro">

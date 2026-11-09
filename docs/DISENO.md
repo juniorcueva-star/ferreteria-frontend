@@ -106,5 +106,10 @@ Diferencias que se mantienen a propósito:
 ## Tamaño de letra (lupa)
 
 En la barra superior hay una lupa con − y + (`ControlZoom`) para agrandar o achicar la letra de todo el sistema
-(90 % a 160 %); el número vuelve al 100 %. Se cambia el tamaño de letra base de la página y, como Tailwind mide en
+(90 % a 160 %). Arranca en **110 %** (pedido del dueño) y el número vuelve a ese tamaño. Se cambia el tamaño de letra base de la página y, como Tailwind mide en
 `rem`, crecen letras, botones y espacios. El nivel se recuerda en el navegador. Pedido del dueño para lectura cómoda.
+
+## Aviso de stock bajo al vender
+
+En el carrito del punto de venta, si lo que queda en la tienda después de la venta llega al stock mínimo, se muestra
+"Quedarán N u: pida reposición" (o "Se agota con esta venta"). Suma las líneas del mismo producto (unidad y docena).
