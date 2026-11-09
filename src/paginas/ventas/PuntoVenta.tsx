@@ -32,7 +32,7 @@ import {
 import { esDecimalValido } from '@/logica/decimales'
 import { cantidad, cantidadConUnidad, hoyLima, soles, solesDeCentimos, sufijoUnidad } from '@/logica/formato'
 import { aPagosRequest, calcularCobro, type PagoFormulario } from '@/logica/pagos'
-import { permiteDecimales, presentacionesActivas } from '@/logica/presentaciones'
+import { presentacionesActivas } from '@/logica/presentaciones'
 
 const PAGO_INICIAL: PagoFormulario = { metodoPago: 'EFECTIVO', monto: '', numeroOperacion: '' }
 
@@ -95,6 +95,7 @@ export default function PuntoVenta() {
         presentacionId: p.id,
         presentacionNombre: p.nombre,
         factor: p.factor,
+        decimales: p.decimales,
         precio: p.precioVenta,
       }),
     )
@@ -268,7 +269,7 @@ export default function PuntoVenta() {
               <ul className="divide-y divide-borde">
                 {carrito.map((linea, i) => {
                   const calculo = totales.lineas[i]
-                  const decimales = permiteDecimales(linea.unidadBase)
+                  const decimales = linea.decimales > 0
                   const disponible = stockDe(linea.productoId)
                   const sinStock = tiendaId !== undefined && calculo !== undefined && calculo.cantidadBase > disponible
                   const paso = (delta: number) => {

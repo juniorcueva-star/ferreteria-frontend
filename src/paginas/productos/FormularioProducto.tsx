@@ -16,10 +16,10 @@ import { Cargando, MensajeError } from '@/componentes/ui/Estados'
 import { FotoProducto } from '@/componentes/ui/FotoProducto'
 import { useAvisos } from '@/componentes/ui/notificaciones'
 import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
-import { useCategorias } from '@/hooks/useCatalogos'
+import { useCategorias, useUnidadesMedida } from '@/hooks/useCatalogos'
 import { esDecimalValido, textoANumero } from '@/logica/decimales'
 import { cantidadAgrupada, nombreUnidad, soles, sufijoUnidad } from '@/logica/formato'
-import { factorValido } from '@/logica/presentaciones'
+import { factorValido, textoDecimales, valoresDeUnidad } from '@/logica/presentaciones'
 import { monto, nulo, textoObligatorio, textoOpcional } from '@/logica/validaciones'
 
 const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp']
@@ -32,6 +32,7 @@ const esquemaPresentacion = z.object({
   precioVenta: monto,
   codigoBarras: textoOpcional(50),
   activo: z.boolean(),
+  decimales: z.enum(['0', '1', '2', '3']),
 })
 
 const esquema = z
@@ -40,6 +41,9 @@ const esquema = z
     nombre: textoObligatorio(150),
     descripcion: textoOpcional(300),
     marca: textoOpcional(80),
+    tipo: textoOpcional(60),
+    acabado: textoOpcional(60),
+    medida: textoOpcional(60),
     categoriaId: z.string().min(1, 'Elija una categoría'),
     unidadBase: z.enum(['UNIDAD', 'KILO', 'METRO']),
     activo: z.boolean(),
@@ -73,7 +77,15 @@ const esquema = z
 type DatosProducto = z.infer<typeof esquema>
 type DatosPresentacion = DatosProducto['presentaciones'][number]
 
-const PRESENTACION_NUEVA: DatosPresentacion = { nombre: '', factor: '1', precioVenta: '', codigoBarras: '', activo: true }
+const MARCA_POR_DEFECTO = 'VARIADO'
+
+function presentacionNueva(unidad: UnidadBase): DatosPresentacion {
+  return { nombre: '', factor: '1', precioVenta: '', codigoBarras: '', activo: true, decimales: unidad === 'UNIDAD' ? '0' : '3' }
+}
+
+function aDecimales(valor: number): DatosPresentacion['decimales'] {
+  return valor === 1 ? '1' : valor === 2 ? '2' : valor === 3 ? '3' : '0'
+}
 
 function aFormulario(p: ProductoResponse): DatosProducto {
   const presentaciones = [...p.presentaciones].sort((a, b) => a.factor - b.factor)
@@ -82,6 +94,9 @@ function aFormulario(p: ProductoResponse): DatosProducto {
     nombre: p.nombre,
     descripcion: p.descripcion ?? '',
     marca: p.marca ?? '',
+    tipo: p.tipo ?? '',
+    acabado: p.acabado ?? '',
+    medida: p.medida ?? '',
     categoriaId: String(p.categoriaId),
     unidadBase: p.unidadBase,
     activo: p.activo,
@@ -93,6 +108,7 @@ function aFormulario(p: ProductoResponse): DatosProducto {
       precioVenta: x.precioVenta.toFixed(2),
       codigoBarras: x.codigoBarras ?? '',
       activo: x.activo,
+      decimales: aDecimales(x.decimales),
     })),
   }
 }
@@ -105,6 +121,7 @@ function aPresentacionRequest(p: DatosPresentacion, principal: boolean | null): 
     codigoBarras: nulo(p.codigoBarras),
     principal,
     activo: p.activo,
+    decimales: Number(p.decimales),
   }
 }
 
@@ -114,7 +131,8 @@ function cambio(original: PresentacionResponse, nueva: DatosPresentacion): boole
     original.factor !== textoANumero(nueva.factor) ||
     original.precioVenta !== textoANumero(nueva.precioVenta) ||
     (original.codigoBarras ?? '') !== nueva.codigoBarras.trim() ||
-    original.activo !== nueva.activo
+    original.activo !== nueva.activo ||
+    original.decimales !== Number(nueva.decimales)
   )
 }
 
@@ -162,18 +180,32 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
           codigo: '',
           nombre: '',
           descripcion: '',
-          marca: '',
+          marca: MARCA_POR_DEFECTO,
+          tipo: '',
+          acabado: '',
+          medida: '',
           categoriaId: '',
           unidadBase: 'UNIDAD',
           activo: true,
           principal: 0,
-          presentaciones: [{ ...PRESENTACION_NUEVA, nombre: 'Unidad' }],
+          presentaciones: [{ ...presentacionNueva('UNIDAD'), nombre: 'Unidad' }],
         },
   })
   const { fields, append, remove } = useFieldArray({ control, name: 'presentaciones' })
   const unidad = useWatch({ control, name: 'unidadBase' }) as UnidadBase
   const principal = useWatch({ control, name: 'principal' })
   const presentaciones = useWatch({ control, name: 'presentaciones' })
+  const unidadesMedida = useUnidadesMedida()
+
+  /** Copia a la presentacion los valores propuestos por la unidad elegida (siguen siendo editables). */
+  const aplicarUnidad = (indice: number, codigo: string) => {
+    const elegida = unidadesMedida.data?.find((u) => u.codigo === codigo)
+    if (!elegida) return
+    const valores = valoresDeUnidad(elegida)
+    setValue(`presentaciones.${indice}.nombre`, valores.nombre, { shouldValidate: true })
+    if (valores.factor !== null) setValue(`presentaciones.${indice}.factor`, valores.factor, { shouldValidate: true })
+    setValue(`presentaciones.${indice}.decimales`, aDecimales(Number(valores.decimales)))
+  }
 
   const elegirArchivo = (lista: FileList | null) => {
     const elegido = lista?.[0]
@@ -201,7 +233,10 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
           codigo: datos.codigo.trim(),
           nombre: datos.nombre.trim(),
           descripcion: nulo(datos.descripcion),
-          marca: nulo(datos.marca),
+          marca: nulo(datos.marca) ?? MARCA_POR_DEFECTO,
+          tipo: nulo(datos.tipo),
+          acabado: nulo(datos.acabado),
+          medida: nulo(datos.medida),
           categoriaId: Number(datos.categoriaId),
           unidadBase: datos.unidadBase,
           presentaciones: datos.presentaciones.map((p, i) => aPresentacionRequest(p, i === datos.principal)),
@@ -211,7 +246,10 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
           codigo: datos.codigo.trim(),
           nombre: datos.nombre.trim(),
           descripcion: nulo(datos.descripcion),
-          marca: nulo(datos.marca),
+          marca: nulo(datos.marca) ?? MARCA_POR_DEFECTO,
+          tipo: nulo(datos.tipo),
+          acabado: nulo(datos.acabado),
+          medida: nulo(datos.medida),
           categoriaId: Number(datos.categoriaId),
           activo: datos.activo,
         })
@@ -283,7 +321,12 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
                 </option>
               ))}
             </CampoSelector>
-            <CampoTexto etiqueta="Marca" error={errors.marca?.message} {...register('marca')} />
+            <CampoTexto etiqueta="Marca" ayuda="Si se deja vacía queda como VARIADO." error={errors.marca?.message} {...register('marca')} />
+            <div className="grid gap-4 sm:col-span-2 sm:grid-cols-3">
+              <CampoTexto etiqueta="Tipo" placeholder="Ej: Hexagonal" error={errors.tipo?.message} {...register('tipo')} />
+              <CampoTexto etiqueta="Acabado" placeholder="Ej: Zincado" error={errors.acabado?.message} {...register('acabado')} />
+              <CampoTexto etiqueta="Medida" placeholder="Ej: 1/4 X 1/2" error={errors.medida?.message} {...register('medida')} />
+            </div>
             <CampoSelector
               etiqueta="Unidad base"
               obligatorio
@@ -353,7 +396,7 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
         <TituloTarjeta
           titulo="Presentaciones"
           accion={
-            <Boton variante="secundario" tamano="sm" icono={<Plus className="size-4" />} onClick={() => append({ ...PRESENTACION_NUEVA, factor: '' })} disabled={fields.length >= 20}>
+            <Boton variante="secundario" tamano="sm" icono={<Plus className="size-4" />} onClick={() => append({ ...presentacionNueva(unidad), factor: '' })} disabled={fields.length >= 20}>
               Agregar presentación
             </Boton>
           }
@@ -378,6 +421,21 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
                   className={cn('grid gap-3 rounded-xl border p-4 md:grid-cols-12', principal === i ? 'border-marca/50 bg-marca-claro/30' : 'border-borde')}
                   data-testid={`presentacion-${i}`}
                 >
+                  <CampoSelector
+                    className="md:col-span-3"
+                    etiqueta="Unidad de medida"
+                    value=""
+                    onChange={(e) => aplicarUnidad(i, e.target.value)}
+                    ayuda="Propone nombre, factor y decimales"
+                  >
+                    <option value="">Elegir unidad…</option>
+                    {unidadesMedida.data?.map((u) => (
+                      <option key={u.id} value={u.codigo}>
+                        {u.nombre}
+                        {u.factorSugerido !== null ? ` (${cantidadAgrupada(u.factorSugerido)})` : ''}
+                      </option>
+                    ))}
+                  </CampoSelector>
                   <CampoTexto className="md:col-span-3" etiqueta="Nombre" placeholder="Ej: Caja x100" error={errorFila?.nombre?.message} {...register(`presentaciones.${i}.nombre`)} />
                   <CampoTexto
                     className="md:col-span-2"
@@ -394,8 +452,14 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
                     error={errorFila?.precioVenta?.message}
                     {...register(`presentaciones.${i}.precioVenta`)}
                   />
+                  <CampoSelector className="md:col-span-2" etiqueta="Decimales" ayuda={textoDecimales(Number(actual?.decimales ?? 0))} {...register(`presentaciones.${i}.decimales`)}>
+                    <option value="0">0 (enteros)</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                  </CampoSelector>
                   <CampoTexto className="md:col-span-3" etiqueta="Código de barras" error={errorFila?.codigoBarras?.message} {...register(`presentaciones.${i}.codigoBarras`)} />
-                  <div className="flex items-end justify-end gap-1 md:col-span-2">
+                  <div className="flex items-end justify-end gap-1 md:col-span-1">
                     {actual?.id === undefined ? (
                       <Boton
                         variante="fantasma"

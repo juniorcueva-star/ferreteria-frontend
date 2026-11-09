@@ -1,6 +1,5 @@
 import type { UnidadBase, VentaDetalleRequest } from '@/api/tipos'
-import { aCentimos, deMilesimas, dividirRedondeando, escalar } from './decimales'
-import { permiteDecimales } from './presentaciones'
+import { aCentimos, deMilesimas, dividirRedondeando, esDecimalValido, escalar } from './decimales'
 
 /**
  * Carrito del punto de venta. Replica el calculo del backend (VentaService) para mostrar el total
@@ -19,6 +18,8 @@ export interface LineaCarrito {
   presentacionId: number
   presentacionNombre: string
   factor: number
+  /** Decimales que acepta la presentacion (0 = solo enteros) */
+  decimales: number
   /** Precio de la presentacion con IGV */
   precio: number
   /** Cantidad en la presentacion elegida, tal como la escribe el vendedor */
@@ -49,10 +50,9 @@ export interface TotalesCarrito {
 
 const MAXIMA_CANTIDAD = 1_000_000
 
-function cantidadEsValida(texto: string, unidad: UnidadBase): boolean {
+function cantidadEsValida(texto: string, decimales: number): boolean {
   const limpio = texto.trim().replace(',', '.')
-  const patron = permiteDecimales(unidad) ? /^\d+(\.\d{1,3})?$/ : /^\d+$/
-  if (!patron.test(limpio)) {
+  if (!esDecimalValido(limpio, decimales)) {
     return false
   }
   const valor = Number(limpio)
@@ -65,7 +65,7 @@ function descuentoEsValido(texto: string): boolean {
 }
 
 export function calcularLinea(linea: LineaCarrito): CalculoLinea {
-  const cantidadValida = cantidadEsValida(linea.cantidad, linea.unidadBase)
+  const cantidadValida = cantidadEsValida(linea.cantidad, linea.decimales)
   const descuentoValido = descuentoEsValido(linea.descuento)
   if (!cantidadValida) {
     return {
@@ -75,9 +75,10 @@ export function calcularLinea(linea: LineaCarrito): CalculoLinea {
       importeCentimos: 0,
       descuentoCentimos: 0,
       subtotalCentimos: 0,
-      error: permiteDecimales(linea.unidadBase)
-        ? 'Cantidad inválida (mayor que 0, hasta 3 decimales)'
-        : 'Cantidad inválida (número entero mayor que 0)',
+      error:
+        linea.decimales > 0
+          ? `Cantidad inválida (mayor que 0, hasta ${linea.decimales} decimales)`
+          : `${linea.presentacionNombre} no acepta fracciones: escriba un número entero mayor que 0`,
     }
   }
   const cantidadMilesimas = escalar(linea.cantidad, 3)
@@ -140,7 +141,7 @@ export function agregarAlCarrito(
     if (l.presentacionId !== nueva.presentacionId) {
       return l
     }
-    const actual = cantidadEsValida(l.cantidad, l.unidadBase) ? escalar(l.cantidad, 3) : 0n
+    const actual = cantidadEsValida(l.cantidad, l.decimales) ? escalar(l.cantidad, 3) : 0n
     const suma = actual + escalar(cantidad, 3)
     return { ...l, cantidad: String(deMilesimas(Number(suma))) }
   })

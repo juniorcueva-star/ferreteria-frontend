@@ -165,6 +165,8 @@ export interface PresentacionResponse {
   codigoBarras: string | null
   principal: boolean
   activo: boolean
+  /** Decimales que acepta al vender o comprar (0 = solo enteros) */
+  decimales: number
 }
 
 export interface PresentacionRequest {
@@ -175,6 +177,31 @@ export interface PresentacionRequest {
   /** null = no cambia (al editar) */
   principal: boolean | null
   activo: boolean | null
+  /** null = 0 para productos por UNIDAD y 3 para KILO o METRO (al crear) o no cambia (al editar) */
+  decimales: number | null
+}
+
+/** Unidad de venta para armar presentaciones (docena, ciento, kilo...). */
+export interface UnidadMedidaResponse {
+  id: number
+  codigo: string
+  nombre: string
+  decimales: number
+  /** Unidades base que suele contener; null si depende del producto (caja, rollo...) */
+  factorSugerido: number | null
+}
+
+export type AccionLote = 'ASIGNAR_CATEGORIA' | 'ACTIVAR' | 'DESACTIVAR'
+
+export interface AccionLoteRequest {
+  productoIds: number[]
+  accion: AccionLote
+  categoriaId: number | null
+}
+
+export interface AccionLoteResponse {
+  accion: AccionLote
+  productosActualizados: number
 }
 
 export interface ProductoResponse {
@@ -189,6 +216,9 @@ export interface ProductoResponse {
   imagenUrl: string | null
   activo: boolean
   presentaciones: PresentacionResponse[]
+  tipo: string | null
+  acabado: string | null
+  medida: string | null
 }
 
 export interface ProductoCrearRequest {
@@ -199,6 +229,9 @@ export interface ProductoCrearRequest {
   categoriaId: number
   unidadBase: UnidadBase
   presentaciones: PresentacionRequest[]
+  tipo: string | null
+  acabado: string | null
+  medida: string | null
 }
 
 export interface ProductoActualizarRequest {
@@ -208,6 +241,9 @@ export interface ProductoActualizarRequest {
   marca: string | null
   categoriaId: number
   activo: boolean
+  tipo: string | null
+  acabado: string | null
+  medida: string | null
 }
 
 // ---------- Inventario y traslados ----------

@@ -4,6 +4,8 @@ import {
   cantidadBase,
   factorValido,
   permiteDecimales,
+  textoDecimales,
+  valoresDeUnidad,
   presentacionPrincipal,
   presentacionesActivas,
   presentacionesDisponibles,
@@ -21,11 +23,14 @@ const clavo: ProductoResponse = {
   unidadBase: 'UNIDAD',
   imagenUrl: null,
   activo: true,
+  tipo: null,
+  acabado: null,
+  medida: null,
   presentaciones: [
-    { id: 3, nombre: 'Millar', factor: 1000, precioVenta: 70, codigoBarras: null, principal: false, activo: true },
-    { id: 1, nombre: 'Unidad', factor: 1, precioVenta: 0.1, codigoBarras: null, principal: true, activo: true },
-    { id: 2, nombre: 'Ciento', factor: 100, precioVenta: 8, codigoBarras: null, principal: false, activo: true },
-    { id: 4, nombre: 'Caja vieja', factor: 500, precioVenta: 30, codigoBarras: null, principal: false, activo: false },
+    { id: 3, nombre: 'Millar', factor: 1000, precioVenta: 70, codigoBarras: null, principal: false, activo: true, decimales: 0 },
+    { id: 1, nombre: 'Unidad', factor: 1, precioVenta: 0.1, codigoBarras: null, principal: true, activo: true, decimales: 0 },
+    { id: 2, nombre: 'Ciento', factor: 100, precioVenta: 8, codigoBarras: null, principal: false, activo: true, decimales: 0 },
+    { id: 4, nombre: 'Caja vieja', factor: 500, precioVenta: 30, codigoBarras: null, principal: false, activo: false, decimales: 0 },
   ],
 }
 
@@ -65,5 +70,21 @@ describe('conversion de presentaciones a unidad base', () => {
   it('ordena las presentaciones activas con la principal primero', () => {
     expect(presentacionPrincipal(clavo)?.nombre).toBe('Unidad')
     expect(presentacionesActivas(clavo).map((p) => p.nombre)).toEqual(['Unidad', 'Ciento', 'Millar'])
+  })
+})
+
+describe('unidades de medida en presentaciones', () => {
+  it('la unidad propone nombre, factor y decimales', () => {
+    expect(valoresDeUnidad({ id: 2, codigo: 'DOCENA', nombre: 'Docena', decimales: 0, factorSugerido: 12 })).toEqual({
+      nombre: 'Docena',
+      factor: '12',
+      decimales: '0',
+    })
+    expect(valoresDeUnidad({ id: 9, codigo: 'CAJA', nombre: 'Caja', decimales: 0, factorSugerido: null }).factor).toBeNull()
+  })
+
+  it('explica cuantos decimales acepta', () => {
+    expect(textoDecimales(0)).toBe('Solo cantidades enteras')
+    expect(textoDecimales(3)).toBe('Acepta hasta 3 decimales')
   })
 })

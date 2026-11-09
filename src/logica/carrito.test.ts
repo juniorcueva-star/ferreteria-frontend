@@ -17,6 +17,7 @@ const ciento = {
   presentacionId: 2,
   presentacionNombre: 'Ciento',
   factor: 100,
+  decimales: 0,
   precio: 8,
 }
 const cableMetro = {
@@ -26,6 +27,7 @@ const cableMetro = {
   presentacionId: 22,
   presentacionNombre: 'Metro',
   factor: 1,
+  decimales: 3,
   precio: 1.3,
 }
 const medioKilo = {
@@ -35,6 +37,7 @@ const medioKilo = {
   presentacionId: 18,
   presentacionNombre: 'Medio kilo',
   factor: 0.5,
+  decimales: 3,
   precio: 3.8,
 }
 

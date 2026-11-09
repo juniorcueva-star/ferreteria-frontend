@@ -154,9 +154,9 @@ test('VENDEDOR registra una venta al contado con vuelto', async ({ page }) => {
   // 1 caja x S/ 30.00 + 15 unidades x S/ 0.35 = S/ 35.25
   await expect(page.getByTestId('total-venta')).toHaveText('S/ 35.25')
 
-  // Las unidades no aceptan decimales
+  // La presentacion Unidad no acepta decimales (regla de decimales por presentacion)
   await page.getByLabel(`Cantidad de ${NOMBRE} Unidad`).fill('1.5')
-  await expect(page.getByText('Cantidad inválida (número entero mayor que 0)')).toBeVisible()
+  await expect(page.getByText('Unidad no acepta fracciones: escriba un número entero mayor que 0')).toBeVisible()
   await page.getByLabel(`Cantidad de ${NOMBRE} Unidad`).fill('15')
 
   await page.getByLabel('Monto del pago 1').fill('50')

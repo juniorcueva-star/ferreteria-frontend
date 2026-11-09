@@ -1,4 +1,4 @@
-import type { PresentacionResponse, ProductoResponse, UnidadBase } from '@/api/tipos'
+import type { PresentacionResponse, ProductoResponse, UnidadBase, UnidadMedidaResponse } from '@/api/tipos'
 import { aMilesimas, deMilesimas, dividirRedondeando, escalar } from './decimales'
 import { cantidadAgrupada, sufijoUnidad } from './formato'
 
@@ -57,4 +57,19 @@ export function presentacionesActivas(producto: ProductoResponse): PresentacionR
   return producto.presentaciones
     .filter((p) => p.activo)
     .sort((a, b) => Number(b.principal) - Number(a.principal) || a.factor - b.factor)
+}
+
+/** Valores que propone una unidad de medida al armar una presentacion (el usuario puede cambiarlos). */
+export function valoresDeUnidad(unidad: UnidadMedidaResponse): { nombre: string; factor: string | null; decimales: string } {
+  return {
+    nombre: unidad.nombre,
+    factor: unidad.factorSugerido === null ? null : String(unidad.factorSugerido),
+    decimales: String(unidad.decimales),
+  }
+}
+
+/** Texto para explicar que cantidades acepta una presentacion. */
+export function textoDecimales(decimales: number): string {
+  if (decimales === 0) return 'Solo cantidades enteras'
+  return decimales === 1 ? 'Acepta 1 decimal' : `Acepta hasta ${decimales} decimales`
 }

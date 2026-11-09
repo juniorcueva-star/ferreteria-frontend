@@ -79,6 +79,9 @@ export default function Productos() {
         marca: p.marca,
         categoriaId: p.categoriaId,
         activo: !p.activo,
+        tipo: p.tipo,
+        acabado: p.acabado,
+        medida: p.medida,
       }),
     onSuccess: (p) => {
       avisar(p.activo ? `${p.nombre} activado` : `${p.nombre} desactivado`)

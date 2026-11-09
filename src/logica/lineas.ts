@@ -1,6 +1,6 @@
 import type { LineaProductoRequest, ProductoResponse } from '@/api/tipos'
 import { esDecimalValido, textoANumero } from './decimales'
-import { cantidadBase, permiteDecimales } from './presentaciones'
+import { cantidadBase, decimalesCantidad } from './presentaciones'
 
 /**
  * Lineas de producto para ajustes, inventario inicial y traslados. Si no se elige presentacion,
@@ -25,10 +25,12 @@ export function factorDeLinea(linea: LineaEditable): number {
   return linea.producto.presentaciones.find((p) => p.id === Number(linea.presentacionId))?.factor ?? 1
 }
 
-/** Decimales permitidos: en unidad base de un producto por UNIDAD, enteros; en otros casos hasta 3. */
+/** Decimales permitidos: los de la presentacion elegida; sin presentacion, los de la unidad base. */
 export function decimalesDeLinea(linea: LineaEditable): number {
   if (!linea.producto) return 3
-  return permiteDecimales(linea.producto.unidadBase) ? 3 : 0
+  const presentacion = linea.producto.presentaciones.find((p) => p.id === Number(linea.presentacionId))
+  if (linea.presentacionId !== '' && presentacion) return presentacion.decimales
+  return decimalesCantidad(linea.producto.unidadBase)
 }
 
 /** Cantidad en unidad base de la linea (0 si aun no es valida). */
@@ -51,7 +53,10 @@ export function validarLineas(lineas: LineaEditable[]): { porLinea: Map<number, 
     }
     const decimales = decimalesDeLinea(linea)
     if (!esDecimalValido(linea.cantidad, decimales) || textoANumero(linea.cantidad) <= 0) {
-      porLinea.set(linea.clave, decimales === 0 ? 'Cantidad entera mayor que 0' : 'Cantidad mayor que 0 (hasta 3 decimales)')
+      porLinea.set(
+        linea.clave,
+        decimales === 0 ? 'Cantidad entera mayor que 0 (no acepta fracciones)' : `Cantidad mayor que 0 (hasta ${decimales} decimales)`,
+      )
     } else if (textoANumero(linea.cantidad) > 1_000_000) {
       porLinea.set(linea.clave, 'Máximo 1 000 000')
     }

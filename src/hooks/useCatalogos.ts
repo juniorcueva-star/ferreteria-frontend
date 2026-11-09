@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { categoriasApi } from '@/api/catalogo'
+import { categoriasApi, unidadesMedidaApi } from '@/api/catalogo'
 import { proveedoresApi } from '@/api/compras'
 import { empresasApi } from '@/api/organizacion'
 
@@ -10,6 +10,15 @@ export function useCategorias(soloActivas = true) {
     queryFn: () => categoriasApi.listar({ activo: soloActivas ? true : undefined, size: 100, sort: 'nombre' }),
     staleTime: 5 * 60_000,
     select: (pagina) => pagina.contenido,
+  })
+}
+
+/** Unidades de venta (docena, ciento, kilo...) para armar presentaciones. */
+export function useUnidadesMedida() {
+  return useQuery({
+    queryKey: ['unidades-medida'],
+    queryFn: unidadesMedidaApi.listar,
+    staleTime: 30 * 60_000,
   })
 }
 

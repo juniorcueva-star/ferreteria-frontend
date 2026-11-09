@@ -1,5 +1,7 @@
 import { http } from './cliente'
 import type {
+  AccionLoteRequest,
+  AccionLoteResponse,
   CategoriaRequest,
   CategoriaResponse,
   PaginaResponse,
@@ -9,6 +11,7 @@ import type {
   ProductoCrearRequest,
   ProductoResponse,
   UnidadBase,
+  UnidadMedidaResponse,
 } from './tipos'
 
 export interface FiltroCategorias extends Paginacion {
@@ -50,4 +53,11 @@ export const productosApi = {
     return http.post<ProductoResponse>(`/productos/${id}/imagen`, formulario).then((r) => r.data)
   },
   eliminarImagen: (id: number) => http.delete<ProductoResponse>(`/productos/${id}/imagen`).then((r) => r.data),
+  /** Asignar categoria, activar o desactivar varios productos a la vez (todo o nada). */
+  accionLote: (datos: AccionLoteRequest) =>
+    http.post<AccionLoteResponse>('/productos/acciones-lote', datos).then((r) => r.data),
+}
+
+export const unidadesMedidaApi = {
+  listar: () => http.get<UnidadMedidaResponse[]>('/unidades-medida').then((r) => r.data),
 }
