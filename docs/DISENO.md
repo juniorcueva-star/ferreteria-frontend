@@ -113,3 +113,9 @@ En la barra superior hay una lupa con − y + (`ControlZoom`) para agrandar o ac
 
 En el carrito del punto de venta, si lo que queda en la tienda después de la venta llega al stock mínimo, se muestra
 "Quedarán N u: pida reposición" (o "Se agota con esta venta"). Suma las líneas del mismo producto (unidad y docena).
+
+## Marca del negocio
+
+Logo de Bonifaz & Cia (`public/logo.png`, también favicon) con el lema "Pernos y afines" en el menú lateral y en el
+inicio de sesión. La cotización y la nota de venta (Descargar PDF / Imprimir en su detalle y al registrar la venta)
+salen con el mismo logo, los datos de la empresa y sus cuentas bancarias (Configuración → Empresas).

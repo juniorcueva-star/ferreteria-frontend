@@ -13,24 +13,13 @@ import { Insignia } from '@/componentes/ui/Insignia'
 import { useAvisos } from '@/componentes/ui/notificaciones'
 import { Tabla, Tbody, Td, Th, Thead, Tr } from '@/componentes/ui/Tabla'
 import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
+import { useDocumentoPdf } from '@/hooks/useDocumentoPdf'
 import { NOMBRE_COTIZACION, TONO_COTIZACION } from '@/logica/cotizaciones'
 import { cantidad, fecha, hoyLima, soles } from '@/logica/formato'
 import { ModalCorreo, ModalWhatsapp } from './AccionesEnvio'
 import { ModalConversion } from './ModalConversion'
 
 type Dialogo = 'correo' | 'whatsapp' | 'convertir' | 'anular' | null
-
-/** Descarga el PDF con un nombre de archivo propio (el PDF se pide con el token de sesion). */
-function guardarArchivo(pdf: Blob, nombre: string) {
-  const url = URL.createObjectURL(pdf)
-  const enlace = document.createElement('a')
-  enlace.href = url
-  enlace.download = nombre
-  document.body.append(enlace)
-  enlace.click()
-  enlace.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 60_000)
-}
 
 /** Detalle de una cotizacion con sus acciones: PDF, imprimir, correo, WhatsApp, convertir en venta, emitir y anular. */
 export default function DetalleCotizacion() {
@@ -68,24 +57,8 @@ function Ficha({ c }: { c: CotizacionResponse }) {
       alCambiar(r, `Cotización ${r.codigo} anulada`)
     },
   })
-  const descargar = useMutation({
-    mutationFn: () => cotizacionesApi.pdf(c.id),
-    onSuccess: (pdf) => guardarArchivo(pdf, `${c.codigo}.pdf`),
-  })
-  const imprimir = useMutation({
-    // La ventana se abre en el clic (si no, el navegador la bloquea) y luego recibe el PDF
-    mutationFn: async (ventana: Window | null) => ({ ventana, pdf: await cotizacionesApi.pdf(c.id) }),
-    onSuccess: ({ ventana, pdf }) => {
-      if (ventana) {
-        ventana.location.href = URL.createObjectURL(pdf)
-      } else {
-        guardarArchivo(pdf, `${c.codigo}.pdf`)
-        avisar('El navegador bloqueó la ventana: se descargó el PDF para imprimirlo', 'info')
-      }
-    },
-    onError: (_e, ventana) => ventana?.close(),
-  })
-  const errorAccion = emitir.error ?? descargar.error ?? imprimir.error
+  const pdf = useDocumentoPdf(() => cotizacionesApi.pdf(c.id), `${c.codigo}.pdf`)
+  const errorAccion = emitir.error ?? pdf.error
 
   return (
     <div>
@@ -118,14 +91,14 @@ function Ficha({ c }: { c: CotizacionResponse }) {
 
       {activa && (
         <Tarjeta className="mb-5 flex flex-wrap gap-2 p-4" aria-label="Acciones de la cotización">
-          <Boton variante="secundario" icono={<Download className="size-4" />} cargando={descargar.isPending} onClick={() => descargar.mutate()}>
+          <Boton variante="secundario" icono={<Download className="size-4" />} cargando={pdf.descargando} onClick={pdf.descargar}>
             Descargar PDF
           </Boton>
           <Boton
             variante="secundario"
             icono={<Printer className="size-4" />}
-            cargando={imprimir.isPending}
-            onClick={() => imprimir.mutate(window.open('', '_blank'))}
+            cargando={pdf.imprimiendo}
+            onClick={pdf.imprimir}
           >
             Imprimir
           </Boton>

@@ -114,6 +114,11 @@ export interface EmpresaResponse {
   razonSocial: string
   nombreComercial: string | null
   direccion: string | null
+  /** Datos que se imprimen en la cotizacion y la nota de venta */
+  telefono: string | null
+  lema: string | null
+  /** Cuentas para depositos, una por linea */
+  datosBancarios: string | null
   activo: boolean
 }
 
@@ -122,6 +127,9 @@ export interface EmpresaRequest {
   razonSocial: string
   nombreComercial: string | null
   direccion: string | null
+  telefono: string | null
+  lema: string | null
+  datosBancarios: string | null
   activo: boolean
 }
 

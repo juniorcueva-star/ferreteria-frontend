@@ -3,7 +3,7 @@
 @import 'tailwindcss';
 
 /*
- * Tema de TodoPernos: amarillo, negro y blanco (pedido del dueno; ver docs/DISENO.md).
+ * Tema de Bonifaz & Cia: amarillo, negro y blanco (pedido del dueno; ver docs/DISENO.md).
  * Tailwind genera las clases a partir de estas variables: bg-marca, text-tinta-suave, bg-crema, etc.
  */
 @theme {

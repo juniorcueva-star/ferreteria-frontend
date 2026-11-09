@@ -9,7 +9,7 @@ import { categoriasApi } from '@/api/catalogo'
 import { empresasApi, ubicacionesApi } from '@/api/organizacion'
 import type { CategoriaResponse, EmpresaResponse, TipoUbicacion, UbicacionResponse } from '@/api/tipos'
 import { Boton } from '@/componentes/ui/Boton'
-import { Casilla, CampoSelector, CampoTexto } from '@/componentes/ui/Campo'
+import { Casilla, CampoArea, CampoSelector, CampoTexto } from '@/componentes/ui/Campo'
 import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/ui/Estados'
 import { Insignia } from '@/componentes/ui/Insignia'
@@ -138,6 +138,9 @@ const esquemaEmpresa = z.object({
   razonSocial: textoObligatorio(150),
   nombreComercial: textoOpcional(150),
   direccion: textoOpcional(200),
+  telefono: textoOpcional(60),
+  lema: textoOpcional(100),
+  datosBancarios: textoOpcional(300),
   activo: z.boolean(),
 })
 
@@ -156,12 +159,24 @@ function ModalEmpresa({ empresa, onCerrar }: { empresa: EmpresaResponse | null; 
       razonSocial: empresa?.razonSocial ?? '',
       nombreComercial: empresa?.nombreComercial ?? '',
       direccion: empresa?.direccion ?? '',
+      telefono: empresa?.telefono ?? '',
+      lema: empresa?.lema ?? '',
+      datosBancarios: empresa?.datosBancarios ?? '',
       activo: empresa?.activo ?? true,
     },
   })
   const guardar = useMutation({
     mutationFn: (d: Datos) => {
-      const datos = { ruc: d.ruc, razonSocial: d.razonSocial.trim(), nombreComercial: nulo(d.nombreComercial), direccion: nulo(d.direccion), activo: d.activo }
+      const datos = {
+        ruc: d.ruc,
+        razonSocial: d.razonSocial.trim(),
+        nombreComercial: nulo(d.nombreComercial),
+        direccion: nulo(d.direccion),
+        telefono: nulo(d.telefono),
+        lema: nulo(d.lema),
+        datosBancarios: nulo(d.datosBancarios),
+        activo: d.activo,
+      }
       return empresa ? empresasApi.actualizar(empresa.id, datos) : empresasApi.crear(datos)
     },
     onSuccess: (e) => {
@@ -180,6 +195,17 @@ function ModalEmpresa({ empresa, onCerrar }: { empresa: EmpresaResponse | null; 
         <CampoTexto etiqueta="Razón social" obligatorio error={errors.razonSocial?.message} {...register('razonSocial')} />
         <CampoTexto etiqueta="Nombre comercial" error={errors.nombreComercial?.message} {...register('nombreComercial')} />
         <CampoTexto etiqueta="Dirección" error={errors.direccion?.message} {...register('direccion')} />
+        <p className="text-xs font-semibold tracking-wide text-tinta-tenue uppercase sm:col-span-2">Datos que se imprimen en la cotización y la nota de venta</p>
+        <CampoTexto etiqueta="Teléfono / WhatsApp" inputMode="tel" placeholder="950 104 503 / 947 319 013" error={errors.telefono?.message} {...register('telefono')} />
+        <CampoTexto etiqueta="Lema" placeholder="Pernos y afines" error={errors.lema?.message} {...register('lema')} />
+        <CampoArea
+          etiqueta="Cuentas bancarias (una por línea)"
+          className="sm:col-span-2"
+          rows={3}
+          placeholder={'BBVA Continental: 0011-...\nC.C.I.: 011-...'}
+          error={errors.datosBancarios?.message}
+          {...register('datosBancarios')}
+        />
         {empresa && <Casilla etiqueta="Empresa activa" {...register('activo')} />}
       </form>
     </Modal>

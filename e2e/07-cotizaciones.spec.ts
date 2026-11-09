@@ -67,7 +67,16 @@ test('Cotizacion: se crea, se descarga en PDF y se convierte en nota de venta', 
   await expect(page.getByTestId('venta-de-cotizacion')).toContainText(/NV\d{2}-\d{6}/)
   await expect(page.getByRole('button', { name: 'Convertir en nota de venta' })).toHaveCount(0)
 
-  // 4. El stock bajo de 10 a 7 en la Tienda Centro
+  // 4. La nota de venta tambien se descarga en PDF (con el logo y los datos de la empresa)
+  await page.getByTestId('venta-de-cotizacion').getByRole('link').click()
+  await expect(page.getByRole('heading', { name: /^Venta NV\d{2}-\d{6}$/ })).toBeVisible()
+  const esperaNota = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Descargar PDF' }).click()
+  const nota = await esperaNota
+  expect(nota.suggestedFilename()).toMatch(/^NV\d{2}-\d{6}\.pdf$/)
+  expect(readFileSync(await nota.path()).subarray(0, 5).toString()).toBe('%PDF-')
+
+  // 5. El stock bajo de 10 a 7 en la Tienda Centro
   const resumen = await request.get(`${URL_API}/inventario/resumen?productoIds=${producto.id}`, { headers: auth })
   const datos = (await resumen.json()) as Resumen
   expect(datos.contenido[0]?.ubicaciones.find((u) => u.ubicacionNombre === 'Tienda Centro')?.cantidad).toBe(7)

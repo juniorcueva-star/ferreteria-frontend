@@ -1,15 +1,11 @@
-import { Layers } from 'lucide-react'
-
-/** Logo naranja con el nombre "TodoPernos" y "Sistema ERP". */
+/** Logo del negocio (Bonifaz & Cia) con su nombre y lema. */
 export function Logo({ claro = true }: { claro?: boolean }) {
   return (
     <div className="flex items-center gap-3">
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-marca text-sobre-marca shadow-sm">
-        <Layers className="size-5" strokeWidth={2.4} aria-hidden />
-      </div>
+      <img src="/logo.png" alt="" className="size-11 shrink-0 rounded-xl shadow-sm" />
       <div className="leading-tight">
-        <p className={claro ? 'text-[17px] font-bold text-white' : 'text-[17px] font-bold text-tinta'}>TodoPernos</p>
-        <p className="text-xs text-tinta-tenue">Sistema ERP</p>
+        <p className={claro ? 'text-[17px] font-bold text-white' : 'text-[17px] font-bold text-tinta'}>Bonifaz &amp; Cia</p>
+        <p className="text-xs font-semibold tracking-wide text-marca uppercase">Pernos y afines</p>
       </div>
     </div>
   )

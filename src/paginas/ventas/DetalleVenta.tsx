@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Ban, HandCoins } from 'lucide-react'
+import { ArrowLeft, Ban, Download, HandCoins, Printer } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { ventasApi } from '@/api/ventas'
@@ -15,6 +15,7 @@ import { useAvisos } from '@/componentes/ui/notificaciones'
 import { Tabla, Tbody, Td, Th, Thead, Tr } from '@/componentes/ui/Tabla'
 import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { TONO_VENTA } from '@/componentes/ui/tonos'
+import { useDocumentoPdf } from '@/hooks/useDocumentoPdf'
 import { cantidad, fecha, fechaHora, NOMBRE_CONDICION, nombreMetodoPago, soles } from '@/logica/formato'
 
 /** Detalle de una venta: lineas, pagos y abonos; permite anular y registrar abonos. */
@@ -28,6 +29,7 @@ export default function DetalleVenta() {
   const [anulando, setAnulando] = useState(false)
   const [abonando, setAbonando] = useState(false)
   const consulta = useQuery({ queryKey: ['ventas', 'detalle', ventaId], queryFn: () => ventasApi.obtener(ventaId) })
+  const pdf = useDocumentoPdf(() => ventasApi.pdf(ventaId), `${consulta.data?.numeroDocumento ?? `venta-${ventaId}`}.pdf`)
   const anular = useMutation({
     mutationFn: (motivo: string) => ventasApi.anular(ventaId, { motivo }),
     onSuccess: (v) => {
@@ -54,6 +56,12 @@ export default function DetalleVenta() {
         subtitulo={`Nota de venta · ${v.empresaRazonSocial} (RUC ${v.empresaRuc})`}
         acciones={
           <>
+            <Boton variante="secundario" icono={<Download className="size-4" />} cargando={pdf.descargando} onClick={pdf.descargar}>
+              Descargar PDF
+            </Boton>
+            <Boton variante="secundario" icono={<Printer className="size-4" />} cargando={pdf.imprimiendo} onClick={pdf.imprimir}>
+              Imprimir
+            </Boton>
             {puedeAbonar && v.estado === 'EMITIDA' && v.saldoPendiente > 0 && (
               <Boton icono={<HandCoins className="size-4" />} onClick={() => setAbonando(true)}>
                 Registrar abono
@@ -67,6 +75,7 @@ export default function DetalleVenta() {
           </>
         }
       />
+      {pdf.error && <MensajeError error={pdf.error} className="mb-5" />}
       {v.estado === 'ANULADA' && (
         <p className="mb-5 rounded-xl border border-peligro/20 bg-peligro-claro px-4 py-3 text-sm text-tinta" role="status">
           <strong className="text-peligro">Venta anulada.</strong> Motivo: {v.motivoAnulacion}

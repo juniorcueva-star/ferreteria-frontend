@@ -85,6 +85,8 @@ export const ventasApi = {
     http.get<PaginaResponse<VentaResponse>>('/ventas', { params: filtro }).then((r) => r.data),
   anular: (id: number, datos: AnulacionRequest) =>
     http.post<VentaResponse>(`/ventas/${id}/anular`, datos).then((r) => r.data),
+  /** Nota de venta en PDF (con logo, datos de la empresa y cuentas bancarias) */
+  pdf: (id: number) => http.get<Blob>(`/ventas/${id}/pdf`, { responseType: 'blob' }).then((r) => r.data),
 }
 
 export const fiadoApi = {
