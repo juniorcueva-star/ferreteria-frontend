@@ -785,3 +785,18 @@ export interface EnlaceWhatsappResponse {
   url: string
   mensaje: string
 }
+
+// ---------- Auditoria ----------
+
+export type EntidadAuditada = 'PRODUCTO' | 'PRECIO' | 'STOCK' | 'VENTA' | 'COMPRA' | 'USUARIO' | 'EMPRESA'
+
+export interface AuditoriaResponse {
+  id: number
+  fecha: string
+  usuario: string | null
+  usuarioNombre: string | null
+  entidad: EntidadAuditada
+  entidadId: number | null
+  accion: string
+  descripcion: string
+}

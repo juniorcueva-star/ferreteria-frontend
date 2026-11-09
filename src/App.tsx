@@ -32,6 +32,7 @@ const NuevaCompra = lazy(() => import('@/paginas/compras/NuevaCompra'))
 const Proveedores = lazy(() => import('@/paginas/proveedores/Proveedores'))
 const Reportes = lazy(() => import('@/paginas/reportes/Reportes'))
 const Usuarios = lazy(() => import('@/paginas/usuarios/Usuarios'))
+const Auditoria = lazy(() => import('@/paginas/auditoria/Auditoria'))
 const Configuracion = lazy(() => import('@/paginas/configuracion/Configuracion'))
 const NoEncontrado = lazy(() => import('@/paginas/NoEncontrado'))
 
@@ -87,6 +88,7 @@ function Rutas() {
           <Route path="proveedores" element={<RutaProtegida permiso="proveedores.ver"><Proveedores /></RutaProtegida>} />
           <Route path="reportes" element={<RutaProtegida permiso="reportes.ver"><Reportes /></RutaProtegida>} />
           <Route path="usuarios" element={<RutaProtegida permiso="usuarios.ver"><Usuarios /></RutaProtegida>} />
+          <Route path="auditoria" element={<RutaProtegida permiso="auditoria.ver"><Auditoria /></RutaProtegida>} />
           <Route path="configuracion" element={<RutaProtegida permiso="configuracion.ver"><Configuracion /></RutaProtegida>} />
           <Route path="inicio" element={<Navigate to="/" replace />} />
           <Route path="*" element={<NoEncontrado />} />

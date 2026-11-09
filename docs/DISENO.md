@@ -124,3 +124,8 @@ salen con el mismo logo, los datos de la empresa y sus cuentas bancarias (Config
 
 En **Reportes**, arriba a la derecha: "Ventas en Excel" (rango de fechas elegido), "Stock en Excel" y
 "Deudores en Excel", según el rol. Usan la ubicación elegida en la barra superior.
+
+## Auditoría
+
+Pantalla **Auditoría** (solo ADMIN): quién cambió precios, stock, productos, usuarios o empresas, y cuándo, con
+filtros por tipo, texto y fechas. También muestra las ventas y compras anuladas.

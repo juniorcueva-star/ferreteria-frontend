@@ -54,7 +54,7 @@ describe('BarraLateral', () => {
   it('muestra al ADMIN todo el menú, con el ítem activo, sus iniciales y su rol', () => {
     render(conProveedores('ADMIN', <BarraLateral />))
     const menu = screen.getByRole('navigation', { name: 'Menú principal' })
-    expect(within(menu).getAllByRole('link')).toHaveLength(15)
+    expect(within(menu).getAllByRole('link')).toHaveLength(16)
     expect(within(menu).getByRole('link', { name: 'Productos' })).toHaveClass('text-marca')
     expect(screen.getByText('AP')).toBeInTheDocument()
     expect(screen.getByText('Administrador')).toBeInTheDocument()

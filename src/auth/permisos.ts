@@ -54,6 +54,8 @@ export const PERMISOS = {
   'reportes.deudores': ADMIN_VENDEDOR,
   // Administracion
   'usuarios.ver': ADMIN,
+  // Auditoria: quien cambio precios, stock, productos, usuarios o empresas
+  'auditoria.ver': ADMIN,
   'configuracion.ver': ADMIN,
 } as const satisfies Record<string, readonly Rol[]>
 

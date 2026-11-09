@@ -9,6 +9,7 @@ import {
   PackageSearch,
   Settings,
   ShoppingBag,
+  ShieldCheck,
   SquarePlus,
   User,
   UserRound,
@@ -42,5 +43,6 @@ export const MENU: ItemMenu[] = [
   { etiqueta: 'Clientes', ruta: '/clientes', icono: User, permiso: 'clientes.ver' },
   { etiqueta: 'Reportes', ruta: '/reportes', icono: ChartNoAxesColumn, permiso: 'reportes.ver' },
   { etiqueta: 'Usuarios', ruta: '/usuarios', icono: UserRound, permiso: 'usuarios.ver' },
+  { etiqueta: 'Auditoría', ruta: '/auditoria', icono: ShieldCheck, permiso: 'auditoria.ver' },
   { etiqueta: 'Configuración', ruta: '/configuracion', icono: Settings, permiso: 'configuracion.ver' },
 ]
