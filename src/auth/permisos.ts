@@ -30,6 +30,8 @@ export const PERMISOS = {
   'traslados.recibir': TODOS,
   // Punto de venta
   'caja.usar': ADMIN_VENDEDOR,
+  // Encargos de productos sin stock (se entregan como una venta)
+  'encargos.ver': ADMIN_VENDEDOR,
   'ventas.ver': ADMIN_VENDEDOR,
   'ventas.registrar': ADMIN_VENDEDOR,
   'ventas.anular': ADMIN_VENDEDOR,

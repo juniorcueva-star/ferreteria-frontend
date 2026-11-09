@@ -22,6 +22,7 @@ const Caja = lazy(() => import('@/paginas/caja/Caja'))
 const PuntoVenta = lazy(() => import('@/paginas/ventas/PuntoVenta'))
 const HistorialVentas = lazy(() => import('@/paginas/ventas/HistorialVentas'))
 const DetalleVenta = lazy(() => import('@/paginas/ventas/DetalleVenta'))
+const Encargos = lazy(() => import('@/paginas/encargos/Encargos'))
 const Clientes = lazy(() => import('@/paginas/clientes/Clientes'))
 const Compras = lazy(() => import('@/paginas/compras/Compras'))
 const NuevaCompra = lazy(() => import('@/paginas/compras/NuevaCompra'))
@@ -72,6 +73,7 @@ function Rutas() {
           <Route path="ventas" element={<RutaProtegida permiso="ventas.registrar"><PuntoVenta /></RutaProtegida>} />
           <Route path="ventas/historial" element={<RutaProtegida permiso="ventas.ver"><HistorialVentas /></RutaProtegida>} />
           <Route path="ventas/:id" element={<RutaProtegida permiso="ventas.ver"><DetalleVenta /></RutaProtegida>} />
+          <Route path="encargos" element={<RutaProtegida permiso="encargos.ver"><Encargos /></RutaProtegida>} />
           <Route path="clientes" element={<RutaProtegida permiso="clientes.ver"><Clientes /></RutaProtegida>} />
           <Route path="compras" element={<RutaProtegida permiso="compras.ver"><Compras /></RutaProtegida>} />
           <Route path="compras/nueva" element={<RutaProtegida permiso="compras.registrar"><NuevaCompra /></RutaProtegida>} />

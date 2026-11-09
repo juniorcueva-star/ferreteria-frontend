@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { History, Minus, Plus, ScanBarcode, ShoppingCart, Trash2, Wallet } from 'lucide-react'
+import { History, Minus, PackageSearch, Plus, ScanBarcode, ShoppingCart, Trash2, Wallet } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { productosApi } from '@/api/catalogo'
@@ -8,6 +8,7 @@ import { inventarioApi } from '@/api/inventario'
 import type { ClienteResponse, CondicionVenta, ProductoResponse, VentaResponse } from '@/api/tipos'
 import { ventasApi } from '@/api/ventas'
 import { EditorPagos } from '@/componentes/formularios/EditorPagos'
+import { ModalEncargo } from '@/componentes/formularios/ModalEncargo'
 import { SelectorCliente } from '@/componentes/formularios/SelectorCliente'
 import { Boton } from '@/componentes/ui/Boton'
 import { Buscador } from '@/componentes/ui/Buscador'
@@ -57,6 +58,7 @@ export default function PuntoVenta() {
   const [intentado, setIntentado] = useState(false)
   const [errorCodigo, setErrorCodigo] = useState<string | null>(null)
   const [vendida, setVendida] = useState<VentaResponse | null>(null)
+  const [encargo, setEncargo] = useState<{ producto: ProductoResponse; presentacionId: number } | null>(null)
   const busqueda = useRetraso(texto.trim(), 250)
   const tiendaId = caja.data?.ubicacionId
 
@@ -89,6 +91,7 @@ export default function PuntoVenta() {
     const resumen = disponibilidad.data?.contenido.find((r) => r.productoId === productoId)
     return resumen ? otrasUbicacionesConStock(resumen, tiendaId) : []
   }
+  const productoDe = (productoId: number) => productos.data?.contenido.find((p) => p.id === productoId)
   const stockDe = (productoId: number) => stock.data?.contenido.find((s) => s.productoId === productoId)?.cantidad ?? 0
 
   const totales = calcularTotales(carrito)
@@ -250,6 +253,17 @@ export default function PuntoVenta() {
                       )}
                     </div>
                   </div>
+                  {tiendaId !== undefined && disponible <= 0 && (
+                    <Boton
+                      variante="secundario"
+                      tamano="sm"
+                      icono={<PackageSearch className="size-4" />}
+                      onClick={() => setEncargo({ producto, presentacionId: presentacionesActivas(producto)[0]?.id ?? 0 })}
+                      aria-label={`Hacer encargo de ${producto.nombre}`}
+                    >
+                      Hacer encargo
+                    </Boton>
+                  )}
                   <div className="flex flex-wrap gap-1.5">
                     {presentacionesActivas(producto).map((p) => (
                       <button
@@ -353,6 +367,18 @@ export default function PuntoVenta() {
                           <span className="text-peligro">
                             Stock insuficiente (hay {cantidad(disponible)} {sufijoUnidad(linea.unidadBase)})
                           </span>
+                        )}
+                        {sinStock && productoDe(linea.productoId) && (
+                          <button
+                            type="button"
+                            className="font-semibold text-marca underline"
+                            onClick={() => {
+                              const producto = productoDe(linea.productoId)
+                              if (producto) setEncargo({ producto, presentacionId: linea.presentacionId })
+                            }}
+                          >
+                            Hacer encargo
+                          </button>
                         )}
                         {calculo?.error && <span className="text-peligro">{calculo.error}</span>}
                       </div>
@@ -513,6 +539,14 @@ export default function PuntoVenta() {
             )}
           </div>
         </Modal>
+      )}
+      {encargo && (
+        <ModalEncargo
+          producto={encargo.producto}
+          presentacionId={encargo.presentacionId}
+          ubicacionId={tiendaId ?? null}
+          onCerrar={() => setEncargo(null)}
+        />
       )}
     </div>
   )

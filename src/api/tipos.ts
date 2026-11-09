@@ -654,3 +654,55 @@ export interface ComprasPorProveedorResponse {
   totalComprado: number
   ultimaCompra: string
 }
+
+// ---------- Encargos ----------
+
+export type EstadoEncargo = 'PENDIENTE' | 'ENTREGADO' | 'ANULADO'
+
+export interface EncargoRequest {
+  /** Tienda; el VENDEDOR la omite (su tienda), el ADMIN la indica */
+  ubicacionId: number | null
+  clienteId: number | null
+  presentacionId: number
+  cantidad: number
+  /** Precio acordado con IGV por presentacion */
+  precioUnitario: number
+  /** Lo que cuesta conseguirlo; null = costo de la ultima compra */
+  costoReferencia: number | null
+  observacion: string | null
+}
+
+export interface EntregaEncargoRequest {
+  condicion: CondicionVenta
+  /** null = cliente del encargo */
+  clienteId: number | null
+  fechaVencimiento: string | null
+  pagos: PagoRequest[]
+}
+
+export interface EncargoResponse {
+  id: number
+  codigo: string
+  ubicacionId: number
+  ubicacionNombre: string
+  clienteId: number | null
+  clienteNombre: string | null
+  productoId: number
+  productoCodigo: string
+  productoNombre: string
+  presentacionId: number
+  presentacionNombre: string
+  cantidad: number
+  precioUnitario: number
+  total: number
+  precioLista: number
+  recargoPorcentaje: number | null
+  costoReferencia: number | null
+  observacion: string | null
+  estado: EstadoEncargo
+  ventaId: number | null
+  ventaNumero: string | null
+  usuario: string
+  createdAt: string
+  updatedAt: string
+}
