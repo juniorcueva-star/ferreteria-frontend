@@ -4,8 +4,10 @@ import type {
   AccionLoteResponse,
   CategoriaRequest,
   CategoriaResponse,
+  HistorialPrecioResponse,
   PaginaResponse,
   Paginacion,
+  PrecioSugeridoResponse,
   PresentacionRequest,
   ProductoActualizarRequest,
   ProductoCrearRequest,
@@ -53,6 +55,17 @@ export const productosApi = {
     return http.post<ProductoResponse>(`/productos/${id}/imagen`, formulario).then((r) => r.data)
   },
   eliminarImagen: (id: number) => http.delete<ProductoResponse>(`/productos/${id}/imagen`).then((r) => r.data),
+  /** Costo de referencia, ganancia, adicional y precio sugerido (solo ADMIN). */
+  precioSugerido: (id: number, presentacionId: number) =>
+    http
+      .get<PrecioSugeridoResponse>(`/productos/${id}/presentaciones/${presentacionId}/precio-sugerido`)
+      .then((r) => r.data),
+  historialPrecios: (id: number, presentacionId: number, filtro: Paginacion) =>
+    http
+      .get<PaginaResponse<HistorialPrecioResponse>>(`/productos/${id}/presentaciones/${presentacionId}/historial-precios`, {
+        params: filtro,
+      })
+      .then((r) => r.data),
   /** Asignar categoria, activar o desactivar varios productos a la vez (todo o nada). */
   accionLote: (datos: AccionLoteRequest) =>
     http.post<AccionLoteResponse>('/productos/acciones-lote', datos).then((r) => r.data),

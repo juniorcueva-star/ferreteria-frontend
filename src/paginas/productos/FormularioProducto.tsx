@@ -1,13 +1,20 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, ImageUp, Plus, Save, Trash2 } from 'lucide-react'
+import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { ArrowLeft, History, ImageUp, Plus, Save, Trash2, WandSparkles } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { useFieldArray, useForm, useWatch } from 'react-hook-form'
+import { useFieldArray, useForm, useWatch, type UseFormRegister } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router'
 import { z } from 'zod'
 import { productosApi } from '@/api/catalogo'
 import { urlImagen } from '@/api/cliente'
-import type { CategoriaResponse, PresentacionRequest, PresentacionResponse, ProductoResponse, UnidadBase } from '@/api/tipos'
+import type {
+  CategoriaResponse,
+  PrecioSugeridoResponse,
+  PresentacionRequest,
+  PresentacionResponse,
+  ProductoResponse,
+  UnidadBase,
+} from '@/api/tipos'
 import { Boton } from '@/componentes/ui/Boton'
 import { Casilla, CampoArea, CampoSelector, CampoTexto } from '@/componentes/ui/Campo'
 import { cn } from '@/componentes/ui/cn'
@@ -19,7 +26,9 @@ import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { useCategorias, useUnidadesMedida } from '@/hooks/useCatalogos'
 import { esDecimalValido, textoANumero } from '@/logica/decimales'
 import { cantidadAgrupada, nombreUnidad, soles, sufijoUnidad } from '@/logica/formato'
+import { precioSugerido } from '@/logica/precios'
 import { factorValido, textoDecimales, valoresDeUnidad } from '@/logica/presentaciones'
+import { HistorialPrecios } from './HistorialPrecios'
 import { monto, nulo, textoObligatorio, textoOpcional } from '@/logica/validaciones'
 
 const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp']
@@ -33,6 +42,11 @@ const esquemaPresentacion = z.object({
   codigoBarras: textoOpcional(50),
   activo: z.boolean(),
   decimales: z.enum(['0', '1', '2', '3']),
+  porcentajeGanancia: z
+    .string()
+    .trim()
+    .refine((v) => v === '' || (esDecimalValido(v, 4) && textoANumero(v) <= 1000), 'Entre 0 y 1000 (hasta 4 decimales)'),
+  montoAdicional: z.string().trim().refine((v) => v === '' || esDecimalValido(v, 2), 'Monto inválido (hasta 2 decimales)'),
 })
 
 const esquema = z
@@ -80,14 +94,33 @@ type DatosPresentacion = DatosProducto['presentaciones'][number]
 const MARCA_POR_DEFECTO = 'VARIADO'
 
 function presentacionNueva(unidad: UnidadBase): DatosPresentacion {
-  return { nombre: '', factor: '1', precioVenta: '', codigoBarras: '', activo: true, decimales: unidad === 'UNIDAD' ? '0' : '3' }
+  return {
+    nombre: '',
+    factor: '1',
+    precioVenta: '',
+    codigoBarras: '',
+    activo: true,
+    decimales: unidad === 'UNIDAD' ? '0' : '3',
+    porcentajeGanancia: '',
+    montoAdicional: '',
+  }
 }
 
 function aDecimales(valor: number): DatosPresentacion['decimales'] {
   return valor === 1 ? '1' : valor === 2 ? '2' : valor === 3 ? '3' : '0'
 }
 
-function aFormulario(p: ProductoResponse): DatosProducto {
+type Precios = Map<number, PrecioSugeridoResponse>
+
+function textoOpcionalDe(valor: number | null | undefined): string {
+  return valor === null || valor === undefined ? '' : String(valor)
+}
+
+function numeroONulo(texto: string): number | null {
+  return texto.trim() === '' ? null : textoANumero(texto)
+}
+
+function aFormulario(p: ProductoResponse, precios: Precios): DatosProducto {
   const presentaciones = [...p.presentaciones].sort((a, b) => a.factor - b.factor)
   return {
     codigo: p.codigo,
@@ -109,6 +142,8 @@ function aFormulario(p: ProductoResponse): DatosProducto {
       codigoBarras: x.codigoBarras ?? '',
       activo: x.activo,
       decimales: aDecimales(x.decimales),
+      porcentajeGanancia: textoOpcionalDe(precios.get(x.id)?.porcentajeGanancia),
+      montoAdicional: textoOpcionalDe(precios.get(x.id)?.montoAdicional),
     })),
   }
 }
@@ -122,11 +157,15 @@ function aPresentacionRequest(p: DatosPresentacion, principal: boolean | null): 
     principal,
     activo: p.activo,
     decimales: Number(p.decimales),
+    porcentajeGanancia: numeroONulo(p.porcentajeGanancia),
+    montoAdicional: numeroONulo(p.montoAdicional),
   }
 }
 
-function cambio(original: PresentacionResponse, nueva: DatosPresentacion): boolean {
+function cambio(original: PresentacionResponse, nueva: DatosPresentacion, precio: PrecioSugeridoResponse | undefined): boolean {
   return (
+    (precio?.porcentajeGanancia ?? null) !== numeroONulo(nueva.porcentajeGanancia) ||
+    (precio?.montoAdicional ?? null) !== numeroONulo(nueva.montoAdicional) ||
     original.nombre !== nueva.nombre.trim() ||
     original.factor !== textoANumero(nueva.factor) ||
     original.precioVenta !== textoANumero(nueva.precioVenta) ||
@@ -147,14 +186,42 @@ export default function FormularioProducto() {
   })
   // Las categorias deben estar cargadas antes de armar el formulario para que la lista muestre la elegida
   const categorias = useCategorias(true)
+  // Costo, ganancia y adicional de cada presentacion (solo ADMIN, que es quien edita productos)
+  const precios = useQueries({
+    queries: (producto.data?.presentaciones ?? []).map((p) => ({
+      queryKey: ['productos', 'precio-sugerido', p.id],
+      queryFn: () => productosApi.precioSugerido(productoId ?? 0, p.id),
+    })),
+    combine: (resultados) => ({
+      pendiente: resultados.some((r) => r.isPending),
+      error: resultados.find((r) => r.isError)?.error ?? null,
+      mapa: new Map(resultados.flatMap((r) => (r.data ? [[r.data.presentacionId, r.data] as const] : []))),
+    }),
+  })
 
-  if (categorias.isPending || (productoId !== null && producto.isPending)) return <Cargando />
+  if (categorias.isPending || (productoId !== null && (producto.isPending || precios.pendiente))) return <Cargando />
   if (categorias.isError) return <MensajeError error={categorias.error} />
   if (productoId !== null && producto.isError) return <MensajeError error={producto.error} />
-  return <Formulario key={productoId ?? 'nuevo'} producto={producto.data ?? null} categorias={categorias.data ?? []} />
+  if (precios.error) return <MensajeError error={precios.error} />
+  return (
+    <Formulario
+      key={productoId ?? 'nuevo'}
+      producto={producto.data ?? null}
+      categorias={categorias.data ?? []}
+      precios={precios.mapa}
+    />
+  )
 }
 
-function Formulario({ producto, categorias }: { producto: ProductoResponse | null; categorias: CategoriaResponse[] }) {
+function Formulario({
+  producto,
+  categorias,
+  precios,
+}: {
+  producto: ProductoResponse | null
+  categorias: CategoriaResponse[]
+  precios: Precios
+}) {
   const navegar = useNavigate()
   const queryClient = useQueryClient()
   const { avisar } = useAvisos()
@@ -163,6 +230,7 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
   const [archivo, setArchivo] = useState<File | null>(null)
   const [quitarFoto, setQuitarFoto] = useState(false)
   const [errorFoto, setErrorFoto] = useState<string | null>(null)
+  const [historial, setHistorial] = useState<{ id: number; nombre: string } | null>(null)
   const vistaPrevia = useMemo(() => (archivo ? URL.createObjectURL(archivo) : null), [archivo])
   useEffect(() => () => (vistaPrevia ? URL.revokeObjectURL(vistaPrevia) : undefined), [vistaPrevia])
 
@@ -175,7 +243,7 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
   } = useForm<DatosProducto>({
     resolver: zodResolver(esquema),
     defaultValues: producto
-      ? aFormulario(producto)
+      ? aFormulario(producto, precios)
       : {
           codigo: '',
           nombre: '',
@@ -262,7 +330,7 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
           const original = producto.presentaciones.find((x) => x.id === p.id)
           if (!original) {
             resultado = await productosApi.agregarPresentacion(producto.id, aPresentacionRequest(p, esPrincipal))
-          } else if (cambio(original, p) || (esPrincipal && !original.principal)) {
+          } else if (cambio(original, p, precios.get(original.id)) || (esPrincipal && !original.principal)) {
             resultado = await productosApi.actualizarPresentacion(
               producto.id,
               original.id,
@@ -474,6 +542,16 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
                       />
                     ) : null}
                   </div>
+                  <FilaPrecios
+                    indice={i}
+                    costo={actual?.id !== undefined ? (precios.get(actual.id)?.costoReferencia ?? null) : null}
+                    porcentaje={actual?.porcentajeGanancia ?? ''}
+                    adicional={actual?.montoAdicional ?? ''}
+                    errores={{ porcentaje: errorFila?.porcentajeGanancia?.message, adicional: errorFila?.montoAdicional?.message }}
+                    registrar={register}
+                    usarSugerido={(valor) => setValue(`presentaciones.${i}.precioVenta`, valor.toFixed(2), { shouldValidate: true, shouldDirty: true })}
+                    verHistorial={actual?.id !== undefined ? () => setHistorial({ id: actual.id ?? 0, nombre: actual.nombre }) : undefined}
+                  />
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-2 md:col-span-12">
                     <label className="inline-flex cursor-pointer items-center gap-2 text-sm">
                       <input type="radio" className="size-4 accent-marca" checked={principal === i} onChange={() => setValue('principal', i, { shouldValidate: true })} name="principal" />
@@ -493,6 +571,9 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
           </div>
         </div>
       </Tarjeta>
+      {historial && producto && (
+        <HistorialPrecios productoId={producto.id} presentacionId={historial.id} nombre={historial.nombre} onCerrar={() => setHistorial(null)} />
+      )}
       <div className="mt-5 flex justify-end gap-2">
         <Boton variante="secundario" onClick={() => navegar('/productos')}>
           Cancelar
@@ -502,5 +583,80 @@ function Formulario({ producto, categorias }: { producto: ProductoResponse | nul
         </Boton>
       </div>
     </form>
+  )
+}
+
+/**
+ * Costo de referencia (ultima compra), ganancia, adicional y precio sugerido de una presentacion.
+ * "Usar sugerido" solo copia el valor al campo Precio: se guarda al presionar "Guardar".
+ */
+function FilaPrecios({
+  indice,
+  costo,
+  porcentaje,
+  adicional,
+  errores,
+  registrar,
+  usarSugerido,
+  verHistorial,
+}: {
+  indice: number
+  costo: number | null
+  porcentaje: string
+  adicional: string
+  errores: { porcentaje?: string; adicional?: string }
+  registrar: UseFormRegister<DatosProducto>
+  usarSugerido: (valor: number) => void
+  verHistorial?: () => void
+}) {
+  const valido = (porcentaje.trim() === '' || esDecimalValido(porcentaje, 4)) && (adicional.trim() === '' || esDecimalValido(adicional, 2))
+  const sugerido = valido ? precioSugerido(costo, porcentaje, adicional) : null
+  return (
+    <div className="grid gap-3 rounded-lg bg-crema/60 p-3 md:col-span-12 md:grid-cols-12" data-testid={`precios-${indice}`}>
+      <div className="md:col-span-2">
+        <p className="text-xs font-semibold text-tinta-suave">Costo de referencia</p>
+        <p className="font-mono text-sm text-tinta" data-testid={`costo-${indice}`}>
+          {costo === null ? 'Sin compras aún' : `S/ ${costo.toFixed(4)}`}
+        </p>
+      </div>
+      <CampoTexto
+        className="md:col-span-2"
+        etiqueta="Ganancia (%)"
+        inputMode="decimal"
+        placeholder="Ej: 30"
+        error={errores.porcentaje}
+        {...registrar(`presentaciones.${indice}.porcentajeGanancia`)}
+      />
+      <CampoTexto
+        className="md:col-span-2"
+        etiqueta="Adicional (S/)"
+        inputMode="decimal"
+        placeholder="0.00"
+        error={errores.adicional}
+        {...registrar(`presentaciones.${indice}.montoAdicional`)}
+      />
+      <div className="md:col-span-2">
+        <p className="text-xs font-semibold text-tinta-suave">Precio sugerido</p>
+        <p className="font-mono text-sm font-bold text-tinta" data-testid={`sugerido-${indice}`}>
+          {sugerido === null ? '—' : soles(sugerido)}
+        </p>
+      </div>
+      <div className="flex flex-wrap items-end gap-2 md:col-span-4">
+        <Boton
+          variante="secundario"
+          tamano="sm"
+          icono={<WandSparkles className="size-4" />}
+          disabled={sugerido === null}
+          onClick={() => sugerido !== null && usarSugerido(sugerido)}
+        >
+          Usar sugerido
+        </Boton>
+        {verHistorial && (
+          <Boton variante="fantasma" tamano="sm" icono={<History className="size-4" />} onClick={verHistorial}>
+            Historial
+          </Boton>
+        )}
+      </div>
+    </div>
   )
 }

@@ -179,6 +179,29 @@ export interface PresentacionRequest {
   activo: boolean | null
   /** null = 0 para productos por UNIDAD y 3 para KILO o METRO (al crear) o no cambia (al editar) */
   decimales: number | null
+  /** Ganancia para el precio sugerido (Ej: 30 = 30 %); al editar, null no cambia */
+  porcentajeGanancia: number | null
+  /** Monto fijo que se suma al precio sugerido; al editar, null no cambia */
+  montoAdicional: number | null
+}
+
+/** Costo y precio sugerido de una presentacion (solo ADMIN). */
+export interface PrecioSugeridoResponse {
+  presentacionId: number
+  presentacionNombre: string
+  costoReferencia: number | null
+  porcentajeGanancia: number | null
+  montoAdicional: number | null
+  precioSugerido: number | null
+  precioVenta: number
+}
+
+export interface HistorialPrecioResponse {
+  id: number
+  precioAnterior: number
+  precioNuevo: number
+  usuario: string | null
+  fecha: string
 }
 
 /** Unidad de venta para armar presentaciones (docena, ciento, kilo...). */

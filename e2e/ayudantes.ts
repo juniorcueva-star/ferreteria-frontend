@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test'
+import { expect, type APIRequestContext, type Page } from '@playwright/test'
 
 /**
  * Ayudantes de las pruebas de punta a punta. Las contrasenas se leen de variables de entorno
@@ -50,4 +50,28 @@ export function sufijoUnico(): string {
 export function campo(page: Page, etiqueta: string) {
   const escapada = etiqueta.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   return page.getByLabel(new RegExp(`^${escapada}( \\*)?$`))
+}
+
+/** URL del backend para preparar datos por API (por defecto el mismo que usa el frontend en local). */
+export const URL_API = process.env.E2E_API_URL ?? 'http://localhost:8080/api'
+
+/** Token de un usuario, para preparar datos directamente por la API. */
+export async function tokenApi(request: APIRequestContext, quien: Quien): Promise<string> {
+  const { usuario, clave } = credenciales(quien)
+  const respuesta = await request.post(`${URL_API}/auth/login`, { data: { username: usuario, password: clave } })
+  expect(respuesta.ok()).toBeTruthy()
+  const cuerpo = (await respuesta.json()) as { token: string }
+  return cuerpo.token
+}
+
+/** POST a la API con token; falla la prueba si no responde 2xx. Devuelve el JSON. */
+export async function postApi<T>(request: APIRequestContext, token: string, ruta: string, datos: unknown): Promise<T> {
+  const respuesta = await request.post(`${URL_API}${ruta}`, { data: datos, headers: { Authorization: `Bearer ${token}` } })
+  expect(respuesta.ok(), `${ruta}: ${await respuesta.text()}`).toBeTruthy()
+  return (await respuesta.json()) as T
+}
+
+/** Fecha de hoy en Lima (AAAA-MM-DD), como la usa el backend. */
+export function hoyEnLima(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date())
 }
