@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Bot, RotateCcw, SendHorizontal, Sparkles, X } from 'lucide-react'
+import { RotateCcw, SendHorizontal, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -21,6 +21,13 @@ const esquema = z.object({
 type Datos = z.infer<typeof esquema>
 
 const CLAVE_ESTADO = ['asistente', 'estado']
+/** Mascota del asistente (el perno de la ferreteria): cara para el boton y los mensajes, imagen completa al saludar */
+const CARA = '/asistente-cara.webp'
+const BIENVENIDA = '/asistente-bienvenida.webp'
+
+function Cara({ className }: { className?: string }) {
+  return <img src={CARA} alt="" aria-hidden className={cn('shrink-0 rounded-full object-cover ring-2 ring-marca', className)} />
+}
 
 /**
  * Asistente de IA de apoyo (version basica): boton flotante que abre un chat al costado. Solo consulta datos con
@@ -35,9 +42,9 @@ export function Asistente() {
         type="button"
         onClick={() => setAbierto((v) => !v)}
         aria-expanded={abierto}
-        className="fixed right-20 bottom-5 z-20 inline-flex h-11 items-center gap-2 rounded-full bg-marca px-4 font-semibold text-sobre-marca shadow-lg hover:bg-marca-oscuro"
+        className="fixed right-20 bottom-5 z-20 inline-flex h-12 items-center gap-2 rounded-full bg-marca py-1 pr-4 pl-1 font-semibold text-sobre-marca shadow-lg hover:bg-marca-oscuro"
       >
-        <Sparkles className="size-5" aria-hidden />
+        <Cara className="size-10 ring-white" />
         Asistente
       </button>
       {abierto && <PanelAsistente onCerrar={() => setAbierto(false)} />}
@@ -95,9 +102,7 @@ function PanelAsistente({ onCerrar }: { onCerrar: () => void }) {
       className="fixed right-4 bottom-20 z-40 flex h-[min(36rem,calc(100vh-7rem))] w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-borde bg-white shadow-2xl"
     >
       <header className="flex items-center gap-3 bg-lateral px-4 py-3 text-white">
-        <span className="flex size-9 items-center justify-center rounded-full bg-marca text-sobre-marca">
-          <Bot className="size-5" aria-hidden />
-        </span>
+        <Cara className="size-11" />
         <div className="min-w-0 flex-1">
           <p className="font-semibold">{nombre}</p>
           {datos?.configurado && (
@@ -138,6 +143,7 @@ function PanelAsistente({ onCerrar }: { onCerrar: () => void }) {
         )}
         {datos?.configurado && (
           <div className="rounded-xl bg-white p-3 text-sm text-tinta shadow-xs">
+            {mensajes.length === 0 && <img src={BIENVENIDA} alt="Mascota del asistente saludando" className="mx-auto mb-3 w-48 rounded-xl" />}
             <p>{datos.saludo}</p>
             {mensajes.length === 0 && (
               <div className="mt-3 flex flex-col gap-2" role="group" aria-label="Preguntas sugeridas">
@@ -156,7 +162,8 @@ function PanelAsistente({ onCerrar }: { onCerrar: () => void }) {
           </div>
         )}
         {mensajes.map((m, i) => (
-          <div key={i} className={cn('flex', m.rol === 'USUARIO' ? 'justify-end' : 'justify-start')}>
+          <div key={i} className={cn('flex items-end gap-2', m.rol === 'USUARIO' ? 'justify-end' : 'justify-start')}>
+            {m.rol === 'ASISTENTE' && <Cara className="size-7 ring-1" />}
             <div
               className={cn(
                 'max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm',
@@ -174,7 +181,8 @@ function PanelAsistente({ onCerrar }: { onCerrar: () => void }) {
           </div>
         ))}
         {preguntar.isPending && (
-          <p className="text-sm text-tinta-suave" data-testid="asistente-pensando">
+          <p className="flex items-center gap-2 text-sm text-tinta-suave" data-testid="asistente-pensando">
+            <Cara className="size-7 animate-pulse ring-1" />
             Revisando el sistema…
           </p>
         )}
