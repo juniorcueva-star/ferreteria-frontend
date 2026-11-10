@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router'
 import { cn } from '@/componentes/ui/cn'
 import { Modal } from '@/componentes/ui/Modal'
+import { Asistente } from './Asistente'
 import { BarraLateral } from './BarraLateral'
 import { BusquedaGlobal } from './BusquedaGlobal'
 import { CampanaAlertas } from './CampanaAlertas'
@@ -71,6 +72,7 @@ export function Layout() {
         </main>
       </div>
 
+      <Asistente />
       <button
         type="button"
         onClick={() => setAyuda(true)}

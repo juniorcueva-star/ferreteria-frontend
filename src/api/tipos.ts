@@ -986,3 +986,27 @@ export interface ConteoResponse {
     diferencia: number
   }[]
 }
+
+// ---------- Asistente de IA ----------
+
+export interface EstadoAsistente {
+  /** false si falta la clave de la IA en el servidor */
+  configurado: boolean
+  nombre: string
+  saludo: string
+  sugerencias: string[]
+  preguntasRestantes: number
+  preguntasPorDia: number
+}
+
+export interface MensajeChat {
+  rol: 'USUARIO' | 'ASISTENTE'
+  texto: string
+}
+
+export interface RespuestaAsistente {
+  respuesta: string
+  /** Lo que el asistente reviso para responder (Ej: buscar_productos) */
+  consultas: string[]
+  preguntasRestantes: number
+}
