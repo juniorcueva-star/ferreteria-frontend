@@ -1,8 +1,8 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { History, Minus, PackageSearch, PauseCircle, PlayCircle, Plus, Printer, Receipt, ScanBarcode, ShoppingCart, Trash2, Wallet, X } from 'lucide-react'
+import { History, LayoutGrid, List, Minus, PackageSearch, PauseCircle, PlayCircle, Plus, Printer, Receipt, ScanBarcode, ShoppingCart, Trash2, Wallet, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { productosApi } from '@/api/catalogo'
+import { categoriasApi, productosApi } from '@/api/catalogo'
 import { aApiError } from '@/api/errores'
 import { inventarioApi } from '@/api/inventario'
 import type {
@@ -18,6 +18,7 @@ import { EditorPagos } from '@/componentes/formularios/EditorPagos'
 import { ModalEncargo } from '@/componentes/formularios/ModalEncargo'
 import { ModalPedidoReposicion } from '@/componentes/formularios/ModalPedidoReposicion'
 import { SelectorCliente } from '@/componentes/formularios/SelectorCliente'
+import { MosaicoProductos } from '@/componentes/tablas/MosaicoProductos'
 import { Boton } from '@/componentes/ui/Boton'
 import { Buscador } from '@/componentes/ui/Buscador'
 import { CampoTexto, Entrada } from '@/componentes/ui/Campo'
@@ -52,6 +53,7 @@ import { avisoStockBajo } from '@/logica/stockBajo'
 import { billetesSugeridos } from '@/logica/billetes'
 import { etiquetaEnEspera, guardarEnEspera, leerEnEspera, MAXIMO_EN_ESPERA, ponerEnEspera, type VentaEnEspera } from '@/logica/ventasEnEspera'
 import { presentacionesActivas } from '@/logica/presentaciones'
+import { guardarVistaCaja, leerVistaCaja, type VistaCaja } from '@/logica/vistaCaja'
 
 const PAGO_INICIAL: PagoFormulario = { metodoPago: 'EFECTIVO', monto: '', numeroOperacion: '' }
 
@@ -86,10 +88,22 @@ export default function PuntoVenta() {
   const [encargo, setEncargo] = useState<{ producto: ProductoResponse; presentacionId: number } | null>(null)
   const busqueda = useRetraso(texto.trim(), 250)
   const tiendaId = caja.data?.ubicacionId
+  const [vista, setVista] = useState<VistaCaja>(() => leerVistaCaja(window.innerWidth))
+  const cambiarVista = (v: VistaCaja) => {
+    setVista(v)
+    guardarVistaCaja(v)
+  }
+  const [categoriaId, setCategoriaId] = useState<number | undefined>(undefined)
+  const categorias = useQuery({
+    queryKey: ['categorias', 'pos'],
+    queryFn: () => categoriasApi.listar({ activo: true, size: 100, sort: 'nombre,asc' }),
+    staleTime: 10 * 60_000,
+  })
 
   const productos = useQuery({
-    queryKey: ['productos', 'pos', busqueda],
-    queryFn: () => productosApi.listar({ texto: busqueda, activo: true, size: 12, sort: 'nombre,asc' }),
+    queryKey: ['productos', 'pos', busqueda, categoriaId],
+    queryFn: () =>
+      productosApi.listar({ texto: busqueda, categoriaId, activo: true, size: categoriaId === undefined ? 12 : 48, sort: 'nombre,asc' }),
     placeholderData: keepPreviousData,
   })
   // Sin busqueda se muestran los mas vendidos de la tienda (si todavia no hay ventas, el catalogo)
@@ -99,7 +113,7 @@ export default function PuntoVenta() {
     enabled: tiendaId !== undefined,
     staleTime: 5 * 60_000,
   })
-  const conFrecuentes = busqueda === '' && (frecuentes.data?.length ?? 0) > 0
+  const conFrecuentes = busqueda === '' && categoriaId === undefined && (frecuentes.data?.length ?? 0) > 0
   const visibles: ProductoResponse[] = useMemo(
     () => (conFrecuentes ? (frecuentes.data ?? []) : (productos.data?.contenido ?? [])),
     [conFrecuentes, frecuentes.data, productos.data],
@@ -352,6 +366,45 @@ export default function PuntoVenta() {
               </span>
             </div>
             {errorCodigo && <p className="mt-2 text-xs text-peligro">{errorCodigo}</p>}
+            <div className="mt-3 flex items-center gap-2">
+              <div className="flex shrink-0 rounded-lg border border-borde p-0.5" role="group" aria-label="Vista de productos">
+                {(
+                  [
+                    ['lista', 'Lista', List],
+                    ['fotos', 'Fotos', LayoutGrid],
+                  ] as const
+                ).map(([valor, etiqueta, Icono]) => (
+                  <button
+                    key={valor}
+                    type="button"
+                    onClick={() => cambiarVista(valor)}
+                    aria-pressed={vista === valor}
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold transition-colors',
+                      vista === valor ? 'bg-marca text-sobre-marca' : 'text-tinta-suave hover:bg-beige',
+                    )}
+                  >
+                    <Icono className="size-3.5" /> {etiqueta}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-1.5 overflow-x-auto pb-1" role="group" aria-label="Categorías">
+                {[{ id: undefined, nombre: 'Todas' }, ...(categorias.data?.contenido ?? [])].map((c) => (
+                  <button
+                    key={c.id ?? 'todas'}
+                    type="button"
+                    onClick={() => setCategoriaId(c.id)}
+                    aria-pressed={categoriaId === c.id}
+                    className={cn(
+                      'shrink-0 rounded-full border px-3 py-1 text-xs font-semibold whitespace-nowrap transition-colors',
+                      categoriaId === c.id ? 'border-tinta bg-tinta text-white' : 'border-borde text-tinta-suave hover:border-marca hover:bg-marca-claro',
+                    )}
+                  >
+                    {c.nombre}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
           {conFrecuentes && (
             <p className="border-b border-borde bg-marca-claro px-4 py-2 text-xs font-semibold tracking-wide text-tinta uppercase" data-testid="pos-frecuentes">
@@ -361,85 +414,96 @@ export default function PuntoVenta() {
           {productos.isPending && !conFrecuentes && <Cargando />}
           {productos.isError && <MensajeError error={productos.error} className="m-4" />}
           {!conFrecuentes && productos.data?.contenido.length === 0 && <EstadoVacio titulo="Sin resultados" descripcion="Prueba con otro nombre o código." />}
-          <ul className="grid sm:grid-cols-2">
-            {visibles.map((producto) => {
-              const disponible = stockDe(producto.id)
-              return (
-                <li key={producto.id} className="flex flex-col gap-3 border-b border-borde p-4 sm:odd:border-r" data-testid={`pos-producto-${producto.codigo}`}>
-                  <div className="flex items-start gap-3">
-                    <FotoProducto url={producto.imagenUrl} nombre={producto.nombre} className="size-12" />
-                    <div className="min-w-0 flex-1">
-                      <p className="leading-tight font-semibold text-tinta">{producto.nombre}</p>
-                      <p className="font-mono text-xs text-tinta-tenue">{producto.codigo}</p>
-                      {tiendaId !== undefined && (
-                        <p className={cn('mt-0.5 font-mono text-xs', disponible > 0 ? 'text-tinta-suave' : 'text-peligro')}>
-                          Stock: {cantidadConUnidad(disponible, producto.unidadBase)}
-                        </p>
-                      )}
-                      {otrasDe(producto.id).length > 0 && (
-                        <p className="mt-0.5 text-xs text-tinta-tenue" data-testid={`pos-otras-${producto.codigo}`}>
-                          También en:{' '}
-                          {otrasDe(producto.id)
-                            .map((u) => `${u.ubicacionNombre} ${cantidad(u.cantidad)}`)
-                            .join(' · ')}
-                        </p>
-                      )}
+          {vista === 'fotos' ? (
+            <MosaicoProductos
+              productos={visibles}
+              tiendaId={tiendaId}
+              stockDe={stockDe}
+              onAgregar={agregar}
+              onAgregarCompleto={agregarCompleto}
+              onEncargo={(producto) => setEncargo({ producto, presentacionId: presentacionesActivas(producto)[0]?.id ?? 0 })}
+            />
+          ) : (
+            <ul className="grid sm:grid-cols-2">
+              {visibles.map((producto) => {
+                const disponible = stockDe(producto.id)
+                return (
+                  <li key={producto.id} className="flex flex-col gap-3 border-b border-borde p-4 sm:odd:border-r" data-testid={`pos-producto-${producto.codigo}`}>
+                    <div className="flex items-start gap-3">
+                      <FotoProducto url={producto.imagenUrl} nombre={producto.nombre} className="size-12" />
+                      <div className="min-w-0 flex-1">
+                        <p className="leading-tight font-semibold text-tinta">{producto.nombre}</p>
+                        <p className="font-mono text-xs text-tinta-tenue">{producto.codigo}</p>
+                        {tiendaId !== undefined && (
+                          <p className={cn('mt-0.5 font-mono text-xs', disponible > 0 ? 'text-tinta-suave' : 'text-peligro')}>
+                            Stock: {cantidadConUnidad(disponible, producto.unidadBase)}
+                          </p>
+                        )}
+                        {otrasDe(producto.id).length > 0 && (
+                          <p className="mt-0.5 text-xs text-tinta-tenue" data-testid={`pos-otras-${producto.codigo}`}>
+                            También en:{' '}
+                            {otrasDe(producto.id)
+                              .map((u) => `${u.ubicacionNombre} ${cantidad(u.cantidad)}`)
+                              .join(' · ')}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  {tiendaId !== undefined && disponible <= 0 && (
-                    <Boton
-                      variante="secundario"
-                      tamano="sm"
-                      icono={<PackageSearch className="size-4" />}
-                      onClick={() => setEncargo({ producto, presentacionId: presentacionesActivas(producto)[0]?.id ?? 0 })}
-                      aria-label={`Hacer encargo de ${producto.nombre}`}
-                    >
-                      Hacer encargo
-                    </Boton>
-                  )}
-                  <div className="flex flex-wrap gap-1.5">
-                    {presentacionesActivas(producto).map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        onClick={() => agregar(producto, p.id)}
-                        className="inline-flex flex-col items-start rounded-lg border border-borde bg-crema/50 px-2.5 py-1.5 text-left transition-colors hover:border-marca hover:bg-marca-claro"
-                        aria-label={`Agregar ${producto.nombre} ${p.nombre}`}
+                    {tiendaId !== undefined && disponible <= 0 && (
+                      <Boton
+                        variante="secundario"
+                        tamano="sm"
+                        icono={<PackageSearch className="size-4" />}
+                        onClick={() => setEncargo({ producto, presentacionId: presentacionesActivas(producto)[0]?.id ?? 0 })}
+                        aria-label={`Hacer encargo de ${producto.nombre}`}
                       >
-                        <span className="text-xs font-semibold text-tinta">{p.nombre}</span>
-                        <span className="font-mono text-xs text-marca-texto">{soles(p.precioVenta)}</span>
-                      </button>
-                    ))}
-                    {producto.completos
-                      .filter((c) => c.activo && c.componentes.every((x) => x.disponible))
-                      .map((c) => {
-                        const alcanza = completosDisponibles(
-                          c.componentes.map((x) => ({ productoId: x.productoId, cantidadBase: x.cantidadBase })),
-                          stockDe,
-                        )
-                        return (
-                          <button
-                            key={`c${c.id}`}
-                            type="button"
-                            onClick={() => agregarCompleto(producto, c)}
-                            title={`Incluye: ${c.composicion}`}
-                            className="inline-flex flex-col items-start rounded-lg border-2 border-marca bg-marca-claro px-2.5 py-1.5 text-left transition-colors hover:bg-marca"
-                            aria-label={`Agregar ${producto.nombre} ${c.nombre}`}
-                            data-testid={`pos-completo-${c.id}`}
-                          >
-                            <span className="text-xs font-semibold text-tinta">{c.nombre}</span>
-                            <span className="font-mono text-xs text-tinta">{soles(c.precioVenta)}</span>
-                            {tiendaId !== undefined && (
-                              <span className={cn('text-[11px]', alcanza > 0 ? 'text-tinta-suave' : 'text-peligro')}>Alcanza: {alcanza}</span>
-                            )}
-                          </button>
-                        )
-                      })}
-                  </div>
-                </li>
-              )
-            })}
-          </ul>
+                        Hacer encargo
+                      </Boton>
+                    )}
+                    <div className="flex flex-wrap gap-1.5">
+                      {presentacionesActivas(producto).map((p) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => agregar(producto, p.id)}
+                          className="inline-flex flex-col items-start rounded-lg border border-borde bg-crema/50 px-2.5 py-1.5 text-left transition-colors hover:border-marca hover:bg-marca-claro"
+                          aria-label={`Agregar ${producto.nombre} ${p.nombre}`}
+                        >
+                          <span className="text-xs font-semibold text-tinta">{p.nombre}</span>
+                          <span className="font-mono text-xs text-marca-texto">{soles(p.precioVenta)}</span>
+                        </button>
+                      ))}
+                      {producto.completos
+                        .filter((c) => c.activo && c.componentes.every((x) => x.disponible))
+                        .map((c) => {
+                          const alcanza = completosDisponibles(
+                            c.componentes.map((x) => ({ productoId: x.productoId, cantidadBase: x.cantidadBase })),
+                            stockDe,
+                          )
+                          return (
+                            <button
+                              key={`c${c.id}`}
+                              type="button"
+                              onClick={() => agregarCompleto(producto, c)}
+                              title={`Incluye: ${c.composicion}`}
+                              className="inline-flex flex-col items-start rounded-lg border-2 border-marca bg-marca-claro px-2.5 py-1.5 text-left transition-colors hover:bg-marca"
+                              aria-label={`Agregar ${producto.nombre} ${c.nombre}`}
+                              data-testid={`pos-completo-${c.id}`}
+                            >
+                              <span className="text-xs font-semibold text-tinta">{c.nombre}</span>
+                              <span className="font-mono text-xs text-tinta">{soles(c.precioVenta)}</span>
+                              {tiendaId !== undefined && (
+                                <span className={cn('text-[11px]', alcanza > 0 ? 'text-tinta-suave' : 'text-peligro')}>Alcanza: {alcanza}</span>
+                              )}
+                            </button>
+                          )
+                        })}
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </Tarjeta>
 
         {/* Carrito y cobro: en laptop queda fijo a la derecha con su propio desplazamiento */}
