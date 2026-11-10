@@ -19,11 +19,13 @@ import { useUbicacion } from '@/contexto/ubicacion'
 import {
   aDetallesRequest,
   calcularLineaCotizacion,
+  cambiarCantidad,
   lineaDesdeDetalle,
   nuevaLinea,
   completoDe,
   elegirOpcion,
   opcionDe,
+  precioAutomaticoDe,
   precioListaDe,
   presentacionDe,
   totalesCotizacion,
@@ -272,7 +274,7 @@ function Editor({ inicial }: { inicial: DatosIniciales }) {
                           aria-label={`Cantidad de ${l.producto.nombre}`}
                           inputMode="decimal"
                           value={l.cantidad}
-                          onChange={(e) => actualizar(l.clave, { cantidad: e.target.value })}
+                          onChange={(e) => setLineas((ls) => ls.map((x) => (x.clave === l.clave ? cambiarCantidad(x, e.target.value) : x)))}
                           className="w-24 font-mono"
                           aria-invalid={calculo.error !== null ? true : undefined}
                         />
@@ -287,6 +289,9 @@ function Editor({ inicial }: { inicial: DatosIniciales }) {
                         />
                         {precioLista !== undefined && l.precio !== precioLista.toFixed(2) && (
                           <p className="mt-1 text-xs text-tinta-tenue">Lista: {soles(precioLista)}</p>
+                        )}
+                        {precioLista !== undefined && (precioAutomaticoDe(l) ?? precioLista) < precioLista && l.precio === precioAutomaticoDe(l)?.toFixed(2) && (
+                          <p className="mt-1 text-xs font-semibold text-marca-texto">Precio por mayor</p>
                         )}
                       </td>
                       <td className="px-4 py-3">

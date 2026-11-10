@@ -8,6 +8,7 @@ import type {
 } from '@/api/tipos'
 import { separarIgv } from './carrito'
 import { aCentimos, dividirRedondeando, esDecimalValido, escalar, textoANumero } from './decimales'
+import { precioSegunCantidad } from './precioMayor'
 
 /**
  * Lineas de una cotizacion en el formulario. El calculo es igual al backend (CotizacionService):
@@ -80,6 +81,29 @@ export function elegirOpcion(linea: LineaCotizacion, opcion: string): LineaCotiz
 /** Precio de lista de lo elegido (presentacion o completo). */
 export function precioListaDe(linea: LineaCotizacion): number | undefined {
   return linea.completoId != null ? completoDe(linea)?.precioVenta : presentacionDe(linea)?.precioVenta
+}
+
+/** Precio que pone el sistema para la cantidad escrita: el de lista o el por mayor (los completos no tienen). */
+export function precioAutomaticoDe(linea: LineaCotizacion): number | undefined {
+  if (linea.completoId != null) return completoDe(linea)?.precioVenta
+  const presentacion = presentacionDe(linea)
+  if (!presentacion) return undefined
+  const cantidad = Number(linea.cantidad.trim().replace(',', '.'))
+  return precioSegunCantidad(presentacion.precioVenta, presentacion.escalas, Number.isFinite(cantidad) ? cantidad : 0).precio
+}
+
+/**
+ * Cambia la cantidad; si el precio era el que puso el sistema, pasa al de la nueva cantidad (Ej: al llegar a 100
+ * baja al precio por mayor). Un precio escrito a mano por el vendedor se respeta.
+ */
+export function cambiarCantidad(linea: LineaCotizacion, cantidad: string): LineaCotizacion {
+  const antes = precioAutomaticoDe(linea)
+  const nueva = { ...linea, cantidad }
+  const despues = precioAutomaticoDe(nueva)
+  if (antes !== undefined && despues !== undefined && linea.precio === antes.toFixed(2)) {
+    return { ...nueva, precio: despues.toFixed(2) }
+  }
+  return nueva
 }
 
 export function calcularLineaCotizacion(linea: LineaCotizacion): CalculoLineaCotizacion {

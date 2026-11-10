@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { ProductoResponse } from '@/api/tipos'
-import { calcularLineaCotizacion, nuevaLinea, totalesCotizacion } from './cotizaciones'
+import { calcularLineaCotizacion, cambiarCantidad, nuevaLinea, totalesCotizacion } from './cotizaciones'
 
 const perno: ProductoResponse = {
   id: 3,
@@ -18,8 +18,8 @@ const perno: ProductoResponse = {
   medida: null,
   completos: [],
   presentaciones: [
-    { id: 6, nombre: 'Unidad', factor: 1, precioVenta: 0.5, codigoBarras: null, principal: true, activo: true, decimales: 0 },
-    { id: 7, nombre: 'Docena', factor: 12, precioVenta: 5.5, codigoBarras: null, principal: false, activo: true, decimales: 0 },
+    { id: 6, nombre: 'Unidad', factor: 1, precioVenta: 0.5, codigoBarras: null, principal: true, activo: true, decimales: 0, escalas: [] },
+    { id: 7, nombre: 'Docena', factor: 12, precioVenta: 5.5, codigoBarras: null, principal: false, activo: true, decimales: 0, escalas: [] },
   ],
 }
 
@@ -33,6 +33,14 @@ describe('cotizaciones', () => {
     expect(totales.baseCentimos).toBe(1186)
     expect(totales.igvCentimos).toBe(214)
     expect(totales.valido).toBe(true)
+  })
+
+  it('al subir la cantidad pasa al precio por mayor, pero respeta un precio escrito a mano', () => {
+    const conEscala = { ...perno, presentaciones: [{ ...perno.presentaciones[0]!, escalas: [{ cantidadMinima: 100, precio: 0.4 }] }] }
+    const linea = nuevaLinea(conEscala, conEscala.presentaciones[0]!)
+    expect(cambiarCantidad(linea, '100').precio).toBe('0.40')
+    expect(cambiarCantidad(cambiarCantidad(linea, '100'), '20').precio).toBe('0.50')
+    expect(cambiarCantidad({ ...linea, precio: '0.45' }, '150').precio).toBe('0.45')
   })
 
   it('respeta los decimales de la presentacion y el tope del descuento', () => {

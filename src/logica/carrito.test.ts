@@ -54,6 +54,12 @@ describe('carrito del punto de venta', () => {
     expect(c.error).toBeNull()
   })
 
+  it('cobra el precio por mayor cuando la cantidad llega a una escala', () => {
+    const conEscalas = { ...ciento, escalas: [{ cantidadMinima: 10, precio: 7 }] }
+    expect(calcularLinea(linea(conEscalas, '9'))).toMatchObject({ precioUnitario: 8, tipoPrecio: 'LISTA', importeCentimos: 7200 })
+    expect(calcularLinea(linea(conEscalas, '10'))).toMatchObject({ precioUnitario: 7, tipoPrecio: 'MAYOR', importeCentimos: 7000 })
+  })
+
   it('acepta decimales en metros y kilos, pero no en unidades', () => {
     expect(calcularLinea(linea(cableMetro, '2.5')).importeCentimos).toBe(325)
     expect(calcularLinea(linea(medioKilo, '3')).cantidadBase).toBe(1.5)

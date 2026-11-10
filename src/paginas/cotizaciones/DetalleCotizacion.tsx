@@ -16,6 +16,7 @@ import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { useDocumentoPdf } from '@/hooks/useDocumentoPdf'
 import { NOMBRE_COTIZACION, TONO_COTIZACION } from '@/logica/cotizaciones'
 import { cantidad, fecha, hoyLima, soles } from '@/logica/formato'
+import { etiquetaTipoPrecio } from '@/logica/precioMayor'
 import { ModalCorreo, ModalWhatsapp } from './AccionesEnvio'
 import { ModalConversion } from './ModalConversion'
 
@@ -166,6 +167,11 @@ function Ficha({ c }: { c: CotizacionResponse }) {
               <Tr key={i}>
                 <Td>
                   <p className="font-medium">{d.descripcion}</p>
+                  {etiquetaTipoPrecio(d.tipoPrecio) && (
+                    <span className="mt-0.5 inline-block rounded bg-marca px-1.5 py-px text-[11px] font-bold text-sobre-marca" data-testid="tipo-precio">
+                      {etiquetaTipoPrecio(d.tipoPrecio)}
+                    </span>
+                  )}
                   {d.composicion && <p className="text-xs text-tinta-tenue">Incluye: {d.composicion}</p>}
                 </Td>
                 <Td alinear="derecha" className="font-mono">

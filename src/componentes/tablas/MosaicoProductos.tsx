@@ -6,6 +6,7 @@ import { cn } from '@/componentes/ui/cn'
 import { FotoProducto } from '@/componentes/ui/FotoProducto'
 import { Modal } from '@/componentes/ui/Modal'
 import { cantidadConUnidad, soles } from '@/logica/formato'
+import { resumenEscalas } from '@/logica/precioMayor'
 import { presentacionesActivas } from '@/logica/presentaciones'
 
 interface Props {
@@ -109,6 +110,7 @@ export function MosaicoProductos({ productos, tiendaId, stockDe, onAgregar, onAg
               >
                 <span className="font-semibold text-tinta">{p.nombre}</span>
                 <span className="font-mono text-lg font-bold text-marca-texto">{soles(p.precioVenta)}</span>
+                {p.escalas.length > 0 && <span className="text-xs text-tinta-suave">Por mayor: {resumenEscalas(p, soles)}</span>}
               </button>
             ))}
             {completosVendibles(eligiendo).map((c) => (

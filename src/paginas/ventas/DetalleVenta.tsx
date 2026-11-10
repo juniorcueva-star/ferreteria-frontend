@@ -18,6 +18,7 @@ import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { TONO_VENTA } from '@/componentes/ui/tonos'
 import { useDocumentoPdf } from '@/hooks/useDocumentoPdf'
 import { cantidad, fecha, fechaHora, NOMBRE_CONDICION, nombreMetodoPago, soles } from '@/logica/formato'
+import { etiquetaTipoPrecio } from '@/logica/precioMayor'
 
 /** Detalle de una venta: lineas, pagos y abonos; permite anular y registrar abonos. */
 export default function DetalleVenta() {
@@ -128,6 +129,11 @@ export default function DetalleVenta() {
                 <Tr key={i}>
                   <Td>
                     <p className="font-medium">{d.descripcion}</p>
+                    {etiquetaTipoPrecio(d.tipoPrecio) && (
+                      <span className="mt-0.5 inline-block rounded bg-marca px-1.5 py-px text-[11px] font-bold text-sobre-marca" data-testid="tipo-precio">
+                        {etiquetaTipoPrecio(d.tipoPrecio)}
+                      </span>
+                    )}
                     {d.composicion ? (
                       <p className="text-xs text-tinta-tenue">Incluye: {d.composicion}</p>
                     ) : (

@@ -6,6 +6,7 @@ import type {
   AccionLoteResponse,
   CategoriaRequest,
   CategoriaResponse,
+  EscalaPrecio,
   HistorialPrecioResponse,
   PaginaResponse,
   Paginacion,
@@ -54,6 +55,9 @@ export const productosApi = {
     http.post<ProductoResponse>(`/productos/${id}/presentaciones`, datos).then((r) => r.data),
   actualizarPresentacion: (id: number, presentacionId: number, datos: PresentacionRequest) =>
     http.put<ProductoResponse>(`/productos/${id}/presentaciones/${presentacionId}`, datos).then((r) => r.data),
+  /** Precio por mayor de una presentacion: reemplaza sus escalas (lista vacia = sin precio por mayor). Solo ADMIN */
+  actualizarEscalas: (id: number, presentacionId: number, escalas: EscalaPrecio[]) =>
+    http.put<ProductoResponse>(`/productos/${id}/presentaciones/${presentacionId}/escalas`, { escalas }).then((r) => r.data),
   subirImagen: (id: number, archivo: File) => {
     const formulario = new FormData()
     formulario.append('archivo', archivo)

@@ -1,5 +1,6 @@
-import type { UnidadBase, VentaDetalleRequest } from '@/api/tipos'
+import type { EscalaPrecio, TipoPrecio, UnidadBase, VentaDetalleRequest } from '@/api/tipos'
 import { aCentimos, deMilesimas, dividirRedondeando, esDecimalValido, escalar } from './decimales'
+import { precioSegunCantidad } from './precioMayor'
 
 /**
  * Carrito del punto de venta. Replica el calculo del backend (VentaService) para mostrar el total
@@ -37,6 +38,8 @@ export interface LineaCarrito {
   decimales: number
   /** Precio de la presentacion con IGV */
   precio: number
+  /** Precio por mayor de la presentacion (el precio baja solo al llegar a la cantidad) */
+  escalas?: EscalaPrecio[]
   /** Cantidad en la presentacion elegida, tal como la escribe el vendedor */
   cantidad: string
   /** Descuento en soles para toda la linea */
@@ -48,6 +51,9 @@ export interface CalculoLinea {
   descuentoValido: boolean
   /** cantidad x factor, en unidad base */
   cantidadBase: number
+  /** Precio que se cobra por presentacion: el de lista o el por mayor segun la cantidad */
+  precioUnitario: number
+  tipoPrecio: TipoPrecio
   importeCentimos: number
   descuentoCentimos: number
   subtotalCentimos: number
@@ -87,6 +93,8 @@ export function calcularLinea(linea: LineaCarrito): CalculoLinea {
       cantidadValida,
       descuentoValido,
       cantidadBase: 0,
+      precioUnitario: linea.precio,
+      tipoPrecio: 'LISTA',
       importeCentimos: 0,
       descuentoCentimos: 0,
       subtotalCentimos: 0,
@@ -97,7 +105,8 @@ export function calcularLinea(linea: LineaCarrito): CalculoLinea {
     }
   }
   const cantidadMilesimas = escalar(linea.cantidad, 3)
-  const importe = Number(dividirRedondeando(cantidadMilesimas * escalar(linea.precio, 2), 1000n))
+  const { precio, tipo } = precioSegunCantidad(linea.precio, linea.escalas, Number(linea.cantidad.trim().replace(',', '.')))
+  const importe = Number(dividirRedondeando(cantidadMilesimas * escalar(precio, 2), 1000n))
   const cantidadBase = deMilesimas(
     Number(dividirRedondeando(cantidadMilesimas * escalar(linea.factor, 3), 1000n)),
   )
@@ -114,6 +123,8 @@ export function calcularLinea(linea: LineaCarrito): CalculoLinea {
     cantidadValida,
     descuentoValido,
     cantidadBase,
+    precioUnitario: precio,
+    tipoPrecio: tipo,
     importeCentimos: importe,
     descuentoCentimos: descuento,
     subtotalCentimos: importe - descuento,

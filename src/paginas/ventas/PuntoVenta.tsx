@@ -53,6 +53,7 @@ import { avisoStockBajo } from '@/logica/stockBajo'
 import { billetesSugeridos } from '@/logica/billetes'
 import { etiquetaEnEspera, guardarEnEspera, leerEnEspera, MAXIMO_EN_ESPERA, ponerEnEspera, type VentaEnEspera } from '@/logica/ventasEnEspera'
 import { presentacionesActivas } from '@/logica/presentaciones'
+import { resumenEscalas } from '@/logica/precioMayor'
 import { guardarVistaCaja, leerVistaCaja, type VistaCaja } from '@/logica/vistaCaja'
 
 const PAGO_INICIAL: PagoFormulario = { metodoPago: 'EFECTIVO', monto: '', numeroOperacion: '' }
@@ -175,8 +176,16 @@ export default function PuntoVenta() {
         factor: p.factor,
         decimales: p.decimales,
         precio: p.precioVenta,
+        escalas: p.escalas,
       }),
     )
+  }
+
+  /** Aviso para vender mas: "Desde 100: S/ 0.40 c/u" (la siguiente escala que todavia no alcanza). */
+  const siguienteEscala = (linea: LineaCarrito): string | null => {
+    const cantidad = Number(linea.cantidad.replace(',', '.'))
+    const proxima = (linea.escalas ?? []).find((e) => e.cantidadMinima > cantidad)
+    return proxima ? `Desde ${proxima.cantidadMinima}: ${soles(proxima.precio)} c/u` : null
   }
 
   /** Completo: el producto con sus piezas (Ej: perno + tuerca + arandela), por unidades enteras. */
@@ -471,6 +480,7 @@ export default function PuntoVenta() {
                         >
                           <span className="text-xs font-semibold text-tinta">{p.nombre}</span>
                           <span className="font-mono text-xs text-marca-texto">{soles(p.precioVenta)}</span>
+                          {p.escalas.length > 0 && <span className="text-[10px] text-tinta-tenue">Por mayor: {resumenEscalas(p, soles)}</span>}
                         </button>
                       ))}
                       {producto.completos
@@ -574,8 +584,19 @@ export default function PuntoVenta() {
                         <div className="min-w-0">
                           <p className="text-sm leading-tight font-semibold text-tinta">{linea.productoNombre}</p>
                           <p className="font-mono text-xs text-tinta-suave">
-                            {linea.presentacionNombre} · {soles(linea.precio)}
+                            {linea.presentacionNombre} ·{' '}
+                            {calculo?.tipoPrecio === 'MAYOR' ? (
+                              <>
+                                <s className="text-tinta-tenue">{soles(linea.precio)}</s> <strong className="text-tinta">{soles(calculo.precioUnitario)}</strong>{' '}
+                                <span className="rounded bg-marca px-1 py-px font-sans text-[10px] font-bold text-sobre-marca" data-testid="precio-mayor">
+                                  POR MAYOR
+                                </span>
+                              </>
+                            ) : (
+                              soles(linea.precio)
+                            )}
                           </p>
+                          {siguienteEscala(linea) && <p className="text-[11px] text-marca-texto">{siguienteEscala(linea)}</p>}
                           {linea.composicion && <p className="text-[11px] text-tinta-tenue">Incluye: {linea.composicion}</p>}
                         </div>
                         <p className="font-mono text-sm font-bold text-tinta">{solesDeCentimos(calculo?.subtotalCentimos ?? 0)}</p>

@@ -175,7 +175,18 @@ export interface PresentacionResponse {
   activo: boolean
   /** Decimales que acepta al vender o comprar (0 = solo enteros) */
   decimales: number
+  /** Precio por mayor, de menor a mayor cantidad (vacio si no tiene) */
+  escalas: EscalaPrecio[]
 }
+
+/** Desde cantidadMinima (en la presentacion) cada una cuesta precio. Ej: desde 100 a S/ 0.40 */
+export interface EscalaPrecio {
+  cantidadMinima: number
+  precio: number
+}
+
+/** De donde sale el precio de una linea: lista, por mayor u oferta */
+export type TipoPrecio = 'LISTA' | 'MAYOR' | 'OFERTA'
 
 export interface PresentacionRequest {
   nombre: string
@@ -619,6 +630,7 @@ export interface VentaDetalle {
   precioUnitario: number
   descuento: number
   subtotal: number
+  tipoPrecio: TipoPrecio
 }
 
 export interface VentaResponse {
@@ -796,6 +808,7 @@ export interface CotizacionDetalleResponse {
   descuento: number
   subtotal: number
   decimales: number
+  tipoPrecio: TipoPrecio
 }
 
 export interface CotizacionResponse {

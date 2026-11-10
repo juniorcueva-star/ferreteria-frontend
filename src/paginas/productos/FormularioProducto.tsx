@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, History, ImageUp, Plus, Save, Trash2, WandSparkles } from 'lucide-react'
+import { ArrowLeft, History, ImageUp, Layers, Plus, Save, Trash2, WandSparkles } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useFieldArray, useForm, useWatch, type UseFormRegister } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -9,6 +9,7 @@ import { productosApi } from '@/api/catalogo'
 import { urlImagen } from '@/api/cliente'
 import type {
   CategoriaResponse,
+  EscalaPrecio,
   PrecioSugeridoResponse,
   PresentacionRequest,
   PresentacionResponse,
@@ -26,9 +27,11 @@ import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { useCategorias, useUnidadesMedida } from '@/hooks/useCatalogos'
 import { esDecimalValido, textoANumero } from '@/logica/decimales'
 import { cantidadAgrupada, nombreUnidad, soles, sufijoUnidad } from '@/logica/formato'
+import { resumenEscalas } from '@/logica/precioMayor'
 import { precioSugerido } from '@/logica/precios'
 import { factorValido, textoDecimales, valoresDeUnidad } from '@/logica/presentaciones'
 import { HistorialPrecios } from './HistorialPrecios'
+import { ModalPrecioMayor } from './ModalPrecioMayor'
 import { SeccionCompletos } from './SeccionCompletos'
 import { conLetras, monto, nulo, textoObligatorio, textoOpcional } from '@/logica/validaciones'
 
@@ -236,6 +239,8 @@ function Formulario({
   const [quitarFoto, setQuitarFoto] = useState(false)
   const [errorFoto, setErrorFoto] = useState<string | null>(null)
   const [historial, setHistorial] = useState<{ id: number; nombre: string } | null>(null)
+  const [porMayor, setPorMayor] = useState<number | null>(null)
+  const presentacionPorMayor = producto?.presentaciones.find((p) => p.id === porMayor)
   const vistaPrevia = useMemo(() => (archivo ? URL.createObjectURL(archivo) : null), [archivo])
   useEffect(() => () => (vistaPrevia ? URL.revokeObjectURL(vistaPrevia) : undefined), [vistaPrevia])
 
@@ -556,6 +561,8 @@ function Formulario({
                     registrar={register}
                     usarSugerido={(valor) => setValue(`presentaciones.${i}.precioVenta`, valor.toFixed(2), { shouldValidate: true, shouldDirty: true })}
                     verHistorial={actual?.id !== undefined ? () => setHistorial({ id: actual.id ?? 0, nombre: actual.nombre }) : undefined}
+                    escalas={producto?.presentaciones.find((p) => p.id === actual?.id)?.escalas}
+                    verPorMayor={actual?.id !== undefined ? () => setPorMayor(actual.id ?? null) : undefined}
                   />
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-2 md:col-span-12">
                     <label className="inline-flex cursor-pointer items-center gap-2 text-sm">
@@ -578,6 +585,9 @@ function Formulario({
       </Tarjeta>
       {historial && producto && (
         <HistorialPrecios productoId={producto.id} presentacionId={historial.id} nombre={historial.nombre} onCerrar={() => setHistorial(null)} />
+      )}
+      {producto && presentacionPorMayor && (
+        <ModalPrecioMayor productoId={producto.id} presentacion={presentacionPorMayor} onCerrar={() => setPorMayor(null)} />
       )}
       <div className="mt-5 flex justify-end gap-2">
         <Boton variante="secundario" onClick={() => navegar('/productos')}>
@@ -604,6 +614,8 @@ function FilaPrecios({
   registrar,
   usarSugerido,
   verHistorial,
+  escalas,
+  verPorMayor,
 }: {
   indice: number
   costo: number | null
@@ -613,6 +625,9 @@ function FilaPrecios({
   registrar: UseFormRegister<DatosProducto>
   usarSugerido: (valor: number) => void
   verHistorial?: () => void
+  /** Precio por mayor guardado (solo presentaciones que ya existen) */
+  escalas?: EscalaPrecio[]
+  verPorMayor?: () => void
 }) {
   const valido = (porcentaje.trim() === '' || esDecimalValido(porcentaje, 4)) && (adicional.trim() === '' || esDecimalValido(adicional, 2))
   const sugerido = valido ? precioSugerido(costo, porcentaje, adicional) : null
@@ -661,7 +676,15 @@ function FilaPrecios({
             Historial
           </Boton>
         )}
+        {verPorMayor && (
+          <Boton variante="secundario" tamano="sm" icono={<Layers className="size-4" />} onClick={verPorMayor} data-testid={`por-mayor-${indice}`}>
+            Precio por mayor{escalas && escalas.length > 0 ? ` (${escalas.length})` : ''}
+          </Boton>
+        )}
       </div>
+      {escalas && escalas.length > 0 && (
+        <p className="text-xs text-tinta-suave md:col-span-12">Por mayor: {resumenEscalas({ escalas }, soles)}</p>
+      )}
     </div>
   )
 }
