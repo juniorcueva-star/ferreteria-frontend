@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { History, Minus, PackageSearch, Plus, Printer, ScanBarcode, ShoppingCart, Trash2, Wallet } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { productosApi } from '@/api/catalogo'
 import { aApiError } from '@/api/errores'
@@ -46,6 +46,7 @@ import { cantidad, cantidadConUnidad, hoyLima, soles, solesDeCentimos, sufijoUni
 import { aPagosRequest, calcularCobro, type PagoFormulario } from '@/logica/pagos'
 import { otrasUbicacionesConStock } from '@/logica/disponibilidad'
 import { avisoStockBajo } from '@/logica/stockBajo'
+import { billetesSugeridos } from '@/logica/billetes'
 import { presentacionesActivas } from '@/logica/presentaciones'
 
 const PAGO_INICIAL: PagoFormulario = { metodoPago: 'EFECTIVO', monto: '', numeroOperacion: '' }
@@ -79,20 +80,32 @@ export default function PuntoVenta() {
     queryFn: () => productosApi.listar({ texto: busqueda, activo: true, size: 12, sort: 'nombre,asc' }),
     placeholderData: keepPreviousData,
   })
+  // Sin busqueda se muestran los mas vendidos de la tienda (si todavia no hay ventas, el catalogo)
+  const frecuentes = useQuery({
+    queryKey: ['productos', 'pos', 'frecuentes', tiendaId],
+    queryFn: () => productosApi.frecuentes(tiendaId),
+    enabled: tiendaId !== undefined,
+    staleTime: 5 * 60_000,
+  })
+  const conFrecuentes = busqueda === '' && (frecuentes.data?.length ?? 0) > 0
+  const visibles: ProductoResponse[] = useMemo(
+    () => (conFrecuentes ? (frecuentes.data ?? []) : (productos.data?.contenido ?? [])),
+    [conFrecuentes, frecuentes.data, productos.data],
+  )
 
   // Stock en la tienda de la caja para los productos visibles y los del carrito
   const idsStock = useMemo(() => {
     // Incluye las piezas de los completos (Ej: la tuerca y la arandela del perno completo)
-    const piezasVisibles = (productos.data?.contenido ?? []).flatMap((p) =>
+    const piezasVisibles = visibles.flatMap((p) =>
       p.completos.filter((c) => c.activo).flatMap((c) => c.componentes.map((x) => x.productoId)),
     )
     const ids = new Set<number>([
-      ...(productos.data?.contenido.map((p) => p.id) ?? []),
+      ...visibles.map((p) => p.id),
       ...piezasVisibles,
       ...productosDelCarrito(carrito),
     ])
     return [...ids].sort((a, b) => a - b)
-  }, [productos.data, carrito])
+  }, [visibles, carrito])
   const stock = useQuery({
     queryKey: ['inventario', 'stock', 'pos', tiendaId, idsStock],
     queryFn: () => inventarioApi.stock({ ubicacionId: tiendaId, productoIds: idsStock, size: 100 }),
@@ -100,7 +113,7 @@ export default function PuntoVenta() {
     placeholderData: keepPreviousData,
   })
   // Disponibilidad en las otras tiendas y el almacen (solo lectura, para pedidos grandes)
-  const idsVisibles = useMemo(() => productos.data?.contenido.map((p) => p.id) ?? [], [productos.data])
+  const idsVisibles = useMemo(() => visibles.map((p) => p.id), [visibles])
   const disponibilidad = useQuery({
     queryKey: ['inventario', 'resumen', 'pos', idsVisibles],
     queryFn: () => inventarioApi.resumen({ productoIds: idsVisibles, size: 100 }),
@@ -111,7 +124,7 @@ export default function PuntoVenta() {
     const resumen = disponibilidad.data?.contenido.find((r) => r.productoId === productoId)
     return resumen ? otrasUbicacionesConStock(resumen, tiendaId) : []
   }
-  const productoDe = (productoId: number) => productos.data?.contenido.find((p) => p.id === productoId)
+  const productoDe = (productoId: number) => visibles.find((p) => p.id === productoId)
   const stockDe = (productoId: number) => stock.data?.contenido.find((s) => s.productoId === productoId)?.cantidad ?? 0
   const minimoDe = (productoId: number) => stock.data?.contenido.find((s) => s.productoId === productoId)?.stockMinimo ?? 0
   const totales = calcularTotales(carrito)
@@ -208,6 +221,26 @@ export default function PuntoVenta() {
     if (puedeCobrar) registrar.mutate()
   }
 
+  // Atajos de teclado: F2 va al buscador y F9 cobra (o registra la venta a credito)
+  const cobrarConAtajo = useRef(cobrar)
+  useEffect(() => {
+    cobrarConAtajo.current = vendida ? () => undefined : cobrar
+  })
+  useEffect(() => {
+    const alPresionar = (e: KeyboardEvent) => {
+      if (e.key === 'F2') {
+        e.preventDefault()
+        buscador.current?.focus()
+        buscador.current?.select()
+      } else if (e.key === 'F9') {
+        e.preventDefault()
+        cobrarConAtajo.current()
+      }
+    }
+    window.addEventListener('keydown', alPresionar)
+    return () => window.removeEventListener('keydown', alPresionar)
+  }, [])
+
   const nuevaVenta = () => {
     setVendida(null)
     setCarrito([])
@@ -261,17 +294,25 @@ export default function PuntoVenta() {
                   if (e.key === 'Enter') void buscarPorCodigo()
                 }}
               />
-              <span className="hidden items-center gap-1 text-xs text-tinta-tenue md:flex">
-                <ScanBarcode className="size-4" /> Enter = código de barras
+              <span className="hidden flex-col justify-center text-[11px] leading-tight text-tinta-tenue md:flex">
+                <span className="inline-flex items-center gap-1">
+                  <ScanBarcode className="size-3.5" /> Enter = código de barras
+                </span>
+                <span>F2 buscar · F9 cobrar</span>
               </span>
             </div>
             {errorCodigo && <p className="mt-2 text-xs text-peligro">{errorCodigo}</p>}
           </div>
-          {productos.isPending && <Cargando />}
+          {conFrecuentes && (
+            <p className="border-b border-borde bg-marca-claro px-4 py-2 text-xs font-semibold tracking-wide text-tinta uppercase" data-testid="pos-frecuentes">
+              Los más vendidos de tu tienda · escribe para buscar otros
+            </p>
+          )}
+          {productos.isPending && !conFrecuentes && <Cargando />}
           {productos.isError && <MensajeError error={productos.error} className="m-4" />}
-          {productos.data?.contenido.length === 0 && <EstadoVacio titulo="Sin resultados" descripcion="Prueba con otro nombre o código." />}
+          {!conFrecuentes && productos.data?.contenido.length === 0 && <EstadoVacio titulo="Sin resultados" descripcion="Prueba con otro nombre o código." />}
           <ul className="grid sm:grid-cols-2">
-            {productos.data?.contenido.map((producto) => {
+            {visibles.map((producto) => {
               const disponible = stockDe(producto.id)
               return (
                 <li key={producto.id} className="flex flex-col gap-3 border-b border-borde p-4 sm:odd:border-r" data-testid={`pos-producto-${producto.codigo}`}>
@@ -541,6 +582,21 @@ export default function PuntoVenta() {
                 <span className="text-xs font-semibold text-tinta-suave">
                   {condicion === 'CONTADO' ? 'Pagos' : 'Adelanto (opcional)'}
                 </span>
+                {condicion === 'CONTADO' && totales.totalCentimos > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Paga con">
+                    <span className="text-xs text-tinta-suave">Paga con:</span>
+                    {[totales.totalCentimos / 100, ...billetesSugeridos(totales.totalCentimos)].map((monto, i) => (
+                      <button
+                        key={monto}
+                        type="button"
+                        onClick={() => setPagos([{ metodoPago: 'EFECTIVO', monto: monto.toFixed(2), numeroOperacion: '' }])}
+                        className="rounded-lg border border-borde bg-white px-2.5 py-1 font-mono text-sm font-semibold text-tinta hover:border-marca hover:bg-marca-claro"
+                      >
+                        {i === 0 ? 'Exacto' : `S/ ${monto}`}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {metodos.data && (
                   <EditorPagos pagos={pagos} metodos={metodos.data} onCambiar={setPagos} restanteCentimos={restante} />
                 )}

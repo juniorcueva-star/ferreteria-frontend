@@ -136,3 +136,8 @@ En la ficha del producto (ADMIN), sección **Completos**: el producto con otras 
 tuerca + arandela). En el punto de venta aparecen como botones amarillos con "Alcanza: N" (lo que permite la pieza
 más escasa); en cotizaciones, en la lista de presentaciones bajo "Completos". La nota de venta y la cotización
 muestran "Incluye: ..." debajo de la línea.
+
+## Punto de venta rápido
+
+Sin búsqueda se muestran **los más vendidos de la tienda** (últimos 30 días). Al cobrar al contado, "Paga con:"
+ofrece Exacto y billetes redondos que alcanzan el total. Atajos: **F2** buscar, **F9** cobrar.

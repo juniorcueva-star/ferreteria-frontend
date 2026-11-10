@@ -42,6 +42,9 @@ export const productosApi = {
   listar: (filtro: FiltroProductos) =>
     http.get<PaginaResponse<ProductoResponse>>('/productos', { params: filtro }).then((r) => r.data),
   obtener: (id: number) => http.get<ProductoResponse>(`/productos/${id}`).then((r) => r.data),
+  /** Los que se venden en mas ventas de la tienda (ultimos 30 dias), para el punto de venta */
+  frecuentes: (ubicacionId?: number) =>
+    http.get<ProductoResponse[]>('/productos/frecuentes', { params: { ubicacionId, limite: 12 } }).then((r) => r.data),
   porCodigoBarras: (codigo: string) =>
     http.get<ProductoResponse>(`/productos/codigo-barras/${encodeURIComponent(codigo)}`).then((r) => r.data),
   crear: (datos: ProductoCrearRequest) => http.post<ProductoResponse>('/productos', datos).then((r) => r.data),
