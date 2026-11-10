@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { CheckSquare, Pencil, Plus, Power, Tags, X } from 'lucide-react'
+import { CheckSquare, Download, FileText, Pencil, Plus, Power, Printer, Tags, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { productosApi } from '@/api/catalogo'
@@ -22,11 +22,13 @@ import { FilaCompleta, Tabla, Tbody, Td, Th, Thead, Tr } from '@/componentes/ui/
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { nombreCorto, useUbicacion } from '@/contexto/ubicacion'
 import { useCategorias } from '@/hooks/useCatalogos'
+import { useDocumentoPdf } from '@/hooks/useDocumentoPdf'
 import { useRetraso } from '@/hooks/useRetraso'
 import { cantidad, hoyLima, nombreUnidad, soles } from '@/logica/formato'
 import { presentacionPrincipal, presentacionesActivas, textoChip } from '@/logica/presentaciones'
 import { alternar, alternarPagina, textoAccionLote, todosSeleccionados } from '@/logica/seleccion'
 import { ofertaVigente } from '@/logica/precioMayor'
+import { ModalEtiquetas } from './ModalEtiquetas'
 
 type FiltroEstado = '' | 'activos' | 'inactivos'
 
@@ -47,10 +49,16 @@ export default function Productos() {
   const queryClient = useQueryClient()
   const { avisar } = useAvisos()
   const puedeEditar = usePermiso('productos.editar')
+  // Las etiquetas de los estantes las imprime el ADMIN o el ALMACENERO
+  const puedeEtiquetas = usePermiso('inventario.ajustar')
+  const puedeSeleccionar = puedeEditar || puedeEtiquetas
+  const [etiquetas, setEtiquetas] = useState(false)
   const { visibles, todas } = useUbicacion()
   const [parametros] = useSearchParams()
   const [texto, setTexto] = useState(parametros.get('texto') ?? '')
   const [categoriaId, setCategoriaId] = useState('')
+  // Lista de precios para el cliente: de la categoria filtrada o de todo el catalogo
+  const lista = useDocumentoPdf(() => productosApi.listaPrecios(categoriaId ? Number(categoriaId) : undefined), `lista-precios-${hoyLima()}.pdf`)
   const [estado, setEstado] = useState<FiltroEstado>('')
   const [pagina, setPagina] = useState(0)
   const busqueda = useRetraso(texto.trim())
@@ -129,7 +137,7 @@ export default function Productos() {
   }
 
   const ubicacionesStock = [...visibles].sort((a, b) => Number(a.tipo === 'ALMACEN') - Number(b.tipo === 'ALMACEN'))
-  const columnas = 5 + ubicacionesStock.length + (puedeEditar ? 2 : 0)
+  const columnas = 5 + ubicacionesStock.length + (puedeSeleccionar ? 1 : 0) + (puedeEditar ? 1 : 0)
   const idsPagina = ids
   const total = productos.data?.totalElementos
 
@@ -139,13 +147,28 @@ export default function Productos() {
         titulo="Productos"
         subtitulo={total === undefined ? 'Cargando…' : `${total} ${total === 1 ? 'producto registrado' : 'productos registrados'}`}
         acciones={
-          puedeEditar && (
-            <Boton tamano="lg" icono={<Plus className="size-5" />} onClick={() => navegar('/productos/nuevo')}>
-              Nuevo Producto
+          <div className="flex flex-wrap gap-2">
+            <Boton variante="secundario" tamano="lg" icono={<FileText className="size-5" />} cargando={lista.imprimiendo} onClick={lista.imprimir}>
+              Lista de precios
             </Boton>
-          )
+            <Boton
+              variante="secundario"
+              tamano="lg"
+              icono={<Download className="size-5" />}
+              cargando={lista.descargando}
+              onClick={lista.descargar}
+              aria-label="Descargar lista de precios"
+              title="Descargar el PDF para mandarlo por WhatsApp"
+            />
+            {puedeEditar && (
+              <Boton tamano="lg" icono={<Plus className="size-5" />} onClick={() => navegar('/productos/nuevo')}>
+                Nuevo Producto
+              </Boton>
+            )}
+          </div>
         }
       />
+      {lista.error && <MensajeError error={lista.error} className="mb-4" />}
 
       <Tarjeta className="mb-5 grid gap-3 p-5 md:grid-cols-[minmax(0,1fr)_13rem_13rem]">
         <Buscador
@@ -188,43 +211,52 @@ export default function Productos() {
         </Selector>
       </Tarjeta>
 
-      {puedeEditar && seleccion.size > 0 && (
+      {puedeSeleccionar && seleccion.size > 0 && (
         <Tarjeta className="mb-3 flex flex-wrap items-center gap-3 border-marca/40 bg-marca-claro/30 px-5 py-3" data-testid="barra-lote">
           <span className="inline-flex items-center gap-2 text-sm font-semibold text-tinta">
             <CheckSquare className="size-4 text-marca-texto" aria-hidden />
             {seleccion.size === 1 ? '1 producto seleccionado' : `${seleccion.size} productos seleccionados`}
           </span>
           <div className="flex flex-wrap items-center gap-2">
-            <Selector
-              value={categoriaLote}
-              onChange={(e) => setCategoriaLote(e.target.value)}
-              aria-label="Categoría a asignar"
-              className="h-9 w-48 rounded-lg"
-            >
-              <option value="">Elegir categoría…</option>
-              {categorias.data
-                ?.filter((c) => c.activo)
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nombre}
-                  </option>
-                ))}
-            </Selector>
-            <Boton tamano="sm" variante="secundario" icono={<Tags className="size-4" />} disabled={!categoriaLote} onClick={() => pedirAccion('ASIGNAR_CATEGORIA')}>
-              Asignar categoría
+            <Boton tamano="sm" icono={<Printer className="size-4" />} onClick={() => setEtiquetas(true)}>
+              Imprimir etiquetas
             </Boton>
-            <Boton tamano="sm" variante="secundario" onClick={() => pedirAccion('ACTIVAR')}>
-              Activar
-            </Boton>
-            <Boton tamano="sm" variante="secundario" onClick={() => pedirAccion('DESACTIVAR')}>
-              Desactivar
-            </Boton>
+            {puedeEditar && (
+              <>
+                <Selector
+                  value={categoriaLote}
+                  onChange={(e) => setCategoriaLote(e.target.value)}
+                  aria-label="Categoría a asignar"
+                  className="h-9 w-48 rounded-lg"
+                >
+                  <option value="">Elegir categoría…</option>
+                  {categorias.data
+                    ?.filter((c) => c.activo)
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nombre}
+                      </option>
+                    ))}
+                </Selector>
+                <Boton tamano="sm" variante="secundario" icono={<Tags className="size-4" />} disabled={!categoriaLote} onClick={() => pedirAccion('ASIGNAR_CATEGORIA')}>
+                  Asignar categoría
+                </Boton>
+                <Boton tamano="sm" variante="secundario" onClick={() => pedirAccion('ACTIVAR')}>
+                  Activar
+                </Boton>
+                <Boton tamano="sm" variante="secundario" onClick={() => pedirAccion('DESACTIVAR')}>
+                  Desactivar
+                </Boton>
+              </>
+            )}
             <Boton tamano="sm" variante="fantasma" icono={<X className="size-4" />} onClick={() => setSeleccion(new Set())}>
               Quitar selección
             </Boton>
           </div>
         </Tarjeta>
       )}
+
+      {etiquetas && <ModalEtiquetas productoIds={[...seleccion]} onCerrar={() => setEtiquetas(false)} />}
 
       <Modal
         abierto={pendiente !== null}
@@ -253,7 +285,7 @@ export default function Productos() {
         <Tabla>
           <Thead>
             <tr>
-              {puedeEditar && (
+              {puedeSeleccionar && (
                 <Th className="w-10">
                   <input
                     type="checkbox"
@@ -300,7 +332,7 @@ export default function Productos() {
               const principal = presentacionPrincipal(p)
               return (
                 <Tr key={p.id} className={cn(!p.activo && 'opacity-60')} data-testid={`producto-${p.codigo}`}>
-                  {puedeEditar && (
+                  {puedeSeleccionar && (
                     <Td>
                       <input
                         type="checkbox"

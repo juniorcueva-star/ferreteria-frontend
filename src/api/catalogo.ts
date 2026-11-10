@@ -66,6 +66,14 @@ export const productosApi = {
     http.put<ProductoResponse>(`/productos/${id}/presentaciones/${presentacionId}/oferta`, datos).then((r) => r.data),
   quitarOferta: (id: number, presentacionId: number) =>
     http.delete<ProductoResponse>(`/productos/${id}/presentaciones/${presentacionId}/oferta`).then((r) => r.data),
+  /** Lista de precios en PDF para el cliente (con fotos, ofertas y precio por mayor) */
+  listaPrecios: (categoriaId?: number) =>
+    http.get<Blob>('/productos/lista-precios', { params: { categoriaId }, responseType: 'blob' }).then((r) => r.data),
+  /** Etiquetas con codigo de barras: hoja A4 de 3 x 8 */
+  etiquetas: (productoIds: number[], copias: number, todas: boolean) =>
+    http
+      .get<Blob>('/productos/etiquetas', { params: { productoIds: productoIds.join(','), copias, todas }, responseType: 'blob' })
+      .then((r) => r.data),
   subirImagen: (id: number, archivo: File) => {
     const formulario = new FormData()
     formulario.append('archivo', archivo)
