@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Ban, Download, HandCoins, Printer } from 'lucide-react'
+import { ArrowLeft, Ban, Download, HandCoins, Printer, Receipt } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { ventasApi } from '@/api/ventas'
@@ -30,6 +30,7 @@ export default function DetalleVenta() {
   const [abonando, setAbonando] = useState(false)
   const consulta = useQuery({ queryKey: ['ventas', 'detalle', ventaId], queryFn: () => ventasApi.obtener(ventaId) })
   const pdf = useDocumentoPdf(() => ventasApi.pdf(ventaId), `${consulta.data?.numeroDocumento ?? `venta-${ventaId}`}.pdf`)
+  const ticket = useDocumentoPdf(() => ventasApi.ticket(ventaId), `ticket-${consulta.data?.numeroDocumento ?? ventaId}.pdf`)
   const anular = useMutation({
     mutationFn: (motivo: string) => ventasApi.anular(ventaId, { motivo }),
     onSuccess: (v) => {
@@ -60,7 +61,10 @@ export default function DetalleVenta() {
               Descargar PDF
             </Boton>
             <Boton variante="secundario" icono={<Printer className="size-4" />} cargando={pdf.imprimiendo} onClick={pdf.imprimir}>
-              Imprimir
+              Imprimir A4
+            </Boton>
+            <Boton variante="secundario" icono={<Receipt className="size-4" />} cargando={ticket.imprimiendo} onClick={ticket.imprimir}>
+              Ticket
             </Boton>
             {puedeAbonar && v.estado === 'EMITIDA' && v.saldoPendiente > 0 && (
               <Boton icono={<HandCoins className="size-4" />} onClick={() => setAbonando(true)}>
@@ -75,7 +79,7 @@ export default function DetalleVenta() {
           </>
         }
       />
-      {pdf.error && <MensajeError error={pdf.error} className="mb-5" />}
+      {(pdf.error ?? ticket.error) && <MensajeError error={pdf.error ?? ticket.error} className="mb-5" />}
       {v.estado === 'ANULADA' && (
         <p className="mb-5 rounded-xl border border-peligro/20 bg-peligro-claro px-4 py-3 text-sm text-tinta" role="status">
           <strong className="text-peligro">Venta anulada.</strong> Motivo: {v.motivoAnulacion}

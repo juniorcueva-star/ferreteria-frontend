@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { History, Minus, PackageSearch, Plus, Printer, ScanBarcode, ShoppingCart, Trash2, Wallet } from 'lucide-react'
+import { History, Minus, PackageSearch, Plus, Printer, Receipt, ScanBarcode, ShoppingCart, Trash2, Wallet } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { productosApi } from '@/api/catalogo'
@@ -717,9 +717,15 @@ export default function PuntoVenta() {
 /** Imprime la nota de venta recien registrada (con el logo y los datos de la empresa). */
 function BotonImprimirVenta({ ventaId, numero }: { ventaId: number; numero: string }) {
   const pdf = useDocumentoPdf(() => ventasApi.pdf(ventaId), `${numero}.pdf`)
+  const ticket = useDocumentoPdf(() => ventasApi.ticket(ventaId), `ticket-${numero}.pdf`)
   return (
-    <Boton variante="secundario" icono={<Printer className="size-4" />} cargando={pdf.imprimiendo} onClick={pdf.imprimir}>
-      Imprimir
-    </Boton>
+    <>
+      <Boton variante="secundario" icono={<Receipt className="size-4" />} cargando={ticket.imprimiendo} onClick={ticket.imprimir}>
+        Ticket
+      </Boton>
+      <Boton variante="secundario" icono={<Printer className="size-4" />} cargando={pdf.imprimiendo} onClick={pdf.imprimir}>
+        A4
+      </Boton>
+    </>
   )
 }

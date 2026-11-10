@@ -87,6 +87,8 @@ export const ventasApi = {
     http.post<VentaResponse>(`/ventas/${id}/anular`, datos).then((r) => r.data),
   /** Nota de venta en PDF (con logo, datos de la empresa y cuentas bancarias) */
   pdf: (id: number) => http.get<Blob>(`/ventas/${id}/pdf`, { responseType: 'blob' }).then((r) => r.data),
+  /** Ticket de 80 mm para tiquetera termica */
+  ticket: (id: number) => http.get<Blob>(`/ventas/${id}/ticket`, { responseType: 'blob' }).then((r) => r.data),
 }
 
 export const fiadoApi = {

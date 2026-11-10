@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Ban, PackageCheck, Plus } from 'lucide-react'
+import { Ban, PackageCheck, Plus, Printer } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { inventarioApi, trasladosApi } from '@/api/inventario'
@@ -23,6 +23,7 @@ import { Pestanas } from '@/componentes/ui/Pestanas'
 import { FilaCompleta, Tabla, Tbody, Td, Th, Thead, Tr } from '@/componentes/ui/Tabla'
 import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { useUbicacion } from '@/contexto/ubicacion'
+import { useDocumentoPdf } from '@/hooks/useDocumentoPdf'
 import { cantidad, cantidadConUnidad, fechaHora, NOMBRE_ESTADO_TRASLADO, NOMBRE_MOVIMIENTO } from '@/logica/formato'
 
 type Seccion = 'kardex' | 'traslados'
@@ -307,6 +308,7 @@ function DetalleTraslado({ id, onCerrar }: { id: number | null; onCerrar: () => 
     },
   })
   const t = traslado.data
+  const guia = useDocumentoPdf(() => trasladosApi.guia(id ?? 0), `guia-${t?.codigo ?? 'traslado'}.pdf`)
 
   return (
     <>
@@ -322,6 +324,9 @@ function DetalleTraslado({ id, onCerrar }: { id: number | null; onCerrar: () => 
         pie={
           t && (
             <>
+              <Boton variante="secundario" icono={<Printer className="size-4" />} cargando={guia.imprimiendo} onClick={guia.imprimir}>
+                Imprimir guía
+              </Boton>
               {puedeAnularTraslado(usuario, t) && (
                 <Boton variante="secundario" icono={<Ban className="size-4" />} onClick={() => setAnulando(true)}>
                   Anular
@@ -339,6 +344,7 @@ function DetalleTraslado({ id, onCerrar }: { id: number | null; onCerrar: () => 
         {traslado.isPending && <Cargando />}
         {traslado.isError && <MensajeError error={traslado.error} />}
         {recibir.error && <MensajeError error={recibir.error} className="mb-4" />}
+        {guia.error && <MensajeError error={guia.error} className="mb-4" />}
         {t && (
           <div className="flex flex-col gap-4">
             <div className="grid gap-3 text-sm sm:grid-cols-3">

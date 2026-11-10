@@ -154,3 +154,8 @@ clic lo que está en su mínimo.
 En **Reportes**: "Pedido sugerido" (qué comprar, último proveedor y costo) y "Valor del inventario" (cuánto dinero hay
 en stock y qué no sale), ambos con Excel. En **Inventario**, columna "Ubicación física" y botón "Ubicar" para el
 almacenero (pasillo y estante).
+
+## Documentos impresos
+
+- Venta: "Descargar PDF", "Imprimir A4" y **"Ticket"** (80 mm para tiquetera), en el detalle y al registrarla.
+- Traslado: **"Imprimir guía"** en su detalle (productos con su ubicación en el almacén y firmas).

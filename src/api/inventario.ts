@@ -70,6 +70,8 @@ export const trasladosApi = {
   obtener: (id: number) => http.get<TrasladoResponse>(`/traslados/${id}`).then((r) => r.data),
   enviar: (datos: TrasladoRequest) => http.post<TrasladoResponse>('/traslados', datos).then((r) => r.data),
   recibir: (id: number) => http.post<TrasladoResponse>(`/traslados/${id}/recibir`).then((r) => r.data),
+  /** Guia de traslado en PDF (membrete, productos con su ubicacion en el origen y firmas) */
+  guia: (id: number) => http.get<Blob>(`/traslados/${id}/guia`, { responseType: 'blob' }).then((r) => r.data),
   anular: (id: number, datos: AnulacionRequest) =>
     http.post<TrasladoResponse>(`/traslados/${id}/anular`, datos).then((r) => r.data),
 }
