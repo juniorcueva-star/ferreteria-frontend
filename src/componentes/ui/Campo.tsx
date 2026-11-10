@@ -1,4 +1,5 @@
 import { useId, type ComponentProps, type ReactNode } from 'react'
+import { filtrarEntrada } from '@/logica/entradas'
 import { cn } from './cn'
 
 export const claseControl =
@@ -39,8 +40,19 @@ export function Campo({ etiqueta, error, ayuda, className, children, obligatorio
   )
 }
 
-export function Entrada({ className, ...props }: ComponentProps<'input'>) {
-  return <input className={cn(claseControl, 'h-10', className)} {...props} />
+export function Entrada({ className, onChange, inputMode, ...props }: ComponentProps<'input'>) {
+  return (
+    <input
+      className={cn(claseControl, 'h-10', className)}
+      inputMode={inputMode}
+      onChange={(e) => {
+        const filtrado = filtrarEntrada(e.target.value, inputMode)
+        if (filtrado !== e.target.value) e.target.value = filtrado
+        onChange?.(e)
+      }}
+      {...props}
+    />
+  )
 }
 
 export function Selector({ className, children, ...props }: ComponentProps<'select'>) {

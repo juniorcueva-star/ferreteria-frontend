@@ -30,14 +30,14 @@ import { precioSugerido } from '@/logica/precios'
 import { factorValido, textoDecimales, valoresDeUnidad } from '@/logica/presentaciones'
 import { HistorialPrecios } from './HistorialPrecios'
 import { SeccionCompletos } from './SeccionCompletos'
-import { monto, nulo, textoObligatorio, textoOpcional } from '@/logica/validaciones'
+import { conLetras, monto, nulo, textoObligatorio, textoOpcional } from '@/logica/validaciones'
 
 const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp']
 const MAXIMO_IMAGEN = 2 * 1024 * 1024
 
 const esquemaPresentacion = z.object({
   id: z.number().optional(),
-  nombre: textoObligatorio(50, 'Escriba el nombre (Ej: Caja x100)'),
+  nombre: conLetras(50, true, 'Escriba el nombre (Ej: Caja x100)'),
   factor: z.string().trim().refine((v) => esDecimalValido(v, 3) && textoANumero(v) > 0, 'Factor inválido'),
   precioVenta: monto,
   codigoBarras: textoOpcional(50),
@@ -53,7 +53,7 @@ const esquemaPresentacion = z.object({
 const esquema = z
   .object({
     codigo: textoObligatorio(30),
-    nombre: textoObligatorio(150),
+    nombre: conLetras(150),
     descripcion: textoOpcional(300),
     marca: textoOpcional(80),
     tipo: textoOpcional(60),

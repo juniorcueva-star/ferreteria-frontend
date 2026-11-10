@@ -9,13 +9,13 @@ import { Casilla, CampoTexto } from '@/componentes/ui/Campo'
 import { MensajeError } from '@/componentes/ui/Estados'
 import { Modal } from '@/componentes/ui/Modal'
 import { useAvisos } from '@/componentes/ui/notificaciones'
-import { nulo, textoObligatorio, textoOpcional } from '@/logica/validaciones'
+import { MENSAJE_RUC, RUC_VALIDO, conLetras, nombrePersona, nulo, telefono, textoOpcional } from '@/logica/validaciones'
 
 const esquema = z.object({
-  ruc: z.string().trim().refine((v) => v === '' || /^\d{11}$/.test(v), 'El RUC debe tener 11 dígitos'),
-  razonSocial: textoObligatorio(150),
-  contacto: textoOpcional(100),
-  telefono: textoOpcional(20),
+  ruc: z.string().trim().refine((v) => v === '' || RUC_VALIDO.test(v), MENSAJE_RUC),
+  razonSocial: conLetras(150),
+  contacto: nombrePersona(100, false),
+  telefono,
   email: z.string().trim().max(100).refine((v) => v === '' || z.email().safeParse(v).success, 'Correo inválido'),
   direccion: textoOpcional(200),
   activo: z.boolean(),
@@ -89,9 +89,9 @@ export function ModalProveedor({
       <form onSubmit={enviar} className="grid gap-4 sm:grid-cols-2" noValidate>
         {guardar.error && <MensajeError error={guardar.error} className="sm:col-span-2" />}
         <CampoTexto etiqueta="Razón social" obligatorio className="sm:col-span-2" error={errors.razonSocial?.message} {...register('razonSocial')} />
-        <CampoTexto etiqueta="RUC" inputMode="numeric" mono error={errors.ruc?.message} {...register('ruc')} />
+        <CampoTexto etiqueta="RUC" inputMode="numeric" maxLength={11} mono error={errors.ruc?.message} {...register('ruc')} />
         <CampoTexto etiqueta="Contacto" error={errors.contacto?.message} {...register('contacto')} />
-        <CampoTexto etiqueta="Teléfono" inputMode="tel" error={errors.telefono?.message} {...register('telefono')} />
+        <CampoTexto etiqueta="Celular" inputMode="tel" placeholder="987654321" maxLength={11} error={errors.telefono?.message} {...register('telefono')} />
         <CampoTexto etiqueta="Correo" type="email" error={errors.email?.message} {...register('email')} />
         <CampoTexto etiqueta="Dirección" className="sm:col-span-2" error={errors.direccion?.message} {...register('direccion')} />
         {proveedor && <Casilla etiqueta="Proveedor activo" {...register('activo')} />}

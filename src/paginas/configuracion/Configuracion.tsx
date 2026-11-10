@@ -20,7 +20,7 @@ import { Pestanas } from '@/componentes/ui/Pestanas'
 import { FilaCompleta, Tabla, Tbody, Td, Th, Thead, Tr } from '@/componentes/ui/Tabla'
 import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { useEmpresasActivas } from '@/hooks/useCatalogos'
-import { nulo, ruc, textoObligatorio, textoOpcional } from '@/logica/validaciones'
+import { conLetras, nulo, ruc, telefonos, textoOpcional } from '@/logica/validaciones'
 import { FormularioCambiarPassword } from './CambiarPassword'
 
 type Seccion = 'empresas' | 'ubicaciones' | 'categorias' | 'contrasena'
@@ -135,10 +135,10 @@ function Empresas() {
 
 const esquemaEmpresa = z.object({
   ruc,
-  razonSocial: textoObligatorio(150),
-  nombreComercial: textoOpcional(150),
+  razonSocial: conLetras(150),
+  nombreComercial: conLetras(150, false),
   direccion: textoOpcional(200),
-  telefono: textoOpcional(60),
+  telefono: telefonos,
   lema: textoOpcional(100),
   datosBancarios: textoOpcional(300),
   activo: z.boolean(),
@@ -191,7 +191,7 @@ function ModalEmpresa({ empresa, onCerrar }: { empresa: EmpresaResponse | null; 
     <Modal abierto onCerrar={onCerrar} titulo={empresa ? 'Editar empresa' : 'Nueva empresa'} pie={<PieGuardar onCerrar={onCerrar} onGuardar={enviar} cargando={guardar.isPending} />}>
       <form onSubmit={enviar} className="grid gap-4 sm:grid-cols-2" noValidate>
         {guardar.error && <MensajeError error={guardar.error} className="sm:col-span-2" />}
-        <CampoTexto etiqueta="RUC" obligatorio inputMode="numeric" mono error={errors.ruc?.message} {...register('ruc')} />
+        <CampoTexto etiqueta="RUC" obligatorio inputMode="numeric" maxLength={11} mono error={errors.ruc?.message} {...register('ruc')} />
         <CampoTexto etiqueta="Razón social" obligatorio error={errors.razonSocial?.message} {...register('razonSocial')} />
         <CampoTexto etiqueta="Nombre comercial" error={errors.nombreComercial?.message} {...register('nombreComercial')} />
         <CampoTexto etiqueta="Dirección" error={errors.direccion?.message} {...register('direccion')} />
@@ -285,7 +285,7 @@ function Ubicaciones() {
 
 const esquemaUbicacion = z
   .object({
-    nombre: textoObligatorio(100),
+    nombre: conLetras(100),
     tipo: z.enum(['ALMACEN', 'TIENDA']),
     empresaId: z.string(),
     direccion: textoOpcional(200),
@@ -435,7 +435,7 @@ function Categorias() {
 function ModalCategoria({ categoria, onCerrar }: { categoria: CategoriaResponse | null; onCerrar: () => void }) {
   const queryClient = useQueryClient()
   const { avisar } = useAvisos()
-  const esquema = z.object({ nombre: textoObligatorio(80), activo: z.boolean() })
+  const esquema = z.object({ nombre: conLetras(80), activo: z.boolean() })
   type Datos = z.infer<typeof esquema>
   const {
     register,

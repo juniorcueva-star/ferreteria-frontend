@@ -1,4 +1,4 @@
-import { expect, type APIRequestContext, type Page } from '@playwright/test'
+import { expect, type APIRequestContext, type Locator, type Page } from '@playwright/test'
 
 /**
  * Ayudantes de las pruebas de punta a punta. Las contrasenas se leen de variables de entorno
@@ -47,7 +47,7 @@ export function sufijoUnico(): string {
 }
 
 /** Campo por su etiqueta exacta, sea obligatorio ("Código *") o no ("Código"). */
-export function campo(page: Page, etiqueta: string) {
+export function campo(page: Page | Locator, etiqueta: string) {
   const escapada = etiqueta.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
   return page.getByLabel(new RegExp(`^${escapada}( \\*)?$`))
 }

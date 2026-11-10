@@ -21,7 +21,7 @@ import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { useUbicacion } from '@/contexto/ubicacion'
 import { useRetraso } from '@/hooks/useRetraso'
 import { iniciales, NOMBRE_ROL } from '@/logica/formato'
-import { contrasena, textoObligatorio } from '@/logica/validaciones'
+import { contrasena, nombrePersona } from '@/logica/validaciones'
 
 /** Administracion de usuarios y roles (solo ADMIN). */
 export default function Usuarios() {
@@ -126,7 +126,7 @@ function ModalUsuario({ usuario, onCerrar }: { usuario: UsuarioResponse | null; 
   const { todas } = useUbicacion()
   const esquema = z
     .object({
-      nombres: textoObligatorio(120),
+      nombres: nombrePersona(120),
       username: usuario
         ? z.string()
         : z
