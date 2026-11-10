@@ -148,3 +148,9 @@ Pantalla **Reposición** (todos los roles). La tienda pide al almacén ("Nuevo p
 stock mínimo") o desde el aviso de stock bajo del punto de venta ("Pedir reposición"). El almacén atiende el pedido
 con un traslado (puede enviar menos) o lo rechaza, y tiene el **Traslado sugerido**: elige una tienda y envía con un
 clic lo que está en su mínimo.
+
+## Almacén
+
+En **Reportes**: "Pedido sugerido" (qué comprar, último proveedor y costo) y "Valor del inventario" (cuánto dinero hay
+en stock y qué no sale), ambos con Excel. En **Inventario**, columna "Ubicación física" y botón "Ubicar" para el
+almacenero (pasillo y estante).

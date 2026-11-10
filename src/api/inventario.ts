@@ -54,6 +54,9 @@ export const inventarioApi = {
     http.get<PaginaResponse<ResumenStockResponse>>('/inventario/resumen', { params: filtro }).then((r) => r.data),
   definirMinimo: (datos: StockMinimoRequest) =>
     http.put<StockResponse>('/inventario/stock/minimo', datos).then((r) => r.data),
+  /** Donde esta el producto dentro de la ubicacion (ADMIN o ALMACENERO en su almacen) */
+  definirUbicacionFisica: (datos: { productoId: number; ubicacionId: number; ubicacionFisica: string | null }) =>
+    http.put<StockResponse>('/inventario/stock/ubicacion-fisica', datos).then((r) => r.data),
   ajustar: (datos: AjusteRequest) => http.post<KardexResponse[]>('/inventario/ajustes', datos).then((r) => r.data),
   inventarioInicial: (datos: InventarioInicialRequest) =>
     http.post<KardexResponse[]>('/inventario/inicial', datos).then((r) => r.data),

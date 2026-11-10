@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ClipboardPlus, SlidersHorizontal, Target } from 'lucide-react'
+import { ClipboardPlus, MapPin, SlidersHorizontal, Target } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useSearchParams } from 'react-router'
@@ -8,7 +8,7 @@ import { z } from 'zod'
 import { inventarioApi } from '@/api/inventario'
 import type { StockResponse, TipoAjuste } from '@/api/tipos'
 import { useUsuario } from '@/auth/contexto'
-import { tienePermiso } from '@/auth/permisos'
+import { puedeOperarEn, tienePermiso } from '@/auth/permisos'
 import { EditorLineas } from '@/componentes/formularios/EditorLineas'
 import { Boton } from '@/componentes/ui/Boton'
 import { Buscador } from '@/componentes/ui/Buscador'
@@ -28,7 +28,7 @@ import { textoANumero } from '@/logica/decimales'
 import { cantidad, nombreUnidad, sufijoUnidad } from '@/logica/formato'
 import { aLineasRequest, lineaVacia, validarLineas, type LineaEditable } from '@/logica/lineas'
 import { permiteDecimales } from '@/logica/presentaciones'
-import { cantidad as reglaCantidad, motivo } from '@/logica/validaciones'
+import { cantidad as reglaCantidad, motivo, nulo } from '@/logica/validaciones'
 
 /** Stock por ubicacion, stock minimo, ajustes con motivo e inventario inicial. */
 export default function Inventario() {
@@ -41,6 +41,7 @@ export default function Inventario() {
   const [ajuste, setAjuste] = useState(false)
   const [inicial, setInicial] = useState(false)
   const [minimo, setMinimo] = useState<StockResponse | null>(null)
+  const [ubicando, setUbicando] = useState<StockResponse | null>(null)
   const busqueda = useRetraso(texto.trim())
 
   const filtro = {
@@ -60,7 +61,9 @@ export default function Inventario() {
   const puedeAjustar = tienePermiso(usuario.rol, 'inventario.ajustar')
   const puedeInicial = tienePermiso(usuario.rol, 'inventario.inicial')
   const puedeMinimo = tienePermiso(usuario.rol, 'inventario.minimo')
-  const columnas = 6 + (puedeMinimo ? 1 : 0)
+  const puedeUbicar = tienePermiso(usuario.rol, 'inventario.ubicar')
+  const conAcciones = puedeMinimo || puedeUbicar
+  const columnas = 7 + (puedeMinimo || puedeUbicar ? 1 : 0)
 
   return (
     <div>
@@ -114,7 +117,8 @@ export default function Inventario() {
               <Th alinear="derecha">Stock</Th>
               <Th alinear="derecha">Mínimo</Th>
               <Th>Estado</Th>
-              {puedeMinimo && <Th alinear="derecha">Acciones</Th>}
+              <Th>Ubicación física</Th>
+              {conAcciones && <Th alinear="derecha">Acciones</Th>}
             </tr>
           </Thead>
           <Tbody>
@@ -153,11 +157,21 @@ export default function Inventario() {
                 <Td>
                   {s.bajo ? <Insignia tono="peligro">Stock bajo</Insignia> : <Insignia tono="exito">Normal</Insignia>}
                 </Td>
-                {puedeMinimo && (
+                <Td className="text-sm text-tinta-suave">{s.ubicacionFisica ?? '—'}</Td>
+                {conAcciones && (
                   <Td alinear="derecha">
-                    <Boton variante="fantasma" tamano="sm" icono={<Target className="size-4" />} onClick={() => setMinimo(s)}>
-                      Mínimo
-                    </Boton>
+                    <div className="flex justify-end gap-1">
+                      {puedeUbicar && puedeOperarEn(usuario, s.ubicacionId) && (
+                        <Boton variante="fantasma" tamano="sm" icono={<MapPin className="size-4" />} onClick={() => setUbicando(s)} aria-label={`Ubicar ${s.productoNombre}`}>
+                          Ubicar
+                        </Boton>
+                      )}
+                      {puedeMinimo && (
+                        <Boton variante="fantasma" tamano="sm" icono={<Target className="size-4" />} onClick={() => setMinimo(s)}>
+                          Mínimo
+                        </Boton>
+                      )}
+                    </div>
                   </Td>
                 )}
               </Tr>
@@ -170,6 +184,7 @@ export default function Inventario() {
       {puedeAjustar && ajuste && <ModalAjuste onCerrar={() => setAjuste(false)} />}
       {puedeInicial && inicial && <ModalInventarioInicial onCerrar={() => setInicial(false)} />}
       {minimo && <ModalStockMinimo stock={minimo} onCerrar={() => setMinimo(null)} />}
+      {ubicando && <ModalUbicacionFisica stock={ubicando} onCerrar={() => setUbicando(null)} />}
     </div>
   )
 }
@@ -399,6 +414,62 @@ function ModalStockMinimo({ stock, onCerrar }: { stock: StockResponse; onCerrar:
           error={errors.stockMinimo?.message}
           mono
           {...register('stockMinimo')}
+        />
+      </form>
+    </Modal>
+  )
+}
+
+/** Donde esta el producto dentro de la ubicacion (pasillo, estante), para encontrarlo rapido. */
+function ModalUbicacionFisica({ stock, onCerrar }: { stock: StockResponse; onCerrar: () => void }) {
+  const queryClient = useQueryClient()
+  const { avisar } = useAvisos()
+  const esquema = z.object({ ubicacionFisica: z.string().trim().max(40, 'Máximo 40 caracteres') })
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<{ ubicacionFisica: string }>({
+    resolver: zodResolver(esquema),
+    defaultValues: { ubicacionFisica: stock.ubicacionFisica ?? '' },
+  })
+  const guardar = useMutation({
+    mutationFn: (valor: string) =>
+      inventarioApi.definirUbicacionFisica({ productoId: stock.productoId, ubicacionId: stock.ubicacionId, ubicacionFisica: nulo(valor) }),
+    onSuccess: (s) => {
+      avisar(s.ubicacionFisica ? `${s.productoNombre}: ${s.ubicacionFisica}` : `Se quitó la ubicación de ${s.productoNombre}`)
+      void queryClient.invalidateQueries({ queryKey: ['inventario'] })
+      onCerrar()
+    },
+  })
+  const enviar = handleSubmit((d) => guardar.mutate(d.ubicacionFisica))
+  return (
+    <Modal
+      abierto
+      onCerrar={onCerrar}
+      titulo="Ubicación en el almacén"
+      descripcion={`${stock.productoNombre} · ${stock.ubicacionNombre}`}
+      ancho="sm"
+      pie={
+        <>
+          <Boton variante="secundario" onClick={onCerrar}>
+            Cancelar
+          </Boton>
+          <Boton cargando={guardar.isPending} onClick={enviar}>
+            Guardar
+          </Boton>
+        </>
+      }
+    >
+      <form onSubmit={enviar} className="flex flex-col gap-4" noValidate>
+        {guardar.error && <MensajeError error={guardar.error} />}
+        <CampoTexto
+          etiqueta="Pasillo, estante o lugar"
+          placeholder="Pasillo 3 - Estante B"
+          ayuda="Déjelo vacío para quitar la ubicación."
+          maxLength={40}
+          error={errors.ubicacionFisica?.message}
+          {...register('ubicacionFisica')}
         />
       </form>
     </Modal>

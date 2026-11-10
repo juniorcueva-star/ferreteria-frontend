@@ -22,6 +22,8 @@ export const PERMISOS = {
   'inventario.ajustar': ADMIN_ALMACENERO,
   'inventario.inicial': ADMIN,
   'inventario.minimo': ADMIN,
+  // Donde esta cada producto dentro del almacen (pasillo, estante)
+  'inventario.ubicar': ADMIN_ALMACENERO,
   'kardex.ver': TODOS,
   // Traslados: enviar y anular desde el almacen; recibir, quien trabaja en el destino
   'traslados.ver': TODOS,
@@ -55,6 +57,8 @@ export const PERMISOS = {
   'reportes.traslados': ADMIN_ALMACENERO,
   'reportes.compras': ADMIN_ALMACENERO,
   'reportes.stockBajo': TODOS,
+  // Almacen: pedido sugerido al proveedor y valor del inventario
+  'reportes.almacen': ADMIN_ALMACENERO,
   'reportes.deudores': ADMIN_VENDEDOR,
   // Administracion
   'usuarios.ver': ADMIN,

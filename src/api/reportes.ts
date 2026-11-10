@@ -1,5 +1,7 @@
 import { http } from './cliente'
 import type {
+  PedidoSugeridoResponse,
+  ValorInventarioResponse,
   ComprasPorProveedorResponse,
   OrdenProductos,
   PaginaResponse,
@@ -37,6 +39,14 @@ export const reportesApi = {
     http.get<PaginaResponse<StockResponse>>('/reportes/stock-bajo', { params: filtro }).then((r) => r.data),
 }
 
+/** Reportes del almacen (ADMIN y ALMACENERO) */
+export const almacenApi = {
+  pedidoSugerido: (ubicacionId?: number) =>
+    http.get<PedidoSugeridoResponse[]>('/reportes/pedido-sugerido', { params: { ubicacionId } }).then((r) => r.data),
+  valorInventario: (filtro: { ubicacionId?: number; diasSinSalida?: number }) =>
+    http.get<ValorInventarioResponse>('/reportes/valor-inventario', { params: filtro }).then((r) => r.data),
+}
+
 /** Reportes en Excel (.xlsx): llegan como archivo (Blob) porque se piden con el token de sesion. */
 export const excelApi = {
   ventas: (filtro: RangoFechas & { ubicacionId?: number }) =>
@@ -45,4 +55,8 @@ export const excelApi = {
     http.get<Blob>('/reportes/excel/stock', { params: filtro, responseType: 'blob' }).then((r) => r.data),
   deudores: (filtro: { ubicacionId?: number }) =>
     http.get<Blob>('/reportes/excel/deudores', { params: filtro, responseType: 'blob' }).then((r) => r.data),
+  pedidoSugerido: (filtro: { ubicacionId?: number }) =>
+    http.get<Blob>('/reportes/excel/pedido-sugerido', { params: filtro, responseType: 'blob' }).then((r) => r.data),
+  valorInventario: (filtro: { ubicacionId?: number; diasSinSalida?: number }) =>
+    http.get<Blob>('/reportes/excel/valor-inventario', { params: filtro, responseType: 'blob' }).then((r) => r.data),
 }

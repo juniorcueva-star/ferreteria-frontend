@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import { FileSpreadsheet } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
-import { excelApi, reportesApi } from '@/api/reportes'
+import { almacenApi, excelApi, reportesApi } from '@/api/reportes'
 import type { OrdenProductos } from '@/api/tipos'
 import { fiadoApi } from '@/api/ventas'
 import { useUsuario } from '@/auth/contexto'
@@ -20,7 +20,7 @@ import { useUbicacion } from '@/contexto/ubicacion'
 import { guardarArchivo } from '@/hooks/useDocumentoPdf'
 import { cantidad, cantidadConUnidad, fecha, hoyLima, inicioMesLima, nombreUnidad, soles } from '@/logica/formato'
 
-type IdReporte = 'ventas' | 'productos' | 'traslados' | 'compras' | 'stock' | 'deudores'
+type IdReporte = 'ventas' | 'productos' | 'traslados' | 'compras' | 'stock' | 'deudores' | 'pedido' | 'valor'
 
 const REPORTES: { id: IdReporte; etiqueta: string; permiso: Permiso; conFechas: boolean }[] = [
   { id: 'ventas', etiqueta: 'Ventas por tienda', permiso: 'reportes.ventas', conFechas: true },
@@ -29,6 +29,8 @@ const REPORTES: { id: IdReporte; etiqueta: string; permiso: Permiso; conFechas: 
   { id: 'compras', etiqueta: 'Compras por proveedor', permiso: 'reportes.compras', conFechas: true },
   { id: 'stock', etiqueta: 'Stock bajo', permiso: 'reportes.stockBajo', conFechas: false },
   { id: 'deudores', etiqueta: 'Deudores', permiso: 'reportes.deudores', conFechas: false },
+  { id: 'pedido', etiqueta: 'Pedido sugerido', permiso: 'reportes.almacen', conFechas: false },
+  { id: 'valor', etiqueta: 'Valor del inventario', permiso: 'reportes.almacen', conFechas: false },
 ]
 
 /** Reportes del backend con filtros de fecha (dias de Lima) y tienda. */
@@ -82,6 +84,8 @@ export default function Reportes() {
           {activo.id === 'compras' && <ComprasPorProveedor desde={desde} hasta={hasta} />}
           {activo.id === 'stock' && <StockBajo />}
           {activo.id === 'deudores' && <Deudores />}
+          {activo.id === 'pedido' && <PedidoSugerido />}
+          {activo.id === 'valor' && <ValorInventario />}
         </>
       )}
     </div>
@@ -381,4 +385,181 @@ function Deudores() {
   const filtro = { ubicacionId: seleccionadaId ?? undefined, page: pagina, size: 20 }
   const consulta = useQuery({ queryKey: ['fiado', 'deudores', filtro], queryFn: () => fiadoApi.deudores(filtro), placeholderData: keepPreviousData })
   return <TablaDeudores consulta={consulta} onPagina={setPagina} />
+}
+
+/** Ubicacion para los reportes del almacen: la elegida arriba o, si el ADMIN ve todas, el primer almacen. */
+function useUbicacionAlmacen(): number | undefined {
+  const usuario = useUsuario()
+  const { seleccionadaId, todas } = useUbicacion()
+  if (usuario.rol !== 'ADMIN') return undefined
+  return seleccionadaId ?? todas.find((u) => u.tipo === 'ALMACEN')?.id
+}
+
+/** Lo que conviene comprar: productos en su minimo, cuanto (hasta el doble del minimo), ultimo proveedor y costo. */
+function PedidoSugerido() {
+  const ubicacionId = useUbicacionAlmacen()
+  const consulta = useQuery({
+    queryKey: ['reportes', 'pedido-sugerido', ubicacionId],
+    queryFn: () => almacenApi.pedidoSugerido(ubicacionId),
+  })
+  const excel = useMutation({
+    mutationFn: () => excelApi.pedidoSugerido({ ubicacionId }),
+    onSuccess: (archivo) => guardarArchivo(archivo, `pedido-sugerido-${hoyLima()}.xlsx`),
+  })
+  const total = (consulta.data ?? []).reduce((suma, f) => suma + (f.montoEstimado ?? 0), 0)
+  return (
+    <TablaReporte
+      encabezados={
+        <>
+          <Th>Producto</Th>
+          <Th alinear="derecha">Stock</Th>
+          <Th alinear="derecha">Mínimo</Th>
+          <Th alinear="derecha">Comprar</Th>
+          <Th>Último proveedor</Th>
+          <Th alinear="derecha">Último costo</Th>
+          <Th alinear="derecha">Monto estimado</Th>
+        </>
+      }
+      pie={
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-borde px-5 py-3">
+          <p className="text-sm">
+            Total estimado: <span className="font-mono font-bold">{soles(total)}</span>
+          </p>
+          <Boton variante="secundario" tamano="sm" icono={<FileSpreadsheet className="size-4 text-exito" />} cargando={excel.isPending} onClick={() => excel.mutate()}>
+            Descargar en Excel
+          </Boton>
+        </div>
+      }
+    >
+      {consulta.isPending && (
+        <FilaCompleta columnas={7}>
+          <Cargando />
+        </FilaCompleta>
+      )}
+      {consulta.isError && (
+        <FilaCompleta columnas={7}>
+          <MensajeError error={consulta.error} />
+        </FilaCompleta>
+      )}
+      {consulta.data?.length === 0 && (
+        <FilaCompleta columnas={7}>
+          <EstadoVacio titulo="Nada que comprar" descripcion="Ningún producto llegó a su stock mínimo en esta ubicación." />
+        </FilaCompleta>
+      )}
+      {consulta.data?.map((f) => (
+        <Tr key={f.productoId} data-testid={`pedido-sugerido-${f.productoCodigo}`}>
+          <Td>
+            <p className="font-semibold">{f.productoNombre}</p>
+            <p className="font-mono text-xs text-tinta-tenue">{f.productoCodigo}</p>
+          </Td>
+          <Td alinear="derecha" className="font-mono text-peligro">{cantidad(f.stock)}</Td>
+          <Td alinear="derecha" className="font-mono">{cantidad(f.stockMinimo)}</Td>
+          <Td alinear="derecha" className="font-mono font-bold">{cantidadConUnidad(f.cantidadSugerida, f.unidadBase)}</Td>
+          <Td className="text-sm">
+            {f.ultimoProveedor ?? '—'}
+            {f.fechaUltimaCompra && <p className="text-xs text-tinta-tenue">{fecha(f.fechaUltimaCompra)}</p>}
+          </Td>
+          <Td alinear="derecha" className="font-mono">{f.ultimoCosto === null ? '—' : `S/ ${f.ultimoCosto.toFixed(4)}`}</Td>
+          <Td alinear="derecha" className="font-mono font-semibold">{f.montoEstimado === null ? '—' : soles(f.montoEstimado)}</Td>
+        </Tr>
+      ))}
+    </TablaReporte>
+  )
+}
+
+/** Cuanto dinero hay en stock (cantidad x costo de la ultima compra) y que productos no salen. */
+function ValorInventario() {
+  const usuario = useUsuario()
+  const { seleccionadaId } = useUbicacion()
+  const ubicacionId = usuario.rol === 'ADMIN' ? (seleccionadaId ?? undefined) : undefined
+  const [dias, setDias] = useState('')
+  const filtro = { ubicacionId, diasSinSalida: dias === '' ? undefined : Number(dias) }
+  const consulta = useQuery({
+    queryKey: ['reportes', 'valor-inventario', filtro],
+    queryFn: () => almacenApi.valorInventario(filtro),
+    placeholderData: keepPreviousData,
+  })
+  const excel = useMutation({
+    mutationFn: () => excelApi.valorInventario(filtro),
+    onSuccess: (archivo) => guardarArchivo(archivo, `valor-inventario-${hoyLima()}.xlsx`),
+  })
+  return (
+    <>
+      <Tarjeta className="mb-5 grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div>
+          <p className="text-xs font-semibold tracking-wide text-tinta-tenue uppercase">Valor del inventario</p>
+          <p className="font-mono text-2xl font-bold" data-testid="valor-total">{soles(consulta.data?.valorTotal ?? 0)}</p>
+        </div>
+        <div>
+          <p className="text-xs font-semibold tracking-wide text-tinta-tenue uppercase">Productos</p>
+          <p className="font-mono text-2xl font-bold">{consulta.data?.productos ?? 0}</p>
+          {(consulta.data?.productosSinCosto ?? 0) > 0 && (
+            <p className="text-xs text-tinta-tenue">{consulta.data?.productosSinCosto} sin compras registradas (no suman)</p>
+          )}
+        </div>
+        <CampoSelector etiqueta="Productos a mostrar" value={dias} onChange={(e) => setDias(e.target.value)}>
+          <option value="">Todo el stock</option>
+          <option value="30">Sin salida hace 30 días o más</option>
+          <option value="60">Sin salida hace 60 días o más</option>
+          <option value="90">Sin salida hace 90 días o más</option>
+          <option value="180">Sin salida hace 180 días o más</option>
+        </CampoSelector>
+        <Boton variante="secundario" icono={<FileSpreadsheet className="size-4 text-exito" />} cargando={excel.isPending} onClick={() => excel.mutate()} className="self-end">
+          Descargar en Excel
+        </Boton>
+      </Tarjeta>
+      <TablaReporte
+        encabezados={
+          <>
+            <Th>Producto</Th>
+            <Th>Ubicación</Th>
+            <Th alinear="derecha">Cantidad</Th>
+            <Th alinear="derecha">Costo unitario</Th>
+            <Th alinear="derecha">Valor</Th>
+            <Th>Última salida</Th>
+          </>
+        }
+      >
+        {consulta.isPending && (
+          <FilaCompleta columnas={6}>
+            <Cargando />
+          </FilaCompleta>
+        )}
+        {consulta.isError && (
+          <FilaCompleta columnas={6}>
+            <MensajeError error={consulta.error} />
+          </FilaCompleta>
+        )}
+        {consulta.data?.filas.length === 0 && (
+          <FilaCompleta columnas={6}>
+            <EstadoVacio titulo="Sin productos" descripcion="No hay stock con estos filtros." />
+          </FilaCompleta>
+        )}
+        {consulta.data?.filas.map((f) => (
+          <Tr key={`${f.productoId}-${f.ubicacionId}`}>
+            <Td>
+              <p className="font-semibold">{f.productoNombre}</p>
+              <p className="font-mono text-xs text-tinta-tenue">{f.productoCodigo}</p>
+            </Td>
+            <Td className="text-tinta-suave">{f.ubicacionNombre}</Td>
+            <Td alinear="derecha" className="font-mono">{cantidadConUnidad(f.cantidad, f.unidadBase)}</Td>
+            <Td alinear="derecha" className="font-mono">{f.costoUnitario === null ? '—' : `S/ ${f.costoUnitario.toFixed(4)}`}</Td>
+            <Td alinear="derecha" className="font-mono font-semibold">{f.valor === null ? '—' : soles(f.valor)}</Td>
+            <Td className="text-sm">
+              {f.ultimaSalida ? (
+                <>
+                  {fecha(f.ultimaSalida)}
+                  <p className={f.diasSinSalida !== null && f.diasSinSalida >= 90 ? 'text-xs text-peligro' : 'text-xs text-tinta-tenue'}>
+                    hace {f.diasSinSalida} días
+                  </p>
+                </>
+              ) : (
+                <span className="text-xs text-peligro">Nunca salió</span>
+              )}
+            </Td>
+          </Tr>
+        ))}
+      </TablaReporte>
+    </>
+  )
 }

@@ -347,6 +347,8 @@ export interface StockResponse {
   cantidad: number
   stockMinimo: number
   bajo: boolean
+  /** Donde esta el producto dentro de la ubicacion, Ej: "Pasillo 3 - Estante B" */
+  ubicacionFisica: string | null
 }
 
 export interface StockMinimoRequest {
@@ -894,4 +896,43 @@ export interface SugerenciaReposicionResponse {
   stockMinimo: number
   stockAlmacen: number
   cantidadSugerida: number
+}
+
+// ---------- Reportes del almacen ----------
+
+export interface PedidoSugeridoResponse {
+  productoId: number
+  productoCodigo: string
+  productoNombre: string
+  unidadBase: UnidadBase
+  stock: number
+  stockMinimo: number
+  /** Hasta el doble del minimo, en unidad base */
+  cantidadSugerida: number
+  ultimoProveedor: string | null
+  fechaUltimaCompra: string | null
+  /** Costo por unidad base de la ultima compra */
+  ultimoCosto: number | null
+  montoEstimado: number | null
+}
+
+export interface ValorInventarioFila {
+  productoId: number
+  productoCodigo: string
+  productoNombre: string
+  unidadBase: UnidadBase
+  ubicacionId: number
+  ubicacionNombre: string
+  cantidad: number
+  costoUnitario: number | null
+  valor: number | null
+  ultimaSalida: string | null
+  diasSinSalida: number | null
+}
+
+export interface ValorInventarioResponse {
+  valorTotal: number
+  productos: number
+  productosSinCosto: number
+  filas: ValorInventarioFila[]
 }
