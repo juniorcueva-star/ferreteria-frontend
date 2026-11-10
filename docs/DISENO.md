@@ -141,3 +141,10 @@ muestran "Incluye: ..." debajo de la línea.
 
 Sin búsqueda se muestran **los más vendidos de la tienda** (últimos 30 días). Al cobrar al contado, "Paga con:"
 ofrece Exacto y billetes redondos que alcanzan el total. Atajos: **F2** buscar, **F9** cobrar.
+
+## Reposición
+
+Pantalla **Reposición** (todos los roles). La tienda pide al almacén ("Nuevo pedido", con "Agregar lo que está en su
+stock mínimo") o desde el aviso de stock bajo del punto de venta ("Pedir reposición"). El almacén atiende el pedido
+con un traslado (puede enviar menos) o lo rechaza, y tiene el **Traslado sugerido**: elige una tienda y envía con un
+clic lo que está en su mínimo.

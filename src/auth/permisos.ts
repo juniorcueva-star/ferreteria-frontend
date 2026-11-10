@@ -28,6 +28,10 @@ export const PERMISOS = {
   'traslados.enviar': ADMIN_ALMACENERO,
   'traslados.anular': ADMIN_ALMACENERO,
   'traslados.recibir': TODOS,
+  // Pedidos de reposicion: la tienda pide, el almacen atiende o rechaza
+  'reposicion.ver': TODOS,
+  'reposicion.pedir': ADMIN_VENDEDOR,
+  'reposicion.atender': ADMIN_ALMACENERO,
   // Punto de venta
   'caja.usar': ADMIN_VENDEDOR,
   // Encargos de productos sin stock (se entregan como una venta)

@@ -23,6 +23,7 @@ const PuntoVenta = lazy(() => import('@/paginas/ventas/PuntoVenta'))
 const HistorialVentas = lazy(() => import('@/paginas/ventas/HistorialVentas'))
 const DetalleVenta = lazy(() => import('@/paginas/ventas/DetalleVenta'))
 const Encargos = lazy(() => import('@/paginas/encargos/Encargos'))
+const Reposicion = lazy(() => import('@/paginas/reposicion/Reposicion'))
 const Cotizaciones = lazy(() => import('@/paginas/cotizaciones/Cotizaciones'))
 const FormularioCotizacion = lazy(() => import('@/paginas/cotizaciones/FormularioCotizacion'))
 const DetalleCotizacion = lazy(() => import('@/paginas/cotizaciones/DetalleCotizacion'))
@@ -78,6 +79,7 @@ function Rutas() {
           <Route path="ventas/historial" element={<RutaProtegida permiso="ventas.ver"><HistorialVentas /></RutaProtegida>} />
           <Route path="ventas/:id" element={<RutaProtegida permiso="ventas.ver"><DetalleVenta /></RutaProtegida>} />
           <Route path="encargos" element={<RutaProtegida permiso="encargos.ver"><Encargos /></RutaProtegida>} />
+          <Route path="reposicion" element={<RutaProtegida permiso="reposicion.ver"><Reposicion /></RutaProtegida>} />
           <Route path="cotizaciones" element={<RutaProtegida permiso="cotizaciones.ver"><Cotizaciones /></RutaProtegida>} />
           <Route path="cotizaciones/nueva" element={<RutaProtegida permiso="cotizaciones.ver"><FormularioCotizacion /></RutaProtegida>} />
           <Route path="cotizaciones/:id" element={<RutaProtegida permiso="cotizaciones.ver"><DetalleCotizacion /></RutaProtegida>} />

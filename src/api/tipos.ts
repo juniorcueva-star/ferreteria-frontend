@@ -847,3 +847,51 @@ export interface AuditoriaResponse {
   accion: string
   descripcion: string
 }
+
+// ---------- Pedidos de reposicion ----------
+
+export type EstadoSolicitud = 'PENDIENTE' | 'ATENDIDA' | 'RECHAZADA' | 'ANULADA'
+
+export interface SolicitudReposicionRequest {
+  /** El VENDEDOR la omite (su tienda); el ADMIN la indica */
+  ubicacionId: number | null
+  observacion: string | null
+  /** Cantidades en unidad base */
+  detalles: { productoId: number; cantidad: number }[]
+}
+
+export interface SolicitudReposicionResponse {
+  id: number
+  codigo: string
+  ubicacionId: number
+  ubicacionNombre: string
+  estado: EstadoSolicitud
+  observacion: string | null
+  usuario: string
+  fecha: string
+  atendidaPor: string | null
+  atendidaAt: string | null
+  motivo: string | null
+  trasladoId: number | null
+  trasladoCodigo: string | null
+  detalles: { productoId: number; productoCodigo: string; productoNombre: string; unidadBase: UnidadBase; cantidad: number }[]
+}
+
+export interface AtencionSolicitudRequest {
+  /** El ALMACENERO lo omite (su almacen); el ADMIN lo indica */
+  origenId: number | null
+  observacion: string | null
+  /** Cantidad a enviar por producto (0 = no se envia); vacio = lo pedido */
+  detalles: { productoId: number; cantidad: number }[]
+}
+
+export interface SugerenciaReposicionResponse {
+  productoId: number
+  productoCodigo: string
+  productoNombre: string
+  unidadBase: UnidadBase
+  stockTienda: number
+  stockMinimo: number
+  stockAlmacen: number
+  cantidadSugerida: number
+}

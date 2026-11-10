@@ -15,6 +15,7 @@ import type {
 import { ventasApi } from '@/api/ventas'
 import { EditorPagos } from '@/componentes/formularios/EditorPagos'
 import { ModalEncargo } from '@/componentes/formularios/ModalEncargo'
+import { ModalPedidoReposicion } from '@/componentes/formularios/ModalPedidoReposicion'
 import { SelectorCliente } from '@/componentes/formularios/SelectorCliente'
 import { Boton } from '@/componentes/ui/Boton'
 import { Buscador } from '@/componentes/ui/Buscador'
@@ -71,6 +72,7 @@ export default function PuntoVenta() {
   const [intentado, setIntentado] = useState(false)
   const [errorCodigo, setErrorCodigo] = useState<string | null>(null)
   const [vendida, setVendida] = useState<VentaResponse | null>(null)
+  const [pedido, setPedido] = useState<ProductoResponse | null>(null)
   const [encargo, setEncargo] = useState<{ producto: ProductoResponse; presentacionId: number } | null>(null)
   const busqueda = useRetraso(texto.trim(), 250)
   const tiendaId = caja.data?.ubicacionId
@@ -491,6 +493,15 @@ export default function PuntoVenta() {
                               : `Quedarán ${cantidad(aviso.restante)} ${sufijoUnidad(linea.unidadBase)}: pida reposición`}
                           </span>
                         )}
+                        {(aviso || sinStock) && productoDe(linea.productoId) && (
+                          <button
+                            type="button"
+                            className="font-semibold text-marca-texto underline"
+                            onClick={() => setPedido(productoDe(linea.productoId) ?? null)}
+                          >
+                            Pedir reposición
+                          </button>
+                        )}
                         {sinStock && esCompleto && (
                           <span className="text-peligro">
                             Stock insuficiente: alcanza para{' '}
@@ -690,6 +701,7 @@ export default function PuntoVenta() {
           </div>
         </Modal>
       )}
+      {pedido && <ModalPedidoReposicion productoInicial={pedido} tiendaInicial={tiendaId ?? null} onCerrar={() => setPedido(null)} />}
       {encargo && (
         <ModalEncargo
           producto={encargo.producto}
