@@ -71,6 +71,7 @@ test('pantallas del administrador', async ({ page }) => {
   await expect(page.getByRole('img').first()).toBeVisible()
   await capturar(page, '03-productos')
 
+  await page.getByLabel('Buscar producto').fill('Clavo de acero')
   await page.getByRole('button', { name: /^Editar Clavo de acero/ }).click()
   await expect(page.getByRole('heading', { name: 'Editar producto' })).toBeVisible()
   await capturar(page, '04-producto-editar')

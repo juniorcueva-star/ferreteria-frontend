@@ -16,6 +16,7 @@ const Productos = lazy(() => import('@/paginas/productos/Productos'))
 const FormularioProducto = lazy(() => import('@/paginas/productos/FormularioProducto'))
 const Inventario = lazy(() => import('@/paginas/inventario/Inventario'))
 const Disponibilidad = lazy(() => import('@/paginas/inventario/Disponibilidad'))
+const Conteo = lazy(() => import('@/paginas/inventario/Conteo'))
 const Movimientos = lazy(() => import('@/paginas/movimientos/Movimientos'))
 const NuevoTraslado = lazy(() => import('@/paginas/movimientos/NuevoTraslado'))
 const Caja = lazy(() => import('@/paginas/caja/Caja'))
@@ -71,6 +72,7 @@ function Rutas() {
           <Route path="productos/nuevo" element={<RutaProtegida permiso="productos.editar"><FormularioProducto /></RutaProtegida>} />
           <Route path="productos/:id" element={<RutaProtegida permiso="productos.editar"><FormularioProducto /></RutaProtegida>} />
           <Route path="inventario" element={<RutaProtegida permiso="inventario.ver"><Inventario /></RutaProtegida>} />
+          <Route path="inventario/conteo" element={<RutaProtegida permiso="inventario.ajustar"><Conteo /></RutaProtegida>} />
           <Route path="disponibilidad" element={<RutaProtegida permiso="disponibilidad.ver"><Disponibilidad /></RutaProtegida>} />
           <Route path="movimientos" element={<RutaProtegida permiso="kardex.ver"><Movimientos /></RutaProtegida>} />
           <Route path="movimientos/traslados/nuevo" element={<RutaProtegida permiso="traslados.enviar"><NuevoTraslado /></RutaProtegida>} />

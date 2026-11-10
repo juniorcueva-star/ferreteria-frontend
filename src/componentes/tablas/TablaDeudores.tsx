@@ -1,6 +1,11 @@
 import type { UseQueryResult } from '@tanstack/react-query'
+import { MessageCircle } from 'lucide-react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 import type { DeudorResponse, PaginaResponse } from '@/api/tipos'
+import { fiadoApi } from '@/api/ventas'
+import { ModalEnlaceWhatsapp } from '@/componentes/formularios/ModalEnlaceWhatsapp'
+import { Boton } from '@/componentes/ui/Boton'
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/ui/Estados'
 import { Paginacion } from '@/componentes/ui/Paginacion'
 import { FilaCompleta, Tabla, Tbody, Td, Th, Thead, Tr } from '@/componentes/ui/Tabla'
@@ -16,6 +21,7 @@ export function TablaDeudores({
   onPagina: (n: number) => void
 }) {
   const hoy = hoyLima()
+  const [recordando, setRecordando] = useState<DeudorResponse | null>(null)
   return (
     <Tarjeta className="overflow-hidden">
       <Tabla>
@@ -28,21 +34,22 @@ export function TablaDeudores({
             <Th>Deuda más antigua</Th>
             <Th>Próximo vencimiento</Th>
             <Th alinear="derecha">Deuda total</Th>
+            <Th alinear="derecha">Cobrar</Th>
           </tr>
         </Thead>
         <Tbody>
           {consulta.isPending && (
-            <FilaCompleta columnas={7}>
+            <FilaCompleta columnas={8}>
               <Cargando />
             </FilaCompleta>
           )}
           {consulta.isError && (
-            <FilaCompleta columnas={7}>
+            <FilaCompleta columnas={8}>
               <MensajeError error={consulta.error} />
             </FilaCompleta>
           )}
           {consulta.data?.contenido.length === 0 && (
-            <FilaCompleta columnas={7}>
+            <FilaCompleta columnas={8}>
               <EstadoVacio titulo="Nadie debe" descripcion="No hay clientes con deudas pendientes." />
             </FilaCompleta>
           )}
@@ -64,11 +71,25 @@ export function TablaDeudores({
                 {fecha(d.proximoVencimiento)}
               </Td>
               <Td alinear="derecha" className="font-mono font-bold text-alerta">{soles(d.deudaTotal)}</Td>
+              <Td alinear="derecha">
+                <Boton variante="fantasma" tamano="sm" icono={<MessageCircle className="size-4" />} onClick={() => setRecordando(d)} aria-label={`Recordar deuda a ${d.clienteNombre}`}>
+                  Recordar
+                </Boton>
+              </Td>
             </Tr>
           ))}
         </Tbody>
       </Tabla>
       <Paginacion pagina={consulta.data} onCambiar={onPagina} />
+      {recordando && (
+        <ModalEnlaceWhatsapp
+          titulo={`Recordar deuda a ${recordando.clienteNombre}`}
+          descripcion={`Se abre WhatsApp con sus ventas pendientes y el total (${soles(recordando.deudaTotal)}).`}
+          telefonoInicial={recordando.telefono}
+          generar={(telefono) => fiadoApi.recordatorioWhatsapp(recordando.clienteId, telefono)}
+          onCerrar={() => setRecordando(null)}
+        />
+      )}
     </Tarjeta>
   )
 }

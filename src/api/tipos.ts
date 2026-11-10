@@ -936,3 +936,30 @@ export interface ValorInventarioResponse {
   productosSinCosto: number
   filas: ValorInventarioFila[]
 }
+
+// ---------- Inventario fisico ----------
+
+export interface ConteoRequest {
+  /** El ALMACENERO la omite (su almacen); el ADMIN la indica */
+  ubicacionId: number | null
+  observacion: string | null
+  /** Lo contado de cada producto, en unidad base */
+  detalles: { productoId: number; cantidadContada: number }[]
+}
+
+export interface ConteoResponse {
+  ubicacionId: number
+  ubicacionNombre: string
+  productosContados: number
+  conDiferencia: number
+  lineas: {
+    productoId: number
+    productoCodigo: string
+    productoNombre: string
+    unidadBase: UnidadBase
+    sistema: number
+    contado: number
+    /** contado - sistema (positivo: sobraba; negativo: faltaba) */
+    diferencia: number
+  }[]
+}

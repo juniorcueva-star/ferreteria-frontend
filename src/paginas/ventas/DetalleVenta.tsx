@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, Ban, Download, HandCoins, Printer, Receipt } from 'lucide-react'
+import { ArrowLeft, Ban, Download, HandCoins, MessageCircle, Printer, Receipt } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { ventasApi } from '@/api/ventas'
 import { usePermiso } from '@/auth/contexto'
 import { ConfirmarAnulacion } from '@/componentes/formularios/ConfirmarAnulacion'
 import { ModalAbono } from '@/componentes/formularios/ModalAbono'
+import { ModalEnlaceWhatsapp } from '@/componentes/formularios/ModalEnlaceWhatsapp'
 import { Boton } from '@/componentes/ui/Boton'
 import { Dato } from '@/componentes/ui/Dato'
 import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
@@ -28,6 +29,7 @@ export default function DetalleVenta() {
   const puedeAbonar = usePermiso('fiado.ver')
   const [anulando, setAnulando] = useState(false)
   const [abonando, setAbonando] = useState(false)
+  const [whatsapp, setWhatsapp] = useState(false)
   const consulta = useQuery({ queryKey: ['ventas', 'detalle', ventaId], queryFn: () => ventasApi.obtener(ventaId) })
   const pdf = useDocumentoPdf(() => ventasApi.pdf(ventaId), `${consulta.data?.numeroDocumento ?? `venta-${ventaId}`}.pdf`)
   const ticket = useDocumentoPdf(() => ventasApi.ticket(ventaId), `ticket-${consulta.data?.numeroDocumento ?? ventaId}.pdf`)
@@ -65,6 +67,9 @@ export default function DetalleVenta() {
             </Boton>
             <Boton variante="secundario" icono={<Receipt className="size-4" />} cargando={ticket.imprimiendo} onClick={ticket.imprimir}>
               Ticket
+            </Boton>
+            <Boton variante="secundario" icono={<MessageCircle className="size-4" />} onClick={() => setWhatsapp(true)}>
+              WhatsApp
             </Boton>
             {puedeAbonar && v.estado === 'EMITIDA' && v.saldoPendiente > 0 && (
               <Boton icono={<HandCoins className="size-4" />} onClick={() => setAbonando(true)}>
@@ -187,6 +192,14 @@ export default function DetalleVenta() {
         onConfirmar={(motivo) => anular.mutate(motivo)}
       />
       {abonando && <ModalAbono venta={v} onCerrar={() => setAbonando(false)} />}
+      {whatsapp && (
+        <ModalEnlaceWhatsapp
+          titulo={`Enviar ${v.numeroDocumento} por WhatsApp`}
+          descripcion="Se abre WhatsApp con el resumen y un enlace para descargar la nota de venta en PDF."
+          generar={(telefono) => ventasApi.enlaceWhatsapp(v.id, telefono)}
+          onCerrar={() => setWhatsapp(false)}
+        />
+      )}
     </div>
   )
 }

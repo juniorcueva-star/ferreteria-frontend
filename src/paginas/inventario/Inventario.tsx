@@ -1,9 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ClipboardPlus, MapPin, SlidersHorizontal, Target } from 'lucide-react'
+import { ClipboardCheck, ClipboardPlus, MapPin, SlidersHorizontal, Target } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { useSearchParams } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { z } from 'zod'
 import { inventarioApi } from '@/api/inventario'
 import type { StockResponse, TipoAjuste } from '@/api/tipos'
@@ -38,6 +38,7 @@ export default function Inventario() {
   const [texto, setTexto] = useState('')
   const [soloBajo, setSoloBajo] = useState(parametros.get('soloBajo') === '1')
   const [pagina, setPagina] = useState(0)
+  const navegar = useNavigate()
   const [ajuste, setAjuste] = useState(false)
   const [inicial, setInicial] = useState(false)
   const [minimo, setMinimo] = useState<StockResponse | null>(null)
@@ -75,6 +76,11 @@ export default function Inventario() {
             {puedeInicial && (
               <Boton variante="secundario" icono={<ClipboardPlus className="size-4" />} onClick={() => setInicial(true)}>
                 Inventario inicial
+              </Boton>
+            )}
+            {puedeAjustar && (
+              <Boton variante="secundario" icono={<ClipboardCheck className="size-4" />} onClick={() => navegar('/inventario/conteo')}>
+                Inventario físico
               </Boton>
             )}
             {puedeAjustar && (

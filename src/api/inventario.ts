@@ -1,5 +1,7 @@
 import { http } from './cliente'
 import type {
+  ConteoRequest,
+  ConteoResponse,
   AjusteRequest,
   AnulacionRequest,
   EstadoTraslado,
@@ -52,6 +54,8 @@ export const inventarioApi = {
   /** Stock de todas las tiendas y el almacen por producto (solo lectura, para cualquier usuario). */
   resumen: (filtro: FiltroResumen) =>
     http.get<PaginaResponse<ResumenStockResponse>>('/inventario/resumen', { params: filtro }).then((r) => r.data),
+  /** Inventario fisico: lo contado; el sistema crea los ajustes por las diferencias */
+  conteo: (datos: ConteoRequest) => http.post<ConteoResponse>('/inventario/conteo', datos).then((r) => r.data),
   definirMinimo: (datos: StockMinimoRequest) =>
     http.put<StockResponse>('/inventario/stock/minimo', datos).then((r) => r.data),
   /** Donde esta el producto dentro de la ubicacion (ADMIN o ALMACENERO en su almacen) */

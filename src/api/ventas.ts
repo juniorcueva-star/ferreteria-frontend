@@ -1,5 +1,6 @@
 import { http } from './cliente'
 import type {
+  EnlaceWhatsappResponse,
   AbonoRequest,
   AnulacionRequest,
   AperturaCajaRequest,
@@ -87,6 +88,11 @@ export const ventasApi = {
     http.post<VentaResponse>(`/ventas/${id}/anular`, datos).then((r) => r.data),
   /** Nota de venta en PDF (con logo, datos de la empresa y cuentas bancarias) */
   pdf: (id: number) => http.get<Blob>(`/ventas/${id}/pdf`, { responseType: 'blob' }).then((r) => r.data),
+  /** Enlace de WhatsApp con la nota de venta (sin telefono usa el celular del cliente) */
+  enlaceWhatsapp: (id: number, telefono: string | null) =>
+    http
+      .get<EnlaceWhatsappResponse>(`/ventas/${id}/enlace-whatsapp`, { params: { telefono: telefono ?? undefined } })
+      .then((r) => r.data),
   /** Ticket de 80 mm para tiquetera termica */
   ticket: (id: number) => http.get<Blob>(`/ventas/${id}/ticket`, { responseType: 'blob' }).then((r) => r.data),
 }
@@ -98,4 +104,9 @@ export const fiadoApi = {
     http.get<PaginaResponse<VentaResponse>>('/fiado/deudas', { params: filtro }).then((r) => r.data),
   deudores: (filtro: FiltroDeudores) =>
     http.get<PaginaResponse<DeudorResponse>>('/fiado/deudores', { params: filtro }).then((r) => r.data),
+  /** Enlace de WhatsApp para recordar la deuda (sin telefono usa el celular del cliente) */
+  recordatorioWhatsapp: (clienteId: number, telefono: string | null) =>
+    http
+      .get<EnlaceWhatsappResponse>(`/fiado/clientes/${clienteId}/recordatorio-whatsapp`, { params: { telefono: telefono ?? undefined } })
+      .then((r) => r.data),
 }
