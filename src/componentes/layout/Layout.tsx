@@ -67,7 +67,8 @@ export function Layout() {
             <CampanaAlertas />
           </div>
         </header>
-        <main key={pathname} className="flex-1 px-4 py-6 lg:px-8 lg:py-8">
+        {/* Espacio abajo para que la mascota del asistente y el boton de ayuda nunca tapen el final de la pagina */}
+        <main key={pathname} className="flex-1 px-4 pt-6 pb-28 lg:px-8 lg:pt-8">
           <Outlet />
         </main>
       </div>

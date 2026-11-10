@@ -1,19 +1,30 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { type UseMutationResult, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { RotateCcw, SendHorizontal, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { asistenteApi } from '@/api/asistente'
-import type { EstadoAsistente, MensajeChat } from '@/api/tipos'
+import type { EstadoAsistente, MensajeChat, RespuestaAsistente } from '@/api/tipos'
+import { useUsuario } from '@/auth/contexto'
 import { Boton } from '@/componentes/ui/Boton'
 import { cn } from '@/componentes/ui/cn'
 import { Cargando, MensajeError } from '@/componentes/ui/Estados'
 import { historialParaEnviar, MAXIMO_PREGUNTA, segmentosDe, textoConsultas } from '@/logica/asistente'
+import {
+  guardarConversacion,
+  guardarPosicion,
+  leerConversacion,
+  leerPosicion,
+  limitar,
+  type MensajeGuardado,
+  posicionInicial,
+  posicionPanel,
+  type Punto,
+  seMovio,
+} from '@/logica/asistenteFlotante'
 
-interface MensajeVisible extends MensajeChat {
-  consultas?: string[]
-}
+type MensajeVisible = MensajeGuardado
 
 const esquema = z.object({
   pregunta: z.string().trim().min(1, 'Escriba su pregunta').max(MAXIMO_PREGUNTA, `Máximo ${MAXIMO_PREGUNTA} caracteres`),
@@ -29,41 +40,36 @@ function Cara({ className }: { className?: string }) {
   return <img src={CARA} alt="" aria-hidden className={cn('shrink-0 rounded-full object-cover ring-2 ring-marca', className)} />
 }
 
+/** Tamano de la mascota flotante (la figura completa del perno) */
+const MASCOTA = { ancho: 74, alto: 80 }
+const MASCOTA_IMG = '/asistente-mascota.webp'
+
+const ventana = () => ({ ancho: window.innerWidth, alto: window.innerHeight })
+const tamanoPanel = () => ({ ancho: Math.min(416, window.innerWidth - 16), alto: Math.min(576, window.innerHeight - 16) })
+
 /**
- * Asistente de IA de apoyo (version basica): boton flotante que abre un chat al costado. Solo consulta datos con
- * los permisos del usuario (productos, precios y stock; el almacen ve lo que falta reponer; el dueno, ventas y
- * deudores). La conversacion vive solo en esta pantalla: al recargar empieza de nuevo.
+ * Asistente de IA de apoyo (version basica): la mascota del perno flota sobre la pantalla; se puede arrastrar para
+ * que no tape nada (recuerda donde quedo) y al tocarla abre el chat a su lado. Solo consulta datos con los permisos
+ * del usuario. La conversacion sigue al cerrar el chat o cambiar de pantalla; "Nueva conversacion" la borra.
  */
 export function Asistente() {
-  const [abierto, setAbierto] = useState(false)
-  return (
-    <>
-      <button
-        type="button"
-        onClick={() => setAbierto((v) => !v)}
-        aria-expanded={abierto}
-        className="fixed right-20 bottom-5 z-20 inline-flex h-12 items-center gap-2 rounded-full bg-marca py-1 pr-4 pl-1 font-semibold text-sobre-marca shadow-lg hover:bg-marca-oscuro"
-      >
-        <Cara className="size-10 ring-white" />
-        Asistente
-      </button>
-      {abierto && <PanelAsistente onCerrar={() => setAbierto(false)} />}
-    </>
-  )
-}
-
-function PanelAsistente({ onCerrar }: { onCerrar: () => void }) {
+  const usuario = useUsuario()
   const queryClient = useQueryClient()
-  const estado = useQuery({ queryKey: CLAVE_ESTADO, queryFn: asistenteApi.estado })
-  const [mensajes, setMensajes] = useState<MensajeVisible[]>([])
-  const fin = useRef<HTMLDivElement>(null)
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setFocus,
-    formState: { errors },
-  } = useForm<Datos>({ resolver: zodResolver(esquema), defaultValues: { pregunta: '' } })
+  const [abierto, setAbierto] = useState(false)
+  const [mensajes, setMensajes] = useState<MensajeVisible[]>(() => leerConversacion(usuario.id))
+  const [posicion, setPosicion] = useState<Punto>(() => limitar(leerPosicion(usuario.id) ?? posicionInicial(MASCOTA, ventana()), MASCOTA, ventana()))
+  const [arrastrando, setArrastrando] = useState(false)
+  const toque = useRef<{ inicio: Punto; origen: Punto; movio: boolean; ultima: Punto } | null>(null)
+  const recienArrastrado = useRef(false)
+
+  useEffect(() => guardarConversacion(usuario.id, mensajes), [usuario.id, mensajes])
+
+  // Si la ventana se achica (o se gira la tablet) la mascota no queda fuera de la pantalla
+  useEffect(() => {
+    const ajustar = () => setPosicion((p) => limitar(p, MASCOTA, ventana()))
+    window.addEventListener('resize', ajustar)
+    return () => window.removeEventListener('resize', ajustar)
+  }, [])
 
   const preguntar = useMutation({
     mutationFn: ({ pregunta, historial }: { pregunta: string; historial: MensajeChat[] }) => asistenteApi.preguntar(pregunta, historial),
@@ -79,8 +85,109 @@ function PanelAsistente({ onCerrar }: { onCerrar: () => void }) {
     const historial = historialParaEnviar(mensajes.map(({ rol, texto: t }) => ({ rol, texto: t })))
     setMensajes((m) => [...m, { rol: 'USUARIO', texto }])
     preguntar.mutate({ pregunta: texto, historial })
-    reset({ pregunta: '' })
   }
+
+  const panel = tamanoPanel()
+  const lugarPanel = posicionPanel({ ...posicion, ...MASCOTA }, panel, ventana())
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label="Asistente"
+        aria-expanded={abierto}
+        title="Tócame para preguntar o arrástrame para moverme"
+        data-testid="asistente-mascota"
+        style={{ left: posicion.x, top: posicion.y, width: MASCOTA.ancho, height: MASCOTA.alto }}
+        className={cn(
+          'group fixed z-30 touch-none select-none',
+          arrastrando ? 'cursor-grabbing' : 'cursor-grab transition-transform hover:-translate-y-1 hover:scale-105',
+        )}
+        onPointerDown={(e) => {
+          e.currentTarget.setPointerCapture(e.pointerId)
+          toque.current = { inicio: { x: e.clientX, y: e.clientY }, origen: posicion, movio: false, ultima: posicion }
+        }}
+        onPointerMove={(e) => {
+          const t = toque.current
+          if (!t) return
+          const actual = { x: e.clientX, y: e.clientY }
+          if (!t.movio && !seMovio(t.inicio, actual)) return
+          t.movio = true
+          setArrastrando(true)
+          t.ultima = limitar({ x: t.origen.x + actual.x - t.inicio.x, y: t.origen.y + actual.y - t.inicio.y }, MASCOTA, ventana())
+          setPosicion(t.ultima)
+        }}
+        onPointerUp={() => {
+          const t = toque.current
+          toque.current = null
+          setArrastrando(false)
+          if (t?.movio) {
+            recienArrastrado.current = true
+            guardarPosicion(usuario.id, t.ultima)
+          }
+        }}
+        onPointerCancel={() => {
+          toque.current = null
+          setArrastrando(false)
+        }}
+        onClick={() => {
+          // Soltar despues de arrastrar no abre el chat; un toque (o Enter con el teclado) si
+          if (recienArrastrado.current) {
+            recienArrastrado.current = false
+            return
+          }
+          setAbierto((v) => !v)
+        }}
+      >
+        <img
+          src={MASCOTA_IMG}
+          alt=""
+          aria-hidden
+          draggable={false}
+          className={cn('pointer-events-none size-full object-contain drop-shadow-[0_6px_10px_rgba(0,0,0,0.35)]', arrastrando && 'scale-110')}
+        />
+        {!abierto && mensajes.length > 0 && (
+          <span className="absolute top-0 right-0 size-3.5 rounded-full border-2 border-white bg-exito" aria-hidden title="Hay una conversación abierta" />
+        )}
+      </button>
+      {abierto && (
+        <PanelAsistente
+          lugar={lugarPanel}
+          tamano={panel}
+          mensajes={mensajes}
+          preguntar={preguntar}
+          enviar={enviar}
+          nuevaConversacion={() => {
+            setMensajes([])
+            preguntar.reset()
+          }}
+          onCerrar={() => setAbierto(false)}
+        />
+      )}
+    </>
+  )
+}
+
+interface PropsPanel {
+  lugar: Punto
+  tamano: { ancho: number; alto: number }
+  mensajes: MensajeVisible[]
+  preguntar: UseMutationResult<RespuestaAsistente, Error, { pregunta: string; historial: MensajeChat[] }>
+  enviar: (pregunta: string) => void
+  nuevaConversacion: () => void
+  onCerrar: () => void
+}
+
+function PanelAsistente({ lugar, tamano, mensajes, preguntar, enviar, nuevaConversacion, onCerrar }: PropsPanel) {
+  const estado = useQuery({ queryKey: CLAVE_ESTADO, queryFn: asistenteApi.estado })
+  const fin = useRef<HTMLDivElement>(null)
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setFocus,
+    formState: { errors },
+  } = useForm<Datos>({ resolver: zodResolver(esquema), defaultValues: { pregunta: '' } })
 
   useEffect(() => {
     fin.current?.scrollIntoView({ block: 'end' })
@@ -99,7 +206,8 @@ function PanelAsistente({ onCerrar }: { onCerrar: () => void }) {
     <section
       role="dialog"
       aria-label={nombre}
-      className="fixed right-4 bottom-20 z-40 flex h-[min(36rem,calc(100vh-7rem))] w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-borde bg-white shadow-2xl"
+      style={{ left: lugar.x, top: lugar.y, width: tamano.ancho, height: tamano.alto }}
+      className="fixed z-40 flex flex-col overflow-hidden rounded-2xl border border-borde bg-white shadow-2xl"
     >
       <header className="flex items-center gap-3 bg-lateral px-4 py-3 text-white">
         <Cara className="size-11" />
@@ -114,10 +222,7 @@ function PanelAsistente({ onCerrar }: { onCerrar: () => void }) {
         {mensajes.length > 0 && (
           <button
             type="button"
-            onClick={() => {
-              setMensajes([])
-              preguntar.reset()
-            }}
+            onClick={nuevaConversacion}
             className="rounded-lg p-1.5 text-lateral-texto hover:bg-white/10 hover:text-white"
             aria-label="Nueva conversación"
             title="Nueva conversación"
@@ -196,6 +301,7 @@ function PanelAsistente({ onCerrar }: { onCerrar: () => void }) {
           onSubmit={(e) => {
             void handleSubmit((d) => {
               enviar(d.pregunta)
+              reset({ pregunta: '' })
               setFocus('pregunta')
             })(e)
           }}

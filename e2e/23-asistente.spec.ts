@@ -57,7 +57,36 @@ test('El asistente avisa si no está activado y conversa con preguntas sugeridas
     { rol: 'ASISTENTE', texto: 'Es el **taco fisher 1/4**: S/ 0.20 c/u.\nHay 120 en tu tienda.' },
   ])
 
-  // 4. Nueva conversación vuelve a mostrar las sugerencias
+  // 4. Cerrar el chat no borra la conversación: al volver a abrirlo sigue ahí
+  await panel.getByRole('button', { name: 'Cerrar asistente' }).click()
+  await expect(panel).toBeHidden()
+  await page.getByRole('button', { name: 'Asistente', exact: true }).click()
+  await expect(panel.getByTestId('mensaje-asistente')).toHaveCount(2)
+
+  // 5. Nueva conversación vuelve a mostrar las sugerencias
   await panel.getByRole('button', { name: 'Nueva conversación' }).click()
   await expect(panel.getByRole('group', { name: 'Preguntas sugeridas' })).toBeVisible()
+})
+
+test('La mascota del asistente se arrastra, no abre el chat al soltarla y recuerda dónde quedó', async ({ page }) => {
+  await iniciarSesion(page, 'vendedor1')
+  const mascota = page.getByTestId('asistente-mascota')
+  const antes = await mascota.boundingBox()
+  if (!antes) throw new Error('No se ve la mascota')
+  await page.mouse.move(antes.x + antes.width / 2, antes.y + antes.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(antes.x - 300, antes.y - 250, { steps: 8 })
+  await page.mouse.up()
+  const despues = await mascota.boundingBox()
+  expect(despues?.x).toBeLessThan(antes.x - 200)
+  expect(despues?.y).toBeLessThan(antes.y - 150)
+  // Soltar después de arrastrar no abre el chat
+  await expect(page.getByRole('dialog', { name: /Asistente/ })).toHaveCount(0)
+  // Al recargar sigue donde la dejó
+  await page.reload()
+  const recargada = await page.getByTestId('asistente-mascota').boundingBox()
+  expect(Math.abs((recargada?.x ?? 0) - (despues?.x ?? 0))).toBeLessThan(2)
+  // Un toque sí abre el chat, al lado de la mascota
+  await page.getByTestId('asistente-mascota').click()
+  await expect(page.getByRole('dialog', { name: /Asistente/ })).toBeVisible()
 })
