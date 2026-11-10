@@ -49,7 +49,8 @@ test('El vendedor agrega productos tocando los cuadritos con foto', async ({ pag
   await page.reload()
   await expect(vista.getByRole('button', { name: 'Fotos' })).toHaveAttribute('aria-pressed', 'true')
   const categorias = page.getByRole('group', { name: 'Categorías' })
-  const segunda = categorias.getByRole('button').nth(1)
+  // Botones: Ofertas, Todas y luego las categorias
+  const segunda = categorias.getByRole('button').nth(2)
   await segunda.click()
   await expect(segunda).toHaveAttribute('aria-pressed', 'true')
   await expect(categorias.getByRole('button', { name: 'Todas' })).toHaveAttribute('aria-pressed', 'false')

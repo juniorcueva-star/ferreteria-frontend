@@ -28,10 +28,10 @@ const clavo: ProductoResponse = {
   medida: null,
   completos: [],
   presentaciones: [
-    { id: 3, nombre: 'Millar', factor: 1000, precioVenta: 70, codigoBarras: null, principal: false, activo: true, decimales: 0, escalas: [] },
-    { id: 1, nombre: 'Unidad', factor: 1, precioVenta: 0.1, codigoBarras: null, principal: true, activo: true, decimales: 0, escalas: [] },
-    { id: 2, nombre: 'Ciento', factor: 100, precioVenta: 8, codigoBarras: null, principal: false, activo: true, decimales: 0, escalas: [] },
-    { id: 4, nombre: 'Caja vieja', factor: 500, precioVenta: 30, codigoBarras: null, principal: false, activo: false, decimales: 0, escalas: [] },
+    { id: 3, nombre: 'Millar', factor: 1000, precioVenta: 70, codigoBarras: null, principal: false, activo: true, decimales: 0, precioOferta: null, ofertaDesde: null, ofertaHasta: null, escalas: [] },
+    { id: 1, nombre: 'Unidad', factor: 1, precioVenta: 0.1, codigoBarras: null, principal: true, activo: true, decimales: 0, precioOferta: null, ofertaDesde: null, ofertaHasta: null, escalas: [] },
+    { id: 2, nombre: 'Ciento', factor: 100, precioVenta: 8, codigoBarras: null, principal: false, activo: true, decimales: 0, precioOferta: null, ofertaDesde: null, ofertaHasta: null, escalas: [] },
+    { id: 4, nombre: 'Caja vieja', factor: 500, precioVenta: 30, codigoBarras: null, principal: false, activo: false, decimales: 0, precioOferta: null, ofertaDesde: null, ofertaHasta: null, escalas: [] },
   ],
 }
 

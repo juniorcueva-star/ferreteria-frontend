@@ -53,7 +53,7 @@ import { avisoStockBajo } from '@/logica/stockBajo'
 import { billetesSugeridos } from '@/logica/billetes'
 import { etiquetaEnEspera, guardarEnEspera, leerEnEspera, MAXIMO_EN_ESPERA, ponerEnEspera, type VentaEnEspera } from '@/logica/ventasEnEspera'
 import { presentacionesActivas } from '@/logica/presentaciones'
-import { resumenEscalas } from '@/logica/precioMayor'
+import { ofertaVigente, resumenEscalas } from '@/logica/precioMayor'
 import { guardarVistaCaja, leerVistaCaja, type VistaCaja } from '@/logica/vistaCaja'
 
 const PAGO_INICIAL: PagoFormulario = { metodoPago: 'EFECTIVO', monto: '', numeroOperacion: '' }
@@ -95,6 +95,7 @@ export default function PuntoVenta() {
     guardarVistaCaja(v)
   }
   const [categoriaId, setCategoriaId] = useState<number | undefined>(undefined)
+  const [soloOfertas, setSoloOfertas] = useState(false)
   const categorias = useQuery({
     queryKey: ['categorias', 'pos'],
     queryFn: () => categoriasApi.listar({ activo: true, size: 100, sort: 'nombre,asc' }),
@@ -102,9 +103,16 @@ export default function PuntoVenta() {
   })
 
   const productos = useQuery({
-    queryKey: ['productos', 'pos', busqueda, categoriaId],
+    queryKey: ['productos', 'pos', busqueda, categoriaId, soloOfertas],
     queryFn: () =>
-      productosApi.listar({ texto: busqueda, categoriaId, activo: true, size: categoriaId === undefined ? 12 : 48, sort: 'nombre,asc' }),
+      productosApi.listar({
+        texto: busqueda,
+        categoriaId,
+        enOferta: soloOfertas || undefined,
+        activo: true,
+        size: categoriaId === undefined && !soloOfertas ? 12 : 48,
+        sort: 'nombre,asc',
+      }),
     placeholderData: keepPreviousData,
   })
   // Sin busqueda se muestran los mas vendidos de la tienda (si todavia no hay ventas, el catalogo)
@@ -114,7 +122,7 @@ export default function PuntoVenta() {
     enabled: tiendaId !== undefined,
     staleTime: 5 * 60_000,
   })
-  const conFrecuentes = busqueda === '' && categoriaId === undefined && (frecuentes.data?.length ?? 0) > 0
+  const conFrecuentes = busqueda === '' && categoriaId === undefined && !soloOfertas && (frecuentes.data?.length ?? 0) > 0
   const visibles: ProductoResponse[] = useMemo(
     () => (conFrecuentes ? (frecuentes.data ?? []) : (productos.data?.contenido ?? [])),
     [conFrecuentes, frecuentes.data, productos.data],
@@ -177,6 +185,7 @@ export default function PuntoVenta() {
         decimales: p.decimales,
         precio: p.precioVenta,
         escalas: p.escalas,
+        precioOferta: ofertaVigente(p, hoyLima()),
       }),
     )
   }
@@ -398,6 +407,17 @@ export default function PuntoVenta() {
                 ))}
               </div>
               <div className="flex gap-1.5 overflow-x-auto pb-1" role="group" aria-label="Categorías">
+                <button
+                  type="button"
+                  onClick={() => setSoloOfertas((v) => !v)}
+                  aria-pressed={soloOfertas}
+                  className={cn(
+                    'shrink-0 rounded-full border-2 border-marca px-3 py-1 text-xs font-bold whitespace-nowrap transition-colors',
+                    soloOfertas ? 'bg-marca text-sobre-marca' : 'bg-marca-claro text-tinta hover:bg-marca',
+                  )}
+                >
+                  Ofertas
+                </button>
                 {[{ id: undefined, nombre: 'Todas' }, ...(categorias.data?.contenido ?? [])].map((c) => (
                   <button
                     key={c.id ?? 'todas'}
@@ -479,7 +499,15 @@ export default function PuntoVenta() {
                           aria-label={`Agregar ${producto.nombre} ${p.nombre}`}
                         >
                           <span className="text-xs font-semibold text-tinta">{p.nombre}</span>
-                          <span className="font-mono text-xs text-marca-texto">{soles(p.precioVenta)}</span>
+                          {ofertaVigente(p, hoyLima()) !== null ? (
+                            <span className="font-mono text-xs">
+                              <s className="text-tinta-tenue">{soles(p.precioVenta)}</s>{' '}
+                              <strong className="text-marca-texto">{soles(ofertaVigente(p, hoyLima()) ?? p.precioVenta)}</strong>{' '}
+                              <span className="rounded bg-marca px-1 font-sans text-[10px] font-bold text-sobre-marca">OFERTA</span>
+                            </span>
+                          ) : (
+                            <span className="font-mono text-xs text-marca-texto">{soles(p.precioVenta)}</span>
+                          )}
                           {p.escalas.length > 0 && <span className="text-[10px] text-tinta-tenue">Por mayor: {resumenEscalas(p, soles)}</span>}
                         </button>
                       ))}
@@ -585,11 +613,14 @@ export default function PuntoVenta() {
                           <p className="text-sm leading-tight font-semibold text-tinta">{linea.productoNombre}</p>
                           <p className="font-mono text-xs text-tinta-suave">
                             {linea.presentacionNombre} ·{' '}
-                            {calculo?.tipoPrecio === 'MAYOR' ? (
+                            {calculo && calculo.tipoPrecio !== 'LISTA' ? (
                               <>
                                 <s className="text-tinta-tenue">{soles(linea.precio)}</s> <strong className="text-tinta">{soles(calculo.precioUnitario)}</strong>{' '}
-                                <span className="rounded bg-marca px-1 py-px font-sans text-[10px] font-bold text-sobre-marca" data-testid="precio-mayor">
-                                  POR MAYOR
+                                <span
+                                  className="rounded bg-marca px-1 py-px font-sans text-[10px] font-bold text-sobre-marca"
+                                  data-testid={calculo.tipoPrecio === 'MAYOR' ? 'precio-mayor' : 'precio-oferta'}
+                                >
+                                  {calculo.tipoPrecio === 'MAYOR' ? 'POR MAYOR' : 'OFERTA'}
                                 </span>
                               </>
                             ) : (

@@ -4,7 +4,7 @@ import { completosDisponibles, consumoPorProducto, calcularTotales, type LineaCa
 import { erroresCompleto, sumaPiezasCentimos, type PiezaEditable } from './completos'
 
 const unidad = (id: number, precio: number, decimales = 0): PresentacionResponse => ({
-  id, nombre: 'Unidad', factor: 1, precioVenta: precio, codigoBarras: null, principal: true, activo: true, decimales, escalas: [],
+  id, nombre: 'Unidad', factor: 1, precioVenta: precio, codigoBarras: null, principal: true, activo: true, decimales, precioOferta: null, ofertaDesde: null, ofertaHasta: null, escalas: [],
 })
 const pieza = (clave: number, productoId: number, p: PresentacionResponse, cantidad: string): PiezaEditable => ({
   clave, productoId, productoNombre: `P${productoId}`, presentaciones: [p], presentacionId: p.id, cantidad,

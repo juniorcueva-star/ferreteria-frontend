@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { etiquetaTipoPrecio, precioSegunCantidad, resumenEscalas } from './precioMayor'
+import { etiquetaTipoPrecio, ofertaVigente, precioSegunCantidad, resumenEscalas } from './precioMayor'
 
 const escalas = [
   { cantidadMinima: 100, precio: 0.4 },
@@ -24,5 +24,20 @@ describe('precio por mayor', () => {
     expect(resumenEscalas({ escalas }, (n) => `S/ ${n.toFixed(2)}`)).toBe('100+ a S/ 0.40 · 500+ a S/ 0.35')
     expect(etiquetaTipoPrecio('MAYOR')).toBe('Precio por mayor')
     expect(etiquetaTipoPrecio('LISTA')).toBeNull()
+  })
+
+  it('cobra la oferta vigente salvo que el precio por mayor sea menor', () => {
+    expect(precioSegunCantidad(0.5, escalas, 10, 0.45)).toEqual({ precio: 0.45, tipo: 'OFERTA' })
+    expect(precioSegunCantidad(0.5, escalas, 150, 0.45)).toEqual({ precio: 0.4, tipo: 'MAYOR' })
+    expect(precioSegunCantidad(0.5, escalas, 150, 0.38)).toEqual({ precio: 0.38, tipo: 'OFERTA' })
+  })
+
+  it('la oferta solo vale entre sus fechas, inclusive', () => {
+    const p = { precioVenta: 0.5, precioOferta: 0.45, ofertaDesde: '2026-11-10', ofertaHasta: '2026-11-20' }
+    expect(ofertaVigente(p, '2026-11-09')).toBeNull()
+    expect(ofertaVigente(p, '2026-11-10')).toBe(0.45)
+    expect(ofertaVigente(p, '2026-11-20')).toBe(0.45)
+    expect(ofertaVigente(p, '2026-11-21')).toBeNull()
+    expect(ofertaVigente({ ...p, precioOferta: null, ofertaDesde: null, ofertaHasta: null }, '2026-11-15')).toBeNull()
   })
 })

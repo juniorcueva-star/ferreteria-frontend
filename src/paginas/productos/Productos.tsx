@@ -23,9 +23,10 @@ import { Tarjeta } from '@/componentes/ui/Tarjeta'
 import { nombreCorto, useUbicacion } from '@/contexto/ubicacion'
 import { useCategorias } from '@/hooks/useCatalogos'
 import { useRetraso } from '@/hooks/useRetraso'
-import { cantidad, nombreUnidad, soles } from '@/logica/formato'
+import { cantidad, hoyLima, nombreUnidad, soles } from '@/logica/formato'
 import { presentacionPrincipal, presentacionesActivas, textoChip } from '@/logica/presentaciones'
 import { alternar, alternarPagina, textoAccionLote, todosSeleccionados } from '@/logica/seleccion'
+import { ofertaVigente } from '@/logica/precioMayor'
 
 type FiltroEstado = '' | 'activos' | 'inactivos'
 
@@ -341,7 +342,12 @@ export default function Productos() {
                       </Td>
                     )
                   })}
-                  <Td className="font-mono whitespace-nowrap text-tinta">{soles(principal?.precioVenta)}</Td>
+                  <Td className="font-mono whitespace-nowrap text-tinta">
+                    {soles(principal?.precioVenta)}
+                    {p.presentaciones.some((x) => x.activo && ofertaVigente(x, hoyLima()) !== null) && (
+                      <span className="ml-1.5 rounded bg-marca px-1 py-px font-sans text-[10px] font-bold text-sobre-marca">OFERTA</span>
+                    )}
+                  </Td>
                   <Td>
                     <Insignia tono={p.activo ? 'exito' : 'neutro'}>{p.activo ? 'Activo' : 'Inactivo'}</Insignia>
                   </Td>

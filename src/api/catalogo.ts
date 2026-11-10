@@ -8,6 +8,7 @@ import type {
   CategoriaResponse,
   EscalaPrecio,
   HistorialPrecioResponse,
+  OfertaRequest,
   PaginaResponse,
   Paginacion,
   PrecioSugeridoResponse,
@@ -29,6 +30,8 @@ export interface FiltroProductos extends Paginacion {
   categoriaId?: number
   unidadBase?: UnidadBase
   activo?: boolean
+  /** Solo los que tienen una oferta vigente hoy */
+  enOferta?: boolean
 }
 
 export const categoriasApi = {
@@ -58,6 +61,11 @@ export const productosApi = {
   /** Precio por mayor de una presentacion: reemplaza sus escalas (lista vacia = sin precio por mayor). Solo ADMIN */
   actualizarEscalas: (id: number, presentacionId: number, escalas: EscalaPrecio[]) =>
     http.put<ProductoResponse>(`/productos/${id}/presentaciones/${presentacionId}/escalas`, { escalas }).then((r) => r.data),
+  /** Oferta de una presentacion entre dos fechas (solo ADMIN) */
+  actualizarOferta: (id: number, presentacionId: number, datos: OfertaRequest) =>
+    http.put<ProductoResponse>(`/productos/${id}/presentaciones/${presentacionId}/oferta`, datos).then((r) => r.data),
+  quitarOferta: (id: number, presentacionId: number) =>
+    http.delete<ProductoResponse>(`/productos/${id}/presentaciones/${presentacionId}/oferta`).then((r) => r.data),
   subirImagen: (id: number, archivo: File) => {
     const formulario = new FormData()
     formulario.append('archivo', archivo)

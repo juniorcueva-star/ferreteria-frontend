@@ -40,6 +40,8 @@ export interface LineaCarrito {
   precio: number
   /** Precio por mayor de la presentacion (el precio baja solo al llegar a la cantidad) */
   escalas?: EscalaPrecio[]
+  /** Precio de oferta vigente al agregarla (null si no tiene) */
+  precioOferta?: number | null
   /** Cantidad en la presentacion elegida, tal como la escribe el vendedor */
   cantidad: string
   /** Descuento en soles para toda la linea */
@@ -105,7 +107,7 @@ export function calcularLinea(linea: LineaCarrito): CalculoLinea {
     }
   }
   const cantidadMilesimas = escalar(linea.cantidad, 3)
-  const { precio, tipo } = precioSegunCantidad(linea.precio, linea.escalas, Number(linea.cantidad.trim().replace(',', '.')))
+  const { precio, tipo } = precioSegunCantidad(linea.precio, linea.escalas, Number(linea.cantidad.trim().replace(',', '.')), linea.precioOferta ?? null)
   const importe = Number(dividirRedondeando(cantidadMilesimas * escalar(precio, 2), 1000n))
   const cantidadBase = deMilesimas(
     Number(dividirRedondeando(cantidadMilesimas * escalar(linea.factor, 3), 1000n)),

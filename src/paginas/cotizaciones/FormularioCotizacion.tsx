@@ -26,6 +26,7 @@ import {
   elegirOpcion,
   opcionDe,
   precioAutomaticoDe,
+  tipoPrecioDe,
   precioListaDe,
   presentacionDe,
   totalesCotizacion,
@@ -291,7 +292,7 @@ function Editor({ inicial }: { inicial: DatosIniciales }) {
                           <p className="mt-1 text-xs text-tinta-tenue">Lista: {soles(precioLista)}</p>
                         )}
                         {precioLista !== undefined && (precioAutomaticoDe(l) ?? precioLista) < precioLista && l.precio === precioAutomaticoDe(l)?.toFixed(2) && (
-                          <p className="mt-1 text-xs font-semibold text-marca-texto">Precio por mayor</p>
+                          <p className="mt-1 text-xs font-semibold text-marca-texto">{tipoPrecioDe(l) === 'OFERTA' ? 'Oferta' : 'Precio por mayor'}</p>
                         )}
                       </td>
                       <td className="px-4 py-3">

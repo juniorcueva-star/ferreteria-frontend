@@ -1,12 +1,12 @@
 import { Check, PackageSearch } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import type { CompletoResponse, ProductoResponse } from '@/api/tipos'
+import type { CompletoResponse, PresentacionResponse, ProductoResponse } from '@/api/tipos'
 import { Boton } from '@/componentes/ui/Boton'
 import { cn } from '@/componentes/ui/cn'
 import { FotoProducto } from '@/componentes/ui/FotoProducto'
 import { Modal } from '@/componentes/ui/Modal'
-import { cantidadConUnidad, soles } from '@/logica/formato'
-import { resumenEscalas } from '@/logica/precioMayor'
+import { cantidadConUnidad, hoyLima, soles } from '@/logica/formato'
+import { ofertaVigente, resumenEscalas } from '@/logica/precioMayor'
 import { presentacionesActivas } from '@/logica/presentaciones'
 
 interface Props {
@@ -18,6 +18,9 @@ interface Props {
   onAgregarCompleto: (producto: ProductoResponse, completo: CompletoResponse) => void
   onEncargo: (producto: ProductoResponse) => void
 }
+
+/** Precio que se cobra hoy por una unidad de la presentacion: la oferta vigente o el de lista. */
+const precioHoy = (p: PresentacionResponse) => ofertaVigente(p, hoyLima()) ?? p.precioVenta
 
 const completosVendibles = (p: ProductoResponse) => p.completos.filter((c) => c.activo && c.componentes.every((x) => x.disponible))
 
@@ -54,6 +57,7 @@ export function MosaicoProductos({ productos, tiendaId, stockDe, onAgregar, onAg
           const disponible = stockDe(producto.id)
           const sinStock = tiendaId !== undefined && disponible <= 0
           const varias = presentaciones.length + completosVendibles(producto).length > 1
+          const enOferta = presentaciones.some((p) => ofertaVigente(p, hoyLima()) !== null)
           return (
             <li key={producto.id}>
               <button
@@ -74,13 +78,18 @@ export function MosaicoProductos({ productos, tiendaId, stockDe, onAgregar, onAg
                     <span className="sr-only">Agregado</span>
                   </span>
                 )}
+                {enOferta && (
+                  <span className="absolute top-2 right-2 rotate-3 rounded-md bg-marca px-1.5 py-0.5 text-[11px] font-black text-sobre-marca shadow" data-testid="mosaico-oferta">
+                    OFERTA
+                  </span>
+                )}
                 {sinStock && <span className="absolute top-2 left-2 rounded-md bg-peligro px-1.5 py-0.5 text-[11px] font-bold text-white">Sin stock</span>}
                 <span className="flex flex-1 flex-col gap-0.5 p-2.5">
                   <span className="line-clamp-2 text-sm leading-tight font-semibold text-tinta">{producto.nombre}</span>
                   {presentaciones.length > 0 && (
                     <span className="font-mono text-sm font-bold whitespace-nowrap text-marca-texto">
                       {varias && <span className="mr-1 font-sans text-[11px] font-normal text-tinta-tenue">desde</span>}
-                      {soles(Math.min(...presentaciones.map((p) => p.precioVenta)))}
+                      {soles(Math.min(...presentaciones.map(precioHoy)))}
                     </span>
                   )}
                   {tiendaId !== undefined && !sinStock && (
@@ -108,8 +117,14 @@ export function MosaicoProductos({ productos, tiendaId, stockDe, onAgregar, onAg
                 className="flex flex-col rounded-xl border-2 border-borde px-4 py-3 text-left transition hover:border-marca hover:bg-marca-claro"
                 aria-label={`Agregar ${eligiendo.nombre} ${p.nombre}`}
               >
-                <span className="font-semibold text-tinta">{p.nombre}</span>
-                <span className="font-mono text-lg font-bold text-marca-texto">{soles(p.precioVenta)}</span>
+                <span className="font-semibold text-tinta">
+                  {p.nombre}
+                  {ofertaVigente(p, hoyLima()) !== null && <span className="ml-2 rounded bg-marca px-1 text-[11px] font-black text-sobre-marca">OFERTA</span>}
+                </span>
+                <span className="font-mono text-lg font-bold text-marca-texto">
+                  {ofertaVigente(p, hoyLima()) !== null && <s className="mr-1.5 text-sm font-normal text-tinta-tenue">{soles(p.precioVenta)}</s>}
+                  {soles(precioHoy(p))}
+                </span>
                 {p.escalas.length > 0 && <span className="text-xs text-tinta-suave">Por mayor: {resumenEscalas(p, soles)}</span>}
               </button>
             ))}

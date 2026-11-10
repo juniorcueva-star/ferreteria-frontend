@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowLeft, History, ImageUp, Layers, Plus, Save, Trash2, WandSparkles } from 'lucide-react'
+import { ArrowLeft, History, ImageUp, Layers, Plus, Save, Tag, Trash2, WandSparkles } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useFieldArray, useForm, useWatch, type UseFormRegister } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -26,11 +26,12 @@ import { useAvisos } from '@/componentes/ui/notificaciones'
 import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { useCategorias, useUnidadesMedida } from '@/hooks/useCatalogos'
 import { esDecimalValido, textoANumero } from '@/logica/decimales'
-import { cantidadAgrupada, nombreUnidad, soles, sufijoUnidad } from '@/logica/formato'
-import { resumenEscalas } from '@/logica/precioMayor'
+import { cantidadAgrupada, hoyLima, nombreUnidad, soles, sufijoUnidad } from '@/logica/formato'
+import { ofertaVigente, resumenEscalas } from '@/logica/precioMayor'
 import { precioSugerido } from '@/logica/precios'
 import { factorValido, textoDecimales, valoresDeUnidad } from '@/logica/presentaciones'
 import { HistorialPrecios } from './HistorialPrecios'
+import { ModalOferta } from './ModalOferta'
 import { ModalPrecioMayor } from './ModalPrecioMayor'
 import { SeccionCompletos } from './SeccionCompletos'
 import { conLetras, monto, nulo, textoObligatorio, textoOpcional } from '@/logica/validaciones'
@@ -241,6 +242,8 @@ function Formulario({
   const [historial, setHistorial] = useState<{ id: number; nombre: string } | null>(null)
   const [porMayor, setPorMayor] = useState<number | null>(null)
   const presentacionPorMayor = producto?.presentaciones.find((p) => p.id === porMayor)
+  const [oferta, setOferta] = useState<number | null>(null)
+  const presentacionOferta = producto?.presentaciones.find((p) => p.id === oferta)
   const vistaPrevia = useMemo(() => (archivo ? URL.createObjectURL(archivo) : null), [archivo])
   useEffect(() => () => (vistaPrevia ? URL.revokeObjectURL(vistaPrevia) : undefined), [vistaPrevia])
 
@@ -563,6 +566,8 @@ function Formulario({
                     verHistorial={actual?.id !== undefined ? () => setHistorial({ id: actual.id ?? 0, nombre: actual.nombre }) : undefined}
                     escalas={producto?.presentaciones.find((p) => p.id === actual?.id)?.escalas}
                     verPorMayor={actual?.id !== undefined ? () => setPorMayor(actual.id ?? null) : undefined}
+                    presentacion={producto?.presentaciones.find((p) => p.id === actual?.id)}
+                    verOferta={actual?.id !== undefined ? () => setOferta(actual.id ?? null) : undefined}
                   />
                   <div className="flex flex-wrap items-center gap-x-5 gap-y-2 md:col-span-12">
                     <label className="inline-flex cursor-pointer items-center gap-2 text-sm">
@@ -586,6 +591,7 @@ function Formulario({
       {historial && producto && (
         <HistorialPrecios productoId={producto.id} presentacionId={historial.id} nombre={historial.nombre} onCerrar={() => setHistorial(null)} />
       )}
+      {producto && presentacionOferta && <ModalOferta productoId={producto.id} presentacion={presentacionOferta} onCerrar={() => setOferta(null)} />}
       {producto && presentacionPorMayor && (
         <ModalPrecioMayor productoId={producto.id} presentacion={presentacionPorMayor} onCerrar={() => setPorMayor(null)} />
       )}
@@ -616,6 +622,8 @@ function FilaPrecios({
   verHistorial,
   escalas,
   verPorMayor,
+  presentacion,
+  verOferta,
 }: {
   indice: number
   costo: number | null
@@ -628,7 +636,11 @@ function FilaPrecios({
   /** Precio por mayor guardado (solo presentaciones que ya existen) */
   escalas?: EscalaPrecio[]
   verPorMayor?: () => void
+  /** Presentacion guardada (para mostrar su oferta) */
+  presentacion?: PresentacionResponse
+  verOferta?: () => void
 }) {
+  const vigente = presentacion ? ofertaVigente(presentacion, hoyLima()) : null
   const valido = (porcentaje.trim() === '' || esDecimalValido(porcentaje, 4)) && (adicional.trim() === '' || esDecimalValido(adicional, 2))
   const sugerido = valido ? precioSugerido(costo, porcentaje, adicional) : null
   return (
@@ -681,9 +693,20 @@ function FilaPrecios({
             Precio por mayor{escalas && escalas.length > 0 ? ` (${escalas.length})` : ''}
           </Boton>
         )}
+        {verOferta && (
+          <Boton variante="secundario" tamano="sm" icono={<Tag className="size-4" />} onClick={verOferta} data-testid={`boton-oferta-${indice}`}>
+            Oferta
+          </Boton>
+        )}
       </div>
       {escalas && escalas.length > 0 && (
         <p className="text-xs text-tinta-suave md:col-span-12">Por mayor: {resumenEscalas({ escalas }, soles)}</p>
+      )}
+      {presentacion?.precioOferta != null && (
+        <p className="text-xs text-tinta-suave md:col-span-12" data-testid={`oferta-${indice}`}>
+          <span className="mr-1 rounded bg-marca px-1 font-bold text-sobre-marca">{vigente !== null ? 'OFERTA VIGENTE' : 'OFERTA'}</span>{' '}
+          {soles(presentacion.precioOferta)} del {presentacion.ofertaDesde} al {presentacion.ofertaHasta}
+        </p>
       )}
     </div>
   )

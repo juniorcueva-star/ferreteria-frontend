@@ -5,10 +5,12 @@ import type {
   EstadoCotizacion,
   PresentacionResponse,
   ProductoResponse,
+  TipoPrecio,
 } from '@/api/tipos'
 import { separarIgv } from './carrito'
 import { aCentimos, dividirRedondeando, esDecimalValido, escalar, textoANumero } from './decimales'
-import { precioSegunCantidad } from './precioMayor'
+import { hoyLima } from './formato'
+import { ofertaVigente, precioSegunCantidad } from './precioMayor'
 
 /**
  * Lineas de una cotizacion en el formulario. El calculo es igual al backend (CotizacionService):
@@ -49,7 +51,8 @@ export function nuevaLinea(producto: ProductoResponse, presentacion: Presentacio
     presentacionId: presentacion.id,
     completoId: null,
     cantidad: '1',
-    precio: presentacion.precioVenta.toFixed(2),
+    // Precio de lista, o el de oferta si esta vigente
+    precio: (ofertaVigente(presentacion, hoyLima()) ?? presentacion.precioVenta).toFixed(2),
     descuento: '',
   }
 }
@@ -75,7 +78,9 @@ export function elegirOpcion(linea: LineaCotizacion, opcion: string): LineaCotiz
     return completo ? { ...linea, presentacionId: null, completoId: id, precio: completo.precioVenta.toFixed(2) } : linea
   }
   const presentacion = linea.producto.presentaciones.find((p) => p.id === id)
-  return presentacion ? { ...linea, presentacionId: id, completoId: null, precio: presentacion.precioVenta.toFixed(2) } : linea
+  if (!presentacion) return linea
+  const elegida = { ...linea, presentacionId: id, completoId: null }
+  return { ...elegida, precio: (precioAutomaticoDe(elegida) ?? presentacion.precioVenta).toFixed(2) }
 }
 
 /** Precio de lista de lo elegido (presentacion o completo). */
@@ -89,7 +94,17 @@ export function precioAutomaticoDe(linea: LineaCotizacion): number | undefined {
   const presentacion = presentacionDe(linea)
   if (!presentacion) return undefined
   const cantidad = Number(linea.cantidad.trim().replace(',', '.'))
-  return precioSegunCantidad(presentacion.precioVenta, presentacion.escalas, Number.isFinite(cantidad) ? cantidad : 0).precio
+  return precioSegunCantidad(presentacion.precioVenta, presentacion.escalas, Number.isFinite(cantidad) ? cantidad : 0, ofertaVigente(presentacion, hoyLima()))
+    .precio
+}
+
+/** De donde sale el precio automatico de la linea: lista, por mayor u oferta. */
+export function tipoPrecioDe(linea: LineaCotizacion): TipoPrecio {
+  const presentacion = linea.completoId == null ? presentacionDe(linea) : undefined
+  if (!presentacion) return 'LISTA'
+  const cantidad = Number(linea.cantidad.trim().replace(',', '.'))
+  return precioSegunCantidad(presentacion.precioVenta, presentacion.escalas, Number.isFinite(cantidad) ? cantidad : 0, ofertaVigente(presentacion, hoyLima()))
+    .tipo
 }
 
 /**

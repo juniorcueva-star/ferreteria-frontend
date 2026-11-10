@@ -60,6 +60,11 @@ describe('carrito del punto de venta', () => {
     expect(calcularLinea(linea(conEscalas, '10'))).toMatchObject({ precioUnitario: 7, tipoPrecio: 'MAYOR', importeCentimos: 7000 })
   })
 
+  it('cobra la oferta guardada en la linea', () => {
+    const enOferta = { ...ciento, precioOferta: 7.5 }
+    expect(calcularLinea(linea(enOferta, '2'))).toMatchObject({ precioUnitario: 7.5, tipoPrecio: 'OFERTA', importeCentimos: 1500 })
+  })
+
   it('acepta decimales en metros y kilos, pero no en unidades', () => {
     expect(calcularLinea(linea(cableMetro, '2.5')).importeCentimos).toBe(325)
     expect(calcularLinea(linea(medioKilo, '3')).cantidadBase).toBe(1.5)

@@ -175,8 +175,18 @@ export interface PresentacionResponse {
   activo: boolean
   /** Decimales que acepta al vender o comprar (0 = solo enteros) */
   decimales: number
+  /** Oferta: precio con IGV entre ofertaDesde y ofertaHasta (inclusive, yyyy-MM-dd); null si no tiene */
+  precioOferta: number | null
+  ofertaDesde: string | null
+  ofertaHasta: string | null
   /** Precio por mayor, de menor a mayor cantidad (vacio si no tiene) */
   escalas: EscalaPrecio[]
+}
+
+export interface OfertaRequest {
+  precio: number
+  desde: string
+  hasta: string
 }
 
 /** Desde cantidadMinima (en la presentacion) cada una cuesta precio. Ej: desde 100 a S/ 0.40 */
