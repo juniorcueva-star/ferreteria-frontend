@@ -26,6 +26,7 @@ const clavo: ProductoResponse = {
   tipo: null,
   acabado: null,
   medida: null,
+  completos: [],
   presentaciones: [
     { id: 3, nombre: 'Millar', factor: 1000, precioVenta: 70, codigoBarras: null, principal: false, activo: true, decimales: 0 },
     { id: 1, nombre: 'Unidad', factor: 1, precioVenta: 0.1, codigoBarras: null, principal: true, activo: true, decimales: 0 },

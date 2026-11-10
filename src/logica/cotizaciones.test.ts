@@ -16,6 +16,7 @@ const perno: ProductoResponse = {
   tipo: null,
   acabado: null,
   medida: null,
+  completos: [],
   presentaciones: [
     { id: 6, nombre: 'Unidad', factor: 1, precioVenta: 0.5, codigoBarras: null, principal: true, activo: true, decimales: 0 },
     { id: 7, nombre: 'Docena', factor: 12, precioVenta: 5.5, codigoBarras: null, principal: false, activo: true, decimales: 0 },

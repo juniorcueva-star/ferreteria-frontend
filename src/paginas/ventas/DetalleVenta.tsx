@@ -119,7 +119,11 @@ export default function DetalleVenta() {
                 <Tr key={i}>
                   <Td>
                     <p className="font-medium">{d.descripcion}</p>
-                    <p className="font-mono text-xs text-tinta-tenue">= {cantidad(d.cantidadBase)} en unidad base</p>
+                    {d.composicion ? (
+                      <p className="text-xs text-tinta-tenue">Incluye: {d.composicion}</p>
+                    ) : (
+                      <p className="font-mono text-xs text-tinta-tenue">= {cantidad(d.cantidadBase)} en unidad base</p>
+                    )}
                   </Td>
                   <Td alinear="derecha" className="font-mono">{cantidad(d.cantidad)}</Td>
                   <Td alinear="derecha" className="font-mono">{soles(d.precioUnitario)}</Td>

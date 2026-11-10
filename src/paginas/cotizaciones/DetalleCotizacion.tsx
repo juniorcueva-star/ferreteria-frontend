@@ -162,9 +162,12 @@ function Ficha({ c }: { c: CotizacionResponse }) {
             </tr>
           </Thead>
           <Tbody>
-            {c.detalles.map((d) => (
-              <Tr key={d.presentacionId}>
-                <Td className="font-medium">{d.descripcion}</Td>
+            {c.detalles.map((d, i) => (
+              <Tr key={i}>
+                <Td>
+                  <p className="font-medium">{d.descripcion}</p>
+                  {d.composicion && <p className="text-xs text-tinta-tenue">Incluye: {d.composicion}</p>}
+                </Td>
                 <Td alinear="derecha" className="font-mono">
                   {cantidad(d.cantidad)}
                 </Td>

@@ -1,5 +1,7 @@
 import { http } from './cliente'
 import type {
+  CompletoRequest,
+  CompletoResponse,
   AccionLoteRequest,
   AccionLoteResponse,
   CategoriaRequest,
@@ -55,6 +57,11 @@ export const productosApi = {
     return http.post<ProductoResponse>(`/productos/${id}/imagen`, formulario).then((r) => r.data)
   },
   eliminarImagen: (id: number) => http.delete<ProductoResponse>(`/productos/${id}/imagen`).then((r) => r.data),
+  /** Completos: el producto con otras piezas a precio propio (solo ADMIN) */
+  crearCompleto: (id: number, datos: CompletoRequest) =>
+    http.post<CompletoResponse>(`/productos/${id}/completos`, datos).then((r) => r.data),
+  actualizarCompleto: (id: number, completoId: number, datos: CompletoRequest) =>
+    http.put<CompletoResponse>(`/productos/${id}/completos/${completoId}`, datos).then((r) => r.data),
   /** Costo de referencia, ganancia, adicional y precio sugerido (solo ADMIN). */
   precioSugerido: (id: number, presentacionId: number) =>
     http

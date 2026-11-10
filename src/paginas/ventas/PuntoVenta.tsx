@@ -5,7 +5,13 @@ import { Link, useNavigate } from 'react-router'
 import { productosApi } from '@/api/catalogo'
 import { aApiError } from '@/api/errores'
 import { inventarioApi } from '@/api/inventario'
-import type { ClienteResponse, CondicionVenta, ProductoResponse, VentaResponse } from '@/api/tipos'
+import type {
+  ClienteResponse,
+  CompletoResponse,
+  CondicionVenta,
+  ProductoResponse,
+  VentaResponse,
+} from '@/api/tipos'
 import { ventasApi } from '@/api/ventas'
 import { EditorPagos } from '@/componentes/formularios/EditorPagos'
 import { ModalEncargo } from '@/componentes/formularios/ModalEncargo'
@@ -28,6 +34,10 @@ import {
   agregarAlCarrito,
   aDetallesVenta,
   calcularTotales,
+  claveLinea,
+  completosDisponibles,
+  consumoPorProducto,
+  productosDelCarrito,
   quitarLinea,
   type LineaCarrito,
 } from '@/logica/carrito'
@@ -72,7 +82,15 @@ export default function PuntoVenta() {
 
   // Stock en la tienda de la caja para los productos visibles y los del carrito
   const idsStock = useMemo(() => {
-    const ids = new Set<number>([...(productos.data?.contenido.map((p) => p.id) ?? []), ...carrito.map((l) => l.productoId)])
+    // Incluye las piezas de los completos (Ej: la tuerca y la arandela del perno completo)
+    const piezasVisibles = (productos.data?.contenido ?? []).flatMap((p) =>
+      p.completos.filter((c) => c.activo).flatMap((c) => c.componentes.map((x) => x.productoId)),
+    )
+    const ids = new Set<number>([
+      ...(productos.data?.contenido.map((p) => p.id) ?? []),
+      ...piezasVisibles,
+      ...productosDelCarrito(carrito),
+    ])
     return [...ids].sort((a, b) => a - b)
   }, [productos.data, carrito])
   const stock = useQuery({
@@ -96,11 +114,10 @@ export default function PuntoVenta() {
   const productoDe = (productoId: number) => productos.data?.contenido.find((p) => p.id === productoId)
   const stockDe = (productoId: number) => stock.data?.contenido.find((s) => s.productoId === productoId)?.cantidad ?? 0
   const minimoDe = (productoId: number) => stock.data?.contenido.find((s) => s.productoId === productoId)?.stockMinimo ?? 0
-  // Unidad base que se lleva de cada producto, sumando sus lineas (Ej: 1 docena + 3 unidades = 15)
-  const baseEnCarrito = (productoId: number) =>
-    carrito.reduce((suma, l, i) => suma + (l.productoId === productoId ? (totales.lineas[i]?.cantidadBase ?? 0) : 0), 0)
-
   const totales = calcularTotales(carrito)
+  // Unidad base que se lleva de cada producto, sumando sus lineas y las piezas de los completos
+  const consumo = consumoPorProducto(carrito, totales.lineas)
+  const baseEnCarrito = (productoId: number) => consumo.get(productoId) ?? 0
   const cobro = calcularCobro(totales.totalCentimos, condicion, pagos, metodos.data ?? [])
   const errorCliente = condicion === 'CREDITO' && !cliente ? 'Una venta a crédito necesita un cliente' : undefined
   const errorVencimiento = vencimiento && vencimiento < hoyLima() ? 'No puede ser anterior a hoy' : undefined
@@ -119,6 +136,25 @@ export default function PuntoVenta() {
         factor: p.factor,
         decimales: p.decimales,
         precio: p.precioVenta,
+      }),
+    )
+  }
+
+  /** Completo: el producto con sus piezas (Ej: perno + tuerca + arandela), por unidades enteras. */
+  const agregarCompleto = (producto: ProductoResponse, completo: CompletoResponse) => {
+    setCarrito((actual) =>
+      agregarAlCarrito(actual, {
+        productoId: producto.id,
+        productoNombre: producto.nombre,
+        unidadBase: producto.unidadBase,
+        presentacionId: null,
+        completoId: completo.id,
+        composicion: completo.composicion,
+        piezas: completo.componentes.map((c) => ({ productoId: c.productoId, cantidadBase: c.cantidadBase })),
+        presentacionNombre: completo.nombre,
+        factor: 1,
+        decimales: 0,
+        precio: completo.precioVenta,
       }),
     )
   }
@@ -283,6 +319,31 @@ export default function PuntoVenta() {
                         <span className="font-mono text-xs text-marca-texto">{soles(p.precioVenta)}</span>
                       </button>
                     ))}
+                    {producto.completos
+                      .filter((c) => c.activo && c.componentes.every((x) => x.disponible))
+                      .map((c) => {
+                        const alcanza = completosDisponibles(
+                          c.componentes.map((x) => ({ productoId: x.productoId, cantidadBase: x.cantidadBase })),
+                          stockDe,
+                        )
+                        return (
+                          <button
+                            key={`c${c.id}`}
+                            type="button"
+                            onClick={() => agregarCompleto(producto, c)}
+                            title={`Incluye: ${c.composicion}`}
+                            className="inline-flex flex-col items-start rounded-lg border-2 border-marca bg-marca-claro px-2.5 py-1.5 text-left transition-colors hover:bg-marca"
+                            aria-label={`Agregar ${producto.nombre} ${c.nombre}`}
+                            data-testid={`pos-completo-${c.id}`}
+                          >
+                            <span className="text-xs font-semibold text-tinta">{c.nombre}</span>
+                            <span className="font-mono text-xs text-tinta">{soles(c.precioVenta)}</span>
+                            {tiendaId !== undefined && (
+                              <span className={cn('text-[11px]', alcanza > 0 ? 'text-tinta-suave' : 'text-peligro')}>Alcanza: {alcanza}</span>
+                            )}
+                          </button>
+                        )
+                      })}
                   </div>
                 </li>
               )
@@ -311,22 +372,34 @@ export default function PuntoVenta() {
                 {carrito.map((linea, i) => {
                   const calculo = totales.lineas[i]
                   const decimales = linea.decimales > 0
+                  const clave = claveLinea(linea)
+                  const esCompleto = linea.completoId != null
                   const disponible = stockDe(linea.productoId)
-                  const sinStock = tiendaId !== undefined && calculo !== undefined && calculo.cantidadBase > disponible
-                  const aviso = tiendaId !== undefined && stock.data ? avisoStockBajo(disponible, baseEnCarrito(linea.productoId), minimoDe(linea.productoId)) : null
+                  // En un completo falta stock si alguna pieza no alcanza para todo el carrito
+                  const sinStock =
+                    tiendaId !== undefined &&
+                    calculo !== undefined &&
+                    (esCompleto
+                      ? (linea.piezas ?? []).some((x) => baseEnCarrito(x.productoId) > stockDe(x.productoId))
+                      : baseEnCarrito(linea.productoId) > disponible)
+                  const aviso =
+                    tiendaId !== undefined && stock.data && !esCompleto
+                      ? avisoStockBajo(disponible, baseEnCarrito(linea.productoId), minimoDe(linea.productoId))
+                      : null
                   const paso = (delta: number) => {
                     const actual = esDecimalValido(linea.cantidad, 3) ? Number(linea.cantidad.replace(',', '.')) : 0
                     const nuevo = Math.max(decimales ? 0.5 : 1, actual + delta)
-                    setCarrito((c) => actualizarLinea(c, linea.presentacionId, { cantidad: String(Number(nuevo.toFixed(3))) }))
+                    setCarrito((c) => actualizarLinea(c, clave, { cantidad: String(Number(nuevo.toFixed(3))) }))
                   }
                   return (
-                    <li key={linea.presentacionId} className="flex flex-col gap-2 px-5 py-3" data-testid={`carrito-linea-${i + 1}`}>
+                    <li key={clave} className="flex flex-col gap-2 px-5 py-3" data-testid={`carrito-linea-${i + 1}`}>
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="text-sm leading-tight font-semibold text-tinta">{linea.productoNombre}</p>
                           <p className="font-mono text-xs text-tinta-suave">
                             {linea.presentacionNombre} · {soles(linea.precio)}
                           </p>
+                          {linea.composicion && <p className="text-[11px] text-tinta-tenue">Incluye: {linea.composicion}</p>}
                         </div>
                         <p className="font-mono text-sm font-bold text-tinta">{solesDeCentimos(calculo?.subtotalCentimos ?? 0)}</p>
                       </div>
@@ -339,7 +412,7 @@ export default function PuntoVenta() {
                             aria-label={`Cantidad de ${linea.productoNombre} ${linea.presentacionNombre}`}
                             inputMode={decimales ? 'decimal' : 'numeric'}
                             value={linea.cantidad}
-                            onChange={(e) => setCarrito((c) => actualizarLinea(c, linea.presentacionId, { cantidad: e.target.value }))}
+                            onChange={(e) => setCarrito((c) => actualizarLinea(c, clave, { cantidad: e.target.value }))}
                             className="h-8 w-16 border-x border-borde text-center font-mono text-sm focus:outline-none"
                           />
                           <button type="button" onClick={() => paso(1)} className="p-2 text-tinta-suave hover:text-tinta" aria-label="Sumar uno">
@@ -353,13 +426,13 @@ export default function PuntoVenta() {
                             inputMode="decimal"
                             placeholder="0.00"
                             value={linea.descuento}
-                            onChange={(e) => setCarrito((c) => actualizarLinea(c, linea.presentacionId, { descuento: e.target.value }))}
+                            onChange={(e) => setCarrito((c) => actualizarLinea(c, clave, { descuento: e.target.value }))}
                             className="h-8 w-20! font-mono"
                           />
                         </label>
                         <button
                           type="button"
-                          onClick={() => setCarrito((c) => quitarLinea(c, linea.presentacionId))}
+                          onClick={() => setCarrito((c) => quitarLinea(c, clave))}
                           className="ml-auto rounded p-1.5 text-tinta-tenue hover:bg-peligro-claro hover:text-peligro"
                           aria-label={`Quitar ${linea.productoNombre}`}
                         >
@@ -377,18 +450,24 @@ export default function PuntoVenta() {
                               : `Quedarán ${cantidad(aviso.restante)} ${sufijoUnidad(linea.unidadBase)}: pida reposición`}
                           </span>
                         )}
-                        {sinStock && (
+                        {sinStock && esCompleto && (
+                          <span className="text-peligro">
+                            Stock insuficiente: alcanza para{' '}
+                            {completosDisponibles(linea.piezas ?? [], stockDe)} {linea.presentacionNombre.toLowerCase()}
+                          </span>
+                        )}
+                        {sinStock && !esCompleto && (
                           <span className="text-peligro">
                             Stock insuficiente (hay {cantidad(disponible)} {sufijoUnidad(linea.unidadBase)})
                           </span>
                         )}
-                        {sinStock && productoDe(linea.productoId) && (
+                        {sinStock && !esCompleto && linea.presentacionId !== null && productoDe(linea.productoId) && (
                           <button
                             type="button"
                             className="font-semibold text-marca-texto underline"
                             onClick={() => {
                               const producto = productoDe(linea.productoId)
-                              if (producto) setEncargo({ producto, presentacionId: linea.presentacionId })
+                              if (producto && linea.presentacionId !== null) setEncargo({ producto, presentacionId: linea.presentacionId })
                             }}
                           >
                             Hacer encargo

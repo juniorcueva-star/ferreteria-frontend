@@ -29,6 +29,7 @@ import { cantidadAgrupada, nombreUnidad, soles, sufijoUnidad } from '@/logica/fo
 import { precioSugerido } from '@/logica/precios'
 import { factorValido, textoDecimales, valoresDeUnidad } from '@/logica/presentaciones'
 import { HistorialPrecios } from './HistorialPrecios'
+import { SeccionCompletos } from './SeccionCompletos'
 import { monto, nulo, textoObligatorio, textoOpcional } from '@/logica/validaciones'
 
 const TIPOS_IMAGEN = ['image/jpeg', 'image/png', 'image/webp']
@@ -204,12 +205,16 @@ export default function FormularioProducto() {
   if (productoId !== null && producto.isError) return <MensajeError error={producto.error} />
   if (precios.error) return <MensajeError error={precios.error} />
   return (
-    <Formulario
-      key={productoId ?? 'nuevo'}
-      producto={producto.data ?? null}
-      categorias={categorias.data ?? []}
-      precios={precios.mapa}
-    />
+    <>
+      <Formulario
+        key={productoId ?? 'nuevo'}
+        producto={producto.data ?? null}
+        categorias={categorias.data ?? []}
+        precios={precios.mapa}
+      />
+      {/* Los completos se guardan aparte: el producto ya debe existir */}
+      {producto.data && <SeccionCompletos producto={producto.data} />}
+    </>
   )
 }
 

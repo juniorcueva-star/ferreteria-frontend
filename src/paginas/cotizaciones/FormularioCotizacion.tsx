@@ -21,6 +21,10 @@ import {
   calcularLineaCotizacion,
   lineaDesdeDetalle,
   nuevaLinea,
+  completoDe,
+  elegirOpcion,
+  opcionDe,
+  precioListaDe,
   presentacionDe,
   totalesCotizacion,
   type LineaCotizacion,
@@ -228,7 +232,10 @@ function Editor({ inicial }: { inicial: DatosIniciales }) {
               <tbody className="divide-y divide-borde">
                 {lineas.map((l, i) => {
                   const presentacion = presentacionDe(l)
+                  const completo = completoDe(l)
+                  const precioLista = precioListaDe(l)
                   const calculo = calcularLineaCotizacion(l)
+                  const completosActivos = l.producto.completos.filter((c) => c.activo || c.id === l.completoId)
                   return (
                     <tr key={l.clave} data-testid={`linea-cotizacion-${i}`} className="align-top">
                       <td className="min-w-48 px-4 py-3">
@@ -238,20 +245,27 @@ function Editor({ inicial }: { inicial: DatosIniciales }) {
                       <td className="px-4 py-3">
                         <Selector
                           aria-label={`Presentación de ${l.producto.nombre}`}
-                          value={l.presentacionId}
-                          onChange={(e) => {
-                            const nueva = l.producto.presentaciones.find((p) => p.id === Number(e.target.value))
-                            if (nueva) actualizar(l.clave, { presentacionId: nueva.id, precio: nueva.precioVenta.toFixed(2) })
-                          }}
+                          value={opcionDe(l)}
+                          onChange={(e) => setLineas((ls) => ls.map((x) => (x.clave === l.clave ? elegirOpcion(x, e.target.value) : x)))}
                           className="min-w-36"
                         >
                           {presentacionesActivas(l.producto).map((p) => (
-                            <option key={p.id} value={p.id}>
+                            <option key={p.id} value={`p${p.id}`}>
                               {p.nombre} · {soles(p.precioVenta)}
                             </option>
                           ))}
+                          {completosActivos.length > 0 && (
+                            <optgroup label="Completos">
+                              {completosActivos.map((c) => (
+                                <option key={c.id} value={`c${c.id}`}>
+                                  {c.nombre} · {soles(c.precioVenta)}
+                                </option>
+                              ))}
+                            </optgroup>
+                          )}
                         </Selector>
-                        {presentacion && <p className="mt-1 text-xs text-tinta-tenue">{textoDecimales(presentacion.decimales)}</p>}
+                        {completo && <p className="mt-1 max-w-56 text-xs text-tinta-tenue">Incluye: {completo.composicion}</p>}
+                        {!completo && presentacion && <p className="mt-1 text-xs text-tinta-tenue">{textoDecimales(presentacion.decimales)}</p>}
                       </td>
                       <td className="px-4 py-3">
                         <Entrada
@@ -271,8 +285,8 @@ function Editor({ inicial }: { inicial: DatosIniciales }) {
                           onChange={(e) => actualizar(l.clave, { precio: e.target.value })}
                           className="w-28 font-mono"
                         />
-                        {presentacion && l.precio !== presentacion.precioVenta.toFixed(2) && (
-                          <p className="mt-1 text-xs text-tinta-tenue">Lista: {soles(presentacion.precioVenta)}</p>
+                        {precioLista !== undefined && l.precio !== precioLista.toFixed(2) && (
+                          <p className="mt-1 text-xs text-tinta-tenue">Lista: {soles(precioLista)}</p>
                         )}
                       </td>
                       <td className="px-4 py-3">

@@ -101,17 +101,17 @@ describe('carrito del punto de venta', () => {
     expect(carrito).toHaveLength(2)
     expect(carrito[0]?.cantidad).toBe('3')
     expect(carrito[1]?.cantidad).toBe('1.75')
-    carrito = actualizarLinea(carrito, 2, { descuento: '2' })
+    carrito = actualizarLinea(carrito, 'p2', { descuento: '2' })
     expect(carrito[0]?.descuento).toBe('2')
-    carrito = quitarLinea(carrito, 22)
+    carrito = quitarLinea(carrito, 'p22')
     expect(carrito.map((l) => l.presentacionId)).toEqual([2])
   })
 
   it('arma el detalle para la API sin enviar el precio', () => {
     const detalle = aDetallesVenta([linea(ciento, '3', '1.50'), linea(cableMetro, '2,5')])
     expect(detalle).toEqual([
-      { presentacionId: 2, cantidad: 3, descuento: 1.5 },
-      { presentacionId: 22, cantidad: 2.5, descuento: null },
+      { presentacionId: 2, completoId: null, cantidad: 3, descuento: 1.5 },
+      { presentacionId: 22, completoId: null, cantidad: 2.5, descuento: null },
     ])
   })
 })

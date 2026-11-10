@@ -250,6 +250,43 @@ export interface ProductoResponse {
   tipo: string | null
   acabado: string | null
   medida: string | null
+  /** Completos: el producto con otras piezas a precio propio (Ej: perno + tuerca + arandela) */
+  completos: CompletoResponse[]
+}
+
+export interface CompletoComponenteResponse {
+  productoId: number
+  productoCodigo: string
+  productoNombre: string
+  unidadBase: UnidadBase
+  presentacionId: number
+  presentacionNombre: string
+  cantidad: number
+  /** Lo que se descuenta del stock de la pieza por cada completo */
+  cantidadBase: number
+  precioUnitario: number
+  disponible: boolean
+}
+
+export interface CompletoResponse {
+  id: number
+  productoId: number
+  nombre: string
+  precioVenta: number
+  /** Suma de las piezas a precio de lista */
+  precioSugerido: number
+  activo: boolean
+  /** Ej: "1 Perno (Unidad) + 1 Tuerca (Unidad)" */
+  composicion: string
+  componentes: CompletoComponenteResponse[]
+}
+
+export interface CompletoRequest {
+  nombre: string
+  /** null = suma de las piezas */
+  precioVenta: number | null
+  activo: boolean
+  componentes: { presentacionId: number; cantidad: number }[]
 }
 
 export interface ProductoCrearRequest {
@@ -550,8 +587,10 @@ export interface PagoResponse {
   estado: EstadoPago
 }
 
+/** Linea de venta: de una presentacion o de un completo (solo uno) */
 export interface VentaDetalleRequest {
-  presentacionId: number
+  presentacionId: number | null
+  completoId?: number | null
   cantidad: number
   descuento: number | null
 }
@@ -566,7 +605,11 @@ export interface VentaRequest {
 
 export interface VentaDetalle {
   productoId: number
-  presentacionId: number
+  /** null en las lineas de completo */
+  presentacionId: number | null
+  completoId: number | null
+  /** Piezas del completo al vender */
+  composicion: string | null
   descripcion: string
   cantidad: number
   factor: number
@@ -720,7 +763,9 @@ export interface EncargoResponse {
 export type EstadoCotizacion = 'BORRADOR' | 'EMITIDA' | 'ANULADA'
 
 export interface CotizacionDetalleRequest {
-  presentacionId: number
+  /** null en las lineas de completo */
+  presentacionId: number | null
+  completoId?: number | null
   cantidad: number
   /** null = precio de lista */
   precioUnitario: number | null
@@ -738,7 +783,9 @@ export interface CotizacionRequest {
 
 export interface CotizacionDetalleResponse {
   productoId: number
-  presentacionId: number
+  presentacionId: number | null
+  completoId: number | null
+  composicion: string | null
   descripcion: string
   cantidad: number
   factor: number

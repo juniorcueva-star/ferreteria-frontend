@@ -11,11 +11,26 @@ import { aCentimos, deMilesimas, dividirRedondeando, esDecimalValido, escalar } 
  * Todo se calcula en centimos enteros para no arrastrar errores de punto flotante.
  */
 
+/** Pieza de un completo: producto y lo que se descuenta de su stock por cada completo (unidad base) */
+export interface PiezaCompleto {
+  productoId: number
+  cantidadBase: number
+}
+
+/**
+ * Linea del carrito: de una presentacion (Ej: Docena) o de un completo (Ej: perno + tuerca + arandela). En un
+ * completo: presentacionId null, factor 1, decimales 0 y sus piezas para calcular el stock.
+ */
 export interface LineaCarrito {
   productoId: number
   productoNombre: string
   unidadBase: UnidadBase
-  presentacionId: number
+  presentacionId: number | null
+  completoId?: number | null
+  /** Piezas del completo, Ej: "1 Perno (Unidad) + 1 Tuerca (Unidad)" */
+  composicion?: string | null
+  piezas?: PiezaCompleto[]
+  /** Nombre de la presentacion o del completo */
   presentacionNombre: string
   factor: number
   /** Decimales que acepta la presentacion (0 = solo enteros) */
@@ -127,18 +142,24 @@ export function calcularTotales(lineas: LineaCarrito[]): TotalesCarrito {
   }
 }
 
-/** Agrega una presentacion al carrito; si ya estaba, suma la cantidad a la linea existente. */
+/** Identifica una linea: "p5" (presentacion 5) o "c3" (completo 3). */
+export function claveLinea(linea: Pick<LineaCarrito, 'presentacionId' | 'completoId'>): string {
+  return linea.completoId != null ? `c${linea.completoId}` : `p${linea.presentacionId ?? ''}`
+}
+
+/** Agrega una presentacion o un completo al carrito; si ya estaba, suma la cantidad a la linea existente. */
 export function agregarAlCarrito(
   lineas: LineaCarrito[],
   nueva: Omit<LineaCarrito, 'cantidad' | 'descuento'>,
   cantidad = '1',
 ): LineaCarrito[] {
-  const existente = lineas.find((l) => l.presentacionId === nueva.presentacionId)
+  const clave = claveLinea(nueva)
+  const existente = lineas.find((l) => claveLinea(l) === clave)
   if (!existente) {
     return [...lineas, { ...nueva, cantidad, descuento: '' }]
   }
   return lineas.map((l) => {
-    if (l.presentacionId !== nueva.presentacionId) {
+    if (claveLinea(l) !== clave) {
       return l
     }
     const actual = cantidadEsValida(l.cantidad, l.decimales) ? escalar(l.cantidad, 3) : 0n
@@ -149,14 +170,47 @@ export function agregarAlCarrito(
 
 export function actualizarLinea(
   lineas: LineaCarrito[],
-  presentacionId: number,
+  clave: string,
   cambios: Partial<Pick<LineaCarrito, 'cantidad' | 'descuento'>>,
 ): LineaCarrito[] {
-  return lineas.map((l) => (l.presentacionId === presentacionId ? { ...l, ...cambios } : l))
+  return lineas.map((l) => (claveLinea(l) === clave ? { ...l, ...cambios } : l))
 }
 
-export function quitarLinea(lineas: LineaCarrito[], presentacionId: number): LineaCarrito[] {
-  return lineas.filter((l) => l.presentacionId !== presentacionId)
+export function quitarLinea(lineas: LineaCarrito[], clave: string): LineaCarrito[] {
+  return lineas.filter((l) => claveLinea(l) !== clave)
+}
+
+/**
+ * Unidad base que se lleva de cada producto, sumando todas las lineas: 1 docena + 3 unidades = 15, y cada completo
+ * suma sus piezas (10 completos de perno + tuerca = 10 pernos y 10 tuercas).
+ */
+export function consumoPorProducto(lineas: LineaCarrito[], calculos: CalculoLinea[]): Map<number, number> {
+  const consumo = new Map<number, number>()
+  const sumar = (productoId: number, milesimas: bigint) =>
+    consumo.set(productoId, deMilesimas(Number(escalar(consumo.get(productoId) ?? 0, 3) + milesimas)))
+  lineas.forEach((l, i) => {
+    const base = calculos[i]?.cantidadBase ?? 0
+    if (base <= 0) return
+    if (l.completoId != null) {
+      for (const pieza of l.piezas ?? []) {
+        sumar(pieza.productoId, dividirRedondeando(escalar(base, 3) * escalar(pieza.cantidadBase, 3), 1000n))
+      }
+    } else {
+      sumar(l.productoId, escalar(base, 3))
+    }
+  })
+  return consumo
+}
+
+/** Productos del carrito y piezas de sus completos (para pedir su stock). */
+export function productosDelCarrito(lineas: LineaCarrito[]): number[] {
+  return lineas.flatMap((l) => [l.productoId, ...(l.piezas ?? []).map((p) => p.productoId)])
+}
+
+/** Cuantos completos alcanzan con el stock de sus piezas (el menor de todas). */
+export function completosDisponibles(piezas: PiezaCompleto[], stockDe: (productoId: number) => number): number {
+  if (piezas.length === 0) return 0
+  return Math.min(...piezas.map((p) => (p.cantidadBase > 0 ? Math.floor(stockDe(p.productoId) / p.cantidadBase + 1e-9) : 0)))
 }
 
 /** Detalle que se envia al backend: el precio no se envia, lo pone el sistema. */
@@ -164,7 +218,8 @@ export function aDetallesVenta(lineas: LineaCarrito[]): VentaDetalleRequest[] {
   return lineas.map((l) => {
     const descuento = l.descuento.trim() === '' ? 0 : aCentimos(l.descuento)
     return {
-      presentacionId: l.presentacionId,
+      presentacionId: l.completoId != null ? null : l.presentacionId,
+      completoId: l.completoId ?? null,
       cantidad: Number(l.cantidad.trim().replace(',', '.')),
       descuento: descuento > 0 ? descuento / 100 : null,
     }

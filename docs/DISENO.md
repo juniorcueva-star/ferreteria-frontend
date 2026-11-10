@@ -129,3 +129,10 @@ En **Reportes**, arriba a la derecha: "Ventas en Excel" (rango de fechas elegido
 
 Pantalla **Auditoría** (solo ADMIN): quién cambió precios, stock, productos, usuarios o empresas, y cuándo, con
 filtros por tipo, texto y fechas. También muestra las ventas y compras anuladas.
+
+## Completos
+
+En la ficha del producto (ADMIN), sección **Completos**: el producto con otras piezas a precio propio (Ej: perno +
+tuerca + arandela). En el punto de venta aparecen como botones amarillos con "Alcanza: N" (lo que permite la pieza
+más escasa); en cotizaciones, en la lista de presentaciones bajo "Completos". La nota de venta y la cotización
+muestran "Incluye: ..." debajo de la línea.
