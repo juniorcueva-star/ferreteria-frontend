@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { History, Minus, PackageSearch, Plus, Printer, Receipt, ScanBarcode, ShoppingCart, Trash2, Wallet } from 'lucide-react'
+import { History, Minus, PackageSearch, PauseCircle, PlayCircle, Plus, Printer, Receipt, ScanBarcode, ShoppingCart, Trash2, Wallet, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { productosApi } from '@/api/catalogo'
@@ -13,6 +13,7 @@ import type {
   VentaResponse,
 } from '@/api/tipos'
 import { ventasApi } from '@/api/ventas'
+import { useUsuario } from '@/auth/contexto'
 import { EditorPagos } from '@/componentes/formularios/EditorPagos'
 import { ModalEncargo } from '@/componentes/formularios/ModalEncargo'
 import { ModalPedidoReposicion } from '@/componentes/formularios/ModalPedidoReposicion'
@@ -25,6 +26,7 @@ import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
 import { Cargando, EstadoVacio, MensajeError } from '@/componentes/ui/Estados'
 import { FotoProducto } from '@/componentes/ui/FotoProducto'
 import { Modal } from '@/componentes/ui/Modal'
+import { useAvisos } from '@/componentes/ui/notificaciones'
 import { Tarjeta, TituloTarjeta } from '@/componentes/ui/Tarjeta'
 import { useCajaActual } from '@/hooks/useCajaActual'
 import { useMetodosPago } from '@/hooks/useMetodosPago'
@@ -48,6 +50,7 @@ import { aPagosRequest, calcularCobro, type PagoFormulario } from '@/logica/pago
 import { otrasUbicacionesConStock } from '@/logica/disponibilidad'
 import { avisoStockBajo } from '@/logica/stockBajo'
 import { billetesSugeridos } from '@/logica/billetes'
+import { etiquetaEnEspera, guardarEnEspera, leerEnEspera, MAXIMO_EN_ESPERA, ponerEnEspera, type VentaEnEspera } from '@/logica/ventasEnEspera'
 import { presentacionesActivas } from '@/logica/presentaciones'
 
 const PAGO_INICIAL: PagoFormulario = { metodoPago: 'EFECTIVO', monto: '', numeroOperacion: '' }
@@ -60,6 +63,7 @@ const PAGO_INICIAL: PagoFormulario = { metodoPago: 'EFECTIVO', monto: '', numero
 export default function PuntoVenta() {
   const navegar = useNavigate()
   const queryClient = useQueryClient()
+  const { avisar } = useAvisos()
   const caja = useCajaActual()
   const metodos = useMetodosPago()
   const buscador = useRef<HTMLInputElement>(null)
@@ -73,6 +77,12 @@ export default function PuntoVenta() {
   const [errorCodigo, setErrorCodigo] = useState<string | null>(null)
   const [vendida, setVendida] = useState<VentaResponse | null>(null)
   const [pedido, setPedido] = useState<ProductoResponse | null>(null)
+  const usuario = useUsuario()
+  const [enEspera, setEnEspera] = useState<VentaEnEspera[]>(() => leerEnEspera(usuario.id))
+  const cambiarEnEspera = (lista: VentaEnEspera[]) => {
+    setEnEspera(lista)
+    guardarEnEspera(usuario.id, lista)
+  }
   const [encargo, setEncargo] = useState<{ producto: ProductoResponse; presentacionId: number } | null>(null)
   const busqueda = useRetraso(texto.trim(), 250)
   const tiendaId = caja.data?.ubicacionId
@@ -243,6 +253,44 @@ export default function PuntoVenta() {
     return () => window.removeEventListener('keydown', alPresionar)
   }, [])
 
+  /** Pausa el carrito actual (el cliente fue a buscar dinero) para atender a otro. */
+  const pausar = () => {
+    if (carrito.length === 0) return
+    const lista = ponerEnEspera(enEspera, { carrito, condicion, cliente, totalCentimos: totales.totalCentimos })
+    if (!lista) {
+      avisar(`Ya hay ${MAXIMO_EN_ESPERA} ventas en espera: retome o descarte una`, 'error')
+      return
+    }
+    cambiarEnEspera(lista)
+    limpiarCarrito()
+    avisar('Venta en espera: puede atender al siguiente cliente')
+  }
+
+  /** Retoma una venta en espera; si hay un carrito en curso, ese pasa a espera (se intercambian). */
+  const retomar = (id: string) => {
+    const venta = enEspera.find((v) => v.id === id)
+    if (!venta) return
+    let resto = enEspera.filter((v) => v.id !== id)
+    if (carrito.length > 0) {
+      resto = ponerEnEspera(resto, { carrito, condicion, cliente, totalCentimos: totales.totalCentimos }) ?? resto
+    }
+    cambiarEnEspera(resto)
+    setCarrito(venta.carrito)
+    setCondicion(venta.condicion)
+    setCliente(venta.cliente)
+    setPagos([PAGO_INICIAL])
+    setIntentado(false)
+  }
+
+  const limpiarCarrito = () => {
+    setCarrito([])
+    setCondicion('CONTADO')
+    setCliente(null)
+    setVencimiento('')
+    setPagos([PAGO_INICIAL])
+    setIntentado(false)
+  }
+
   const nuevaVenta = () => {
     setVendida(null)
     setCarrito([])
@@ -402,12 +450,34 @@ export default function PuntoVenta() {
               icono={<ShoppingCart className="size-4 text-marca-texto" />}
               accion={
                 carrito.length > 0 && (
-                  <Boton variante="fantasma" tamano="sm" onClick={() => setCarrito([])}>
-                    Vaciar
-                  </Boton>
+                  <div className="flex gap-1">
+                    <Boton variante="secundario" tamano="sm" icono={<PauseCircle className="size-4" />} onClick={pausar}>
+                      Poner en espera
+                    </Boton>
+                    <Boton variante="fantasma" tamano="sm" onClick={() => setCarrito([])}>
+                      Vaciar
+                    </Boton>
+                  </div>
                 )
               }
             />
+            {enEspera.length > 0 && (
+              <div className="flex flex-col gap-1.5 border-b border-borde bg-marca-claro px-5 py-3" data-testid="ventas-en-espera">
+                <p className="text-xs font-semibold tracking-wide text-tinta uppercase">En espera ({enEspera.length})</p>
+                {enEspera.map((v) => (
+                  <div key={v.id} className="flex items-center gap-2 text-sm">
+                    <span className="min-w-0 flex-1 truncate">{etiquetaEnEspera(v)}</span>
+                    <span className="font-mono text-xs font-semibold">{solesDeCentimos(v.totalCentimos)}</span>
+                    <Boton tamano="sm" icono={<PlayCircle className="size-4" />} onClick={() => retomar(v.id)} aria-label={`Retomar ${etiquetaEnEspera(v)}`}>
+                      Retomar
+                    </Boton>
+                    <Boton variante="fantasma" tamano="sm" aria-label={`Descartar ${etiquetaEnEspera(v)}`} onClick={() => cambiarEnEspera(enEspera.filter((x) => x.id !== v.id))}>
+                      <X className="size-4" />
+                    </Boton>
+                  </div>
+                ))}
+              </div>
+            )}
             {carrito.length === 0 ? (
               <EstadoVacio titulo="Carrito vacío" descripcion="Elige una presentación del catálogo para agregarla." />
             ) : (

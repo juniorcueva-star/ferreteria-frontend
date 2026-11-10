@@ -159,3 +159,10 @@ almacenero (pasillo y estante).
 
 - Venta: "Descargar PDF", "Imprimir A4" y **"Ticket"** (80 mm para tiquetera), en el detalle y al registrarla.
 - Traslado: **"Imprimir guía"** en su detalle (productos con su ubicación en el almacén y firmas).
+
+## Ventas en espera y cierre de caja
+
+- **Poner en espera** (carrito): guarda la venta para atender a otro cliente; se retoma desde "En espera" (si hay
+  otra venta en curso, se intercambian). Máximo 5, se guardan en el navegador por usuario.
+- **Cerrar caja → Contar billetes y monedas**: cantidades por denominación (S/ 200 a S/ 0.10) que llenan el efectivo
+  contado.

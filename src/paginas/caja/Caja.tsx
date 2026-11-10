@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Lock, LockOpen, RefreshCw, ShoppingBag } from 'lucide-react'
+import { Calculator, Lock, LockOpen, RefreshCw, ShoppingBag } from 'lucide-react'
 import { useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { useNavigate } from 'react-router'
@@ -9,7 +9,7 @@ import type { CajaResponse } from '@/api/tipos'
 import { cajasApi } from '@/api/ventas'
 import { useUsuario } from '@/auth/contexto'
 import { Boton } from '@/componentes/ui/Boton'
-import { CampoSelector, CampoTexto } from '@/componentes/ui/Campo'
+import { CampoSelector, CampoTexto, Entrada } from '@/componentes/ui/Campo'
 import { cn } from '@/componentes/ui/cn'
 import { Dato } from '@/componentes/ui/Dato'
 import { EncabezadoPagina } from '@/componentes/ui/EncabezadoPagina'
@@ -26,6 +26,7 @@ import { useCajaActual } from '@/hooks/useCajaActual'
 import { aCentimos, esDecimalValido } from '@/logica/decimales'
 import { fechaHora, nombreMetodoPago, soles, solesDeCentimos } from '@/logica/formato'
 import { monto } from '@/logica/validaciones'
+import { centimosATexto, DENOMINACIONES, totalConteo, type Conteo } from '@/logica/denominaciones'
 
 /** Apertura, resumen en vivo y cierre con cuadre; ademas el historial de cajas. */
 export default function Caja() {
@@ -212,8 +213,16 @@ function CerrarCaja({ caja, onCerrar, onCerrada }: { caja: CajaResponse; onCerra
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<{ efectivoContado: string }>({ resolver: zodResolver(esquema), defaultValues: { efectivoContado: '' } })
+  const [contando, setContando] = useState(false)
+  const [conteo, setConteo] = useState<Conteo>({})
+  const contar = (centimos: number, cantidad: string) => {
+    const nuevo = { ...conteo, [centimos]: cantidad }
+    setConteo(nuevo)
+    setValue('efectivoContado', centimosATexto(totalConteo(nuevo)), { shouldValidate: true })
+  }
   const contado = useWatch({ control, name: 'efectivoContado' })
   const esperado = aCentimos(caja.resumen?.efectivoEsperado ?? 0)
   const diferencia = esDecimalValido(contado ?? '', 2) ? aCentimos(contado) - esperado : null
@@ -261,6 +270,33 @@ function CerrarCaja({ caja, onCerrar, onCerrada }: { caja: CajaResponse; onCerra
           error={errors.efectivoContado?.message}
           {...register('efectivoContado')}
         />
+        <Boton variante="secundario" tamano="sm" icono={<Calculator className="size-4" />} onClick={() => setContando((v) => !v)} className="self-start">
+          {contando ? 'Ocultar conteo' : 'Contar billetes y monedas'}
+        </Boton>
+        {contando && (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 rounded-xl border border-borde p-3" data-testid="conteo-caja">
+            {DENOMINACIONES.map((d) => {
+              const cantidad = conteo[d.centimos] ?? ''
+              const subtotal = /^\d+$/.test(cantidad.trim()) ? Number(cantidad) * d.centimos : 0
+              return (
+                <label key={d.centimos} className="flex items-center gap-2 text-sm">
+                  <span className="w-24 text-tinta-suave">
+                    {d.tipo} <span className="font-mono font-semibold text-tinta">{d.nombre}</span>
+                  </span>
+                  <Entrada
+                    aria-label={`Cantidad de ${d.tipo.toLowerCase()}s de ${d.nombre}`}
+                    inputMode="numeric"
+                    placeholder="0"
+                    value={cantidad}
+                    onChange={(e) => contar(d.centimos, e.target.value)}
+                    className="w-16! font-mono"
+                  />
+                  <span className="ml-auto font-mono text-xs text-tinta-tenue">{subtotal > 0 ? solesDeCentimos(subtotal) : ''}</span>
+                </label>
+              )
+            })}
+          </div>
+        )}
         {diferencia !== null && (
           <div
             className={cn(
