@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prototipo Bonifaz & Cia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* Visor oscuro tipo "modo presentacion": la pantalla del sistema al centro, controles arriba. Un solo tema a proposito. */
+  --fondo: #141414;
+  --panel: #1f1f1f;
+  --borde: #333230;
+  --texto: #f2f1ee;
+  --suave: #a8a6a0;
+  --amarillo: #f5c400;
+  --fuente-titulo: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --fuente: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--fondo); color: var(--texto); font: 15px/1.45 var(--fuente); display: flex; flex-direction: column; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; padding: 12px 20px; background: var(--panel); border-bottom: 1px solid var(--borde); }
+.marca { display: flex; flex-direction: column; min-width: 0; }
+.marca strong { font: 800 18px/1.1 var(--fuente-titulo); letter-spacing: .01em; }
+.marca span { font-size: 12px; color: var(--suave); }
+.roles { display: flex; gap: 4px; padding: 3px; border: 1px solid var(--borde); border-radius: 10px; }
+.roles button { font: 600 14px var(--fuente); color: var(--suave); background: none; border: 0; border-radius: 7px; padding: 7px 14px; cursor: pointer; }
+.roles button[aria-pressed="true"] { background: var(--amarillo); color: #111; }
+.roles button:hover:not([aria-pressed="true"]) { color: var(--texto); }
+.navegar { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.navegar button { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--borde); background: none; color: var(--texto); font-size: 18px; cursor: pointer; }
+.navegar button:hover { border-color: var(--amarillo); }
+select { font: 500 14px var(--fuente); color: var(--texto); background: var(--fondo); border: 1px solid var(--borde); border-radius: 8px; padding: 7px 10px; max-width: 260px; }
+label.zonas { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--suave); cursor: pointer; }
+input[type="checkbox"] { accent-color: var(--amarillo); }
+:focus-visible { outline: 2px solid var(--amarillo); outline-offset: 2px; }
+main { flex: 1; min-height: 0; display: grid; place-items: center; padding: 16px; }
+.pantalla { position: relative; width: min(100%, calc((100vh - 150px) * 1.6)); aspect-ratio: 1440 / 900; border-radius: 10px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.55); background: #fff; }
+.pantalla img { display: block; width: 100%; height: 100%; }
+.zona { position: absolute; border: 0; padding: 0; background: transparent; border-radius: 6px; cursor: pointer; }
+.zona:hover, .zona:focus-visible, .mostrar .zona { box-shadow: inset 0 0 0 2px var(--amarillo); background: rgba(245, 196, 0, .16); }
+.destello .zona { animation: destello .7s ease-out; }
+@keyframes destello { from { background: rgba(245, 196, 0, .45); box-shadow: inset 0 0 0 2px var(--amarillo); } to { background: transparent; box-shadow: none; } }
+footer { padding: 0 20px 12px; font-size: 12px; color: var(--suave); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .destello .zona { animation: none; } }
+@media (max-width: 700px) { header { padding: 10px 16px; } .navegar { margin-left: 0; width: 100%; } select { flex: 1; max-width: none; } main { padding: 10px 16px; } }
+</style>
+</head>
+<body>
+<header>
+  <div class="marca"><strong>Bonifaz &amp; Cia · Prototipo</strong><span>Sistema de ventas, inventario y caja · Pernos y afines</span></div>
+  <div class="roles" role="group" aria-label="Recorrido">
+    <button type="button" data-rol="dueno">Dueño</button>
+    <button type="button" data-rol="vendedor">Vendedor</button>
+    <button type="button" data-rol="almacenero">Almacenero</button>
+  </div>
+  <div class="navegar">
+    <button type="button" id="anterior" aria-label="Pantalla anterior">‹</button>
+    <select id="lista" aria-label="Ir a una pantalla"></select>
+    <button type="button" id="siguiente" aria-label="Pantalla siguiente">›</button>
+    <label class="zonas" for="verZonas"><input type="checkbox" id="verZonas"> Ver botones</label>
+  </div>
+</header>
+<main>
+  <div class="pantalla" id="pantalla">
+    <img id="imagen" alt="">
+  </div>
+</main>
+<footer>Haz clic en los botones de la pantalla para navegar (los clicables se resaltan en amarillo). Capturas del sistema real; las respuestas del asistente de IA son de ejemplo.</footer>
+<script>
+const PANTALLAS = [{"id":"01-inicio-de-sesion","rol":"dueno","titulo":"Inicio de sesión","zonas":[[56.32,62.44,29.31,5.89,"02-dueno-inicio"]]},{"id":"02-dueno-inicio","rol":"dueno","titulo":"Inicio","zonas":[[0.9,11.78,17.71,5.0,"02-dueno-inicio"],[0.9,17.11,17.71,5.0,"03-dueno-productos"],[0.9,28.0,17.71,5.0,"07-dueno-disponibilidad"],[0.9,82.33,17.71,5.0,"08-dueno-reportes"],[0.9,93.22,17.71,5.0,"09-dueno-auditoria"],[0.9,87.78,17.71,5.0,"10-dueno-usuarios"],[89.58,89.78,5.14,8.89,"12-dueno-asistente-abierto"]]},{"id":"03-dueno-productos","rol":"dueno","titulo":"Productos","zonas":[[0.9,11.78,17.71,5.0,"02-dueno-inicio"],[0.9,17.11,17.71,5.0,"03-dueno-productos"],[0.9,28.0,17.71,5.0,"07-dueno-disponibilidad"],[0.9,82.33,17.71,5.0,"08-dueno-reportes"],[0.9,93.22,17.71,5.0,"09-dueno-auditoria"],[0.9,87.78,17.71,5.0,"10-dueno-usuarios"],[22.08,40.44,77.92,8.44,"04-dueno-producto-editar"]]},{"id":"04-dueno-producto-editar","rol":"dueno","titulo":"Editar producto","zonas":[[0.9,11.78,17.71,5.0,"02-dueno-inicio"],[0.9,17.11,17.71,5.0,"03-dueno-productos"],[0.9,28.0,17.71,5.0,"07-dueno-disponibilidad"],[0.9,82.33,17.71,5.0,"08-dueno-reportes"],[0.9,93.22,17.71,5.0,"09-dueno-auditoria"],[0.9,87.78,17.71,5.0,"10-dueno-usuarios"],[71.74,48.11,12.71,3.89,"05-dueno-precio-por-mayor"],[85.0,48.11,6.46,3.89,"06-dueno-oferta"]]},{"id":"05-dueno-precio-por-mayor","rol":"dueno","titulo":"Precio por mayor","zonas":[[46.67,70.0,7.22,4.89,"04-dueno-producto-editar"],[54.51,70.0,15.69,4.89,"04-dueno-producto-editar"]]},{"id":"06-dueno-oferta","rol":"dueno","titulo":"Oferta","zonas":[[52.36,60.11,7.22,4.89,"04-dueno-producto-editar"],[60.14,60.11,10.0,4.89,"04-dueno-producto-editar"]]},{"id":"07-dueno-disponibilidad","rol":"dueno","titulo":"Disponibilidad","zonas":[[0.9,11.78,17.71,5.0,"02-dueno-inicio"],[0.9,17.11,17.71,5.0,"03-dueno-productos"],[0.9,28.0,17.71,5.0,"07-dueno-disponibilidad"],[0.9,82.33,17.71,5.0,"08-dueno-reportes"],[0.9,93.22,17.71,5.0,"09-dueno-auditoria"],[0.9,87.78,17.71,5.0,"10-dueno-usuarios"]]},{"id":"08-dueno-reportes","rol":"dueno","titulo":"Reportes","zonas":[[0.9,11.78,17.71,5.0,"02-dueno-inicio"],[0.9,17.11,17.71,5.0,"03-dueno-productos"],[0.9,28.0,17.71,5.0,"07-dueno-disponibilidad"],[0.9,82.33,17.71,5.0,"08-dueno-reportes"],[0.9,93.22,17.71,5.0,"09-dueno-auditoria"],[0.9,87.78,17.71,5.0,"10-dueno-usuarios"]]},{"id":"09-dueno-auditoria","rol":"dueno","titulo":"Auditoría","zonas":[[0.9,11.78,17.71,5.0,"02-dueno-inicio"],[0.9,17.11,17.71,5.0,"03-dueno-productos"],[0.9,28.0,17.71,5.0,"07-dueno-disponibilidad"],[0.9,82.33,17.71,5.0,"08-dueno-reportes"],[0.9,93.22,17.71,5.0,"09-dueno-auditoria"],[0.9,87.78,17.71,5.0,"10-dueno-usuarios"]]},{"id":"10-dueno-usuarios","rol":"dueno","titulo":"Usuarios","zonas":[[0.9,11.78,17.71,5.0,"02-dueno-inicio"],[0.9,17.11,17.71,5.0,"03-dueno-productos"],[0.9,28.0,17.71,5.0,"07-dueno-disponibilidad"],[0.9,82.33,17.71,5.0,"08-dueno-reportes"],[0.9,93.22,17.71,5.0,"09-dueno-auditoria"],[0.9,87.78,17.71,5.0,"10-dueno-usuarios"]]},{"id":"11-dueno-configuracion","rol":"dueno","titulo":"Configuración","zonas":[[0.9,11.78,17.71,5.0,"02-dueno-inicio"],[0.9,17.11,17.71,5.0,"03-dueno-productos"],[0.9,28.0,17.71,5.0,"07-dueno-disponibilidad"],[0.9,82.33,17.71,5.0,"08-dueno-reportes"],[0.9,93.22,17.71,5.0,"09-dueno-auditoria"],[0.9,87.78,17.71,5.0,"10-dueno-usuarios"]]},{"id":"12-dueno-asistente-abierto","rol":"dueno","titulo":"Asistente de IA","zonas":[[0.9,11.78,17.71,5.0,"02-dueno-inicio"],[0.9,17.11,17.71,5.0,"03-dueno-productos"],[0.9,28.0,17.71,5.0,"07-dueno-disponibilidad"],[0.9,82.33,17.71,5.0,"08-dueno-reportes"],[0.9,93.22,17.71,5.0,"09-dueno-auditoria"],[0.9,87.78,17.71,5.0,"10-dueno-usuarios"],[68.06,68.0,24.44,4.67,"13-dueno-asistente-respuesta"],[90.97,27.22,2.43,3.89,"02-dueno-inicio"]]},{"id":"13-dueno-asistente-respuesta","rol":"dueno","titulo":"Asistente: respuesta","zonas":[[0.9,11.78,17.71,5.0,"02-dueno-inicio"],[0.9,17.11,17.71,5.0,"03-dueno-productos"],[0.9,28.0,17.71,5.0,"07-dueno-disponibilidad"],[0.9,82.33,17.71,5.0,"08-dueno-reportes"],[0.9,93.22,17.71,5.0,"09-dueno-auditoria"],[0.9,87.78,17.71,5.0,"10-dueno-usuarios"],[90.97,27.22,2.43,3.89,"02-dueno-inicio"]]},{"id":"20-vendedor-inicio","rol":"vendedor","titulo":"Inicio","zonas":[[0.9,11.78,17.71,5.0,"20-vendedor-inicio"],[0.9,44.33,17.71,5.0,"21-vendedor-caja"],[0.9,49.78,17.71,5.0,"22-vendedor-punto-de-venta-lista"],[0.9,55.22,17.71,5.0,"29-vendedor-cotizaciones"],[0.9,60.67,17.71,5.0,"32-vendedor-encargos"],[0.9,66.0,17.71,5.0,"31-vendedor-clientes"],[0.9,38.89,17.71,5.0,"33-vendedor-pedidos-reposicion"],[89.58,89.78,5.14,8.89,"34-vendedor-asistente"]]},{"id":"21-vendedor-caja","rol":"vendedor","titulo":"Caja","zonas":[[0.9,11.78,17.71,5.0,"20-vendedor-inicio"],[0.9,44.33,17.71,5.0,"21-vendedor-caja"],[0.9,49.78,17.71,5.0,"22-vendedor-punto-de-venta-lista"],[0.9,55.22,17.71,5.0,"29-vendedor-cotizaciones"],[0.9,60.67,17.71,5.0,"32-vendedor-encargos"],[0.9,66.0,17.71,5.0,"31-vendedor-clientes"],[0.9,38.89,17.71,5.0,"33-vendedor-pedidos-reposicion"]]},{"id":"22-vendedor-punto-de-venta-lista","rol":"vendedor","titulo":"Punto de venta","zonas":[[0.9,11.78,17.71,5.0,"20-vendedor-inicio"],[0.9,44.33,17.71,5.0,"21-vendedor-caja"],[0.9,49.78,17.71,5.0,"22-vendedor-punto-de-venta-lista"],[0.9,55.22,17.71,5.0,"29-vendedor-cotizaciones"],[0.9,60.67,17.71,5.0,"32-vendedor-encargos"],[0.9,66.0,17.71,5.0,"31-vendedor-clientes"],[0.9,38.89,17.71,5.0,"33-vendedor-pedidos-reposicion"],[28.54,30.89,5.35,2.89,"23-vendedor-punto-de-venta-fotos"],[83.54,11.78,14.03,4.89,"27-vendedor-historial-ventas"],[23.26,81.22,15.62,7.22,"25-vendedor-carrito-y-cobro"],[89.58,89.78,5.14,8.89,"34-vendedor-asistente"]]},{"id":"23-vendedor-punto-de-venta-fotos","rol":"vendedor","titulo":"Punto de venta: fotos","zonas":[[0.9,11.78,17.71,5.0,"20-vendedor-inicio"],[0.9,44.33,17.71,5.0,"21-vendedor-caja"],[0.9,49.78,17.71,5.0,"22-vendedor-punto-de-venta-lista"],[0.9,55.22,17.71,5.0,"29-vendedor-cotizaciones"],[0.9,60.67,17.71,5.0,"32-vendedor-encargos"],[0.9,66.0,17.71,5.0,"31-vendedor-clientes"],[0.9,38.89,17.71,5.0,"33-vendedor-pedidos-reposicion"],[34.72,30.44,5.49,3.33,"24-vendedor-punto-de-venta-ofertas"],[23.54,30.89,5.0,2.89,"22-vendedor-punto-de-venta-lista"]]},{"id":"24-vendedor-punto-de-venta-ofertas","rol":"vendedor","titulo":"Punto de venta: ofertas","zonas":[[0.9,11.78,17.71,5.0,"20-vendedor-inicio"],[0.9,44.33,17.71,5.0,"21-vendedor-caja"],[0.9,49.78,17.71,5.0,"22-vendedor-punto-de-venta-lista"],[0.9,55.22,17.71,5.0,"29-vendedor-cotizaciones"],[0.9,60.67,17.71,5.0,"32-vendedor-encargos"],[0.9,66.0,17.71,5.0,"31-vendedor-clientes"],[0.9,38.89,17.71,5.0,"33-vendedor-pedidos-reposicion"],[34.72,30.44,5.49,3.33,"23-vendedor-punto-de-venta-fotos"],[23.54,30.89,5.0,2.89,"22-vendedor-punto-de-venta-lista"]]},{"id":"25-vendedor-carrito-y-cobro","rol":"vendedor","titulo":"Carrito y cobro","zonas":[[0.9,11.78,17.71,5.0,"20-vendedor-inicio"],[0.9,44.33,17.71,5.0,"21-vendedor-caja"],[0.9,49.78,17.71,5.0,"22-vendedor-punto-de-venta-lista"],[0.9,55.22,17.71,5.0,"29-vendedor-cotizaciones"],[0.9,60.67,17.71,5.0,"32-vendedor-encargos"],[0.9,66.0,17.71,5.0,"31-vendedor-clientes"],[0.9,38.89,17.71,5.0,"33-vendedor-pedidos-reposicion"],[68.61,22.44,7.15,2.44,"26-vendedor-venta-registrada"]]},{"id":"26-vendedor-venta-registrada","rol":"vendedor","titulo":"Venta registrada","zonas":[[56.39,65.33,8.89,4.89,"22-vendedor-punto-de-venta-lista"]]},{"id":"27-vendedor-historial-ventas","rol":"vendedor","titulo":"Historial de ventas","zonas":[[0.9,11.78,17.71,5.0,"20-vendedor-inicio"],[0.9,44.33,17.71,5.0,"21-vendedor-caja"],[0.9,49.78,17.71,5.0,"22-vendedor-punto-de-venta-lista"],[0.9,55.22,17.71,5.0,"29-vendedor-cotizaciones"],[0.9,60.67,17.71,5.0,"32-vendedor-encargos"],[0.9,66.0,17.71,5.0,"31-vendedor-clientes"],[0.9,38.89,17.71,5.0,"33-vendedor-pedidos-reposicion"],[22.08,42.0,75.42,8.44,"28-vendedor-detalle-venta"]]},{"id":"28-vendedor-detalle-venta","rol":"vendedor","titulo":"Detalle de la venta","zonas":[[0.9,11.78,17.71,5.0,"20-vendedor-inicio"],[0.9,44.33,17.71,5.0,"21-vendedor-caja"],[0.9,49.78,17.71,5.0,"22-vendedor-punto-de-venta-lista"],[0.9,55.22,17.71,5.0,"29-vendedor-cotizaciones"],[0.9,60.67,17.71,5.0,"32-vendedor-encargos"],[0.9,66.0,17.71,5.0,"31-vendedor-clientes"],[0.9,38.89,17.71,5.0,"33-vendedor-pedidos-reposicion"],[22.01,11.78,9.31,2.44,"27-vendedor-historial-ventas"]]},{"id":"29-vendedor-cotizaciones","rol":"vendedor","titulo":"Cotizaciones","zonas":[[0.9,11.78,17.71,5.0,"20-vendedor-inicio"],[0.9,44.33,17.71,5.0,"21-vendedor-caja"],[0.9,49.78,17.71,5.0,"22-vendedor-punto-de-venta-lista"],[0.9,55.22,17.71,5.0,"29-vendedor-cotizaciones"],[0.9,60.67,17.71,5.0,"32-vendedor-encargos"],[0.9,66.0,17.71,5.0,"31-vendedor-clientes"],[0.9,38.89,17.71,5.0,"33-vendedor-pedidos-reposicion"],[82.15,11.78,15.42,5.89,"30-vendedor-cotizacion-nueva"]]},{"id":"30-vendedor-cotizacion-nueva","rol":"vendedor","titulo":"Nueva cotización","zonas":[[0.9,11.78,17.71,5.0,"20-vendedor-inicio"],[0.9,44.33,17.71,5.0,"21-vendedor-caja"],[0.9,49.78,17.71,5.0,"22-vendedor-punto-de-venta-lista"],[0.9,55.22,17.71,5.0,"29-vendedor-cotizaciones"],[0.9,60.67,17.71,5.0,"32-vendedor-encargos"],[0.9,66.0,17.71,5.0,"31-vendedor-clientes"],[0.9,38.89,17.71,5.0,"33-vendedor-pedidos-reposicion"],[22.01,11.78,12.29,2.44,"29-vendedor-cotizaciones"]]},{"id":"31-vendedor-clientes","rol":"vendedor","titulo":"Clientes","zonas":[[0.9,11.78,17.71,5.0,"20-vendedor-inicio"],[0.9,44.33,17.71,5.0,"21-vendedor-caja"],[0.9,49.78,17.71,5.0,"22-vendedor-punto-de-venta-lista"],[0.9,55.22,17.71,5.0,"29-vendedor-cotizaciones"],[0.9,60.67,17.71,5.0,"32-vendedor-encargos"],[0.9,66.0,17.71,5.0,"31-vendedor-clientes"],[0.9,38.89,17.71,5.0,"33-vendedor-pedidos-reposicion"]]},{"id":"32-vendedor-encargos","rol":"vendedor","titulo":"Encargos","zonas":[[0.9,11.78,17.71,5.0,"20-vendedor-inicio"],[0.9,44.33,17.71,5.0,"21-vendedor-caja"],[0.9,49.78,17.71,5.0,"22-vendedor-punto-de-venta-lista"],[0.9,55.22,17.71,5.0,"29-vendedor-cotizaciones"],[0.9,60.67,17.71,5.0,"32-vendedor-encargos"],[0.9,66.0,17.71,5.0,"31-vendedor-clientes"],[0.9,38.89,17.71,5.0,"33-vendedor-pedidos-reposicion"]]},{"id":"33-vendedor-pedidos-reposicion","rol":"vendedor","titulo":"Pedidos de reposición","zonas":[[0.9,11.78,17.71,5.0,"20-vendedor-inicio"],[0.9,44.33,17.71,5.0,"21-vendedor-caja"],[0.9,49.78,17.71,5.0,"22-vendedor-punto-de-venta-lista"],[0.9,55.22,17.71,5.0,"29-vendedor-cotizaciones"],[0.9,60.67,17.71,5.0,"32-vendedor-encargos"],[0.9,66.0,17.71,5.0,"31-vendedor-clientes"],[0.9,38.89,17.71,5.0,"33-vendedor-pedidos-reposicion"]]},{"id":"34-vendedor-asistente","rol":"vendedor","titulo":"Asistente de IA","zonas":[[0.9,11.78,17.71,5.0,"20-vendedor-inicio"],[0.9,44.33,17.71,5.0,"21-vendedor-caja"],[0.9,49.78,17.71,5.0,"22-vendedor-punto-de-venta-lista"],[0.9,55.22,17.71,5.0,"29-vendedor-cotizaciones"],[0.9,60.67,17.71,5.0,"32-vendedor-encargos"],[0.9,66.0,17.71,5.0,"31-vendedor-clientes"],[0.9,38.89,17.71,5.0,"33-vendedor-pedidos-reposicion"],[90.97,27.22,2.43,3.89,"22-vendedor-punto-de-venta-lista"]]},{"id":"40-almacenero-inicio","rol":"almacenero","titulo":"Inicio","zonas":[[0.9,11.78,17.71,5.0,"40-almacenero-inicio"],[0.9,22.56,17.71,5.0,"41-almacenero-inventario"],[0.9,38.89,17.71,5.0,"43-almacenero-reposicion"],[0.9,33.44,17.71,5.0,"44-almacenero-movimientos"],[0.9,44.33,17.71,5.0,"46-almacenero-compras"],[0.9,55.22,17.71,5.0,"48-almacenero-reportes"],[89.58,89.78,5.14,8.89,"49-almacenero-asistente"],[23.61,81.33,13.26,4.89,"47-almacenero-compra-nueva"],[37.5,81.33,12.22,4.89,"45-almacenero-traslado-nuevo"]]},{"id":"41-almacenero-inventario","rol":"almacenero","titulo":"Inventario","zonas":[[0.9,11.78,17.71,5.0,"40-almacenero-inicio"],[0.9,22.56,17.71,5.0,"41-almacenero-inventario"],[0.9,38.89,17.71,5.0,"43-almacenero-reposicion"],[0.9,33.44,17.71,5.0,"44-almacenero-movimientos"],[0.9,44.33,17.71,5.0,"46-almacenero-compras"],[0.9,55.22,17.71,5.0,"48-almacenero-reportes"],[69.65,11.78,12.71,4.89,"42-almacenero-inventario-fisico"]]},{"id":"42-almacenero-inventario-fisico","rol":"almacenero","titulo":"Inventario físico","zonas":[[0.9,11.78,17.71,5.0,"40-almacenero-inicio"],[0.9,22.56,17.71,5.0,"41-almacenero-inventario"],[0.9,38.89,17.71,5.0,"43-almacenero-reposicion"],[0.9,33.44,17.71,5.0,"44-almacenero-movimientos"],[0.9,44.33,17.71,5.0,"46-almacenero-compras"],[0.9,55.22,17.71,5.0,"48-almacenero-reportes"],[22.01,11.78,10.9,2.44,"41-almacenero-inventario"]]},{"id":"43-almacenero-reposicion","rol":"almacenero","titulo":"Reposición","zonas":[[0.9,11.78,17.71,5.0,"40-almacenero-inicio"],[0.9,22.56,17.71,5.0,"41-almacenero-inventario"],[0.9,38.89,17.71,5.0,"43-almacenero-reposicion"],[0.9,33.44,17.71,5.0,"44-almacenero-movimientos"],[0.9,44.33,17.71,5.0,"46-almacenero-compras"],[0.9,55.22,17.71,5.0,"48-almacenero-reportes"]]},{"id":"44-almacenero-movimientos","rol":"almacenero","titulo":"Movimientos","zonas":[[0.9,11.78,17.71,5.0,"40-almacenero-inicio"],[0.9,22.56,17.71,5.0,"41-almacenero-inventario"],[0.9,38.89,17.71,5.0,"43-almacenero-reposicion"],[0.9,33.44,17.71,5.0,"44-almacenero-movimientos"],[0.9,44.33,17.71,5.0,"46-almacenero-compras"],[0.9,55.22,17.71,5.0,"48-almacenero-reportes"],[83.4,11.78,14.1,5.89,"45-almacenero-traslado-nuevo"]]},{"id":"45-almacenero-traslado-nuevo","rol":"almacenero","titulo":"Nuevo traslado","zonas":[[0.9,11.78,17.71,5.0,"40-almacenero-inicio"],[0.9,22.56,17.71,5.0,"41-almacenero-inventario"],[0.9,38.89,17.71,5.0,"43-almacenero-reposicion"],[0.9,33.44,17.71,5.0,"44-almacenero-movimientos"],[0.9,44.33,17.71,5.0,"46-almacenero-compras"],[0.9,55.22,17.71,5.0,"48-almacenero-reportes"],[22.01,11.78,10.56,2.44,"44-almacenero-movimientos"]]},{"id":"46-almacenero-compras","rol":"almacenero","titulo":"Compras","zonas":[[0.9,11.78,17.71,5.0,"40-almacenero-inicio"],[0.9,22.56,17.71,5.0,"41-almacenero-inventario"],[0.9,38.89,17.71,5.0,"43-almacenero-reposicion"],[0.9,33.44,17.71,5.0,"44-almacenero-movimientos"],[0.9,44.33,17.71,5.0,"46-almacenero-compras"],[0.9,55.22,17.71,5.0,"48-almacenero-reportes"],[82.22,11.78,15.35,5.89,"47-almacenero-compra-nueva"]]},{"id":"47-almacenero-compra-nueva","rol":"almacenero","titulo":"Registrar compra","zonas":[[0.9,11.78,17.71,5.0,"40-almacenero-inicio"],[0.9,22.56,17.71,5.0,"41-almacenero-inventario"],[0.9,38.89,17.71,5.0,"43-almacenero-reposicion"],[0.9,33.44,17.71,5.0,"44-almacenero-movimientos"],[0.9,44.33,17.71,5.0,"46-almacenero-compras"],[0.9,55.22,17.71,5.0,"48-almacenero-reportes"],[22.01,11.78,10.35,2.44,"46-almacenero-compras"]]},{"id":"48-almacenero-reportes","rol":"almacenero","titulo":"Reportes","zonas":[[0.9,11.78,17.71,5.0,"40-almacenero-inicio"],[0.9,22.56,17.71,5.0,"41-almacenero-inventario"],[0.9,38.89,17.71,5.0,"43-almacenero-reposicion"],[0.9,33.44,17.71,5.0,"44-almacenero-movimientos"],[0.9,44.33,17.71,5.0,"46-almacenero-compras"],[0.9,55.22,17.71,5.0,"48-almacenero-reportes"]]},{"id":"49-almacenero-asistente","rol":"almacenero","titulo":"Asistente de IA","zonas":[[0.9,11.78,17.71,5.0,"40-almacenero-inicio"],[0.9,22.56,17.71,5.0,"41-almacenero-inventario"],[0.9,38.89,17.71,5.0,"43-almacenero-reposicion"],[0.9,33.44,17.71,5.0,"44-almacenero-movimientos"],[0.9,44.33,17.71,5.0,"46-almacenero-compras"],[0.9,55.22,17.71,5.0,"48-almacenero-reportes"],[90.97,27.22,2.43,3.89,"40-almacenero-inicio"]]}];
+const INICIO = { dueno: '01-inicio-de-sesion', vendedor: '20-vendedor-inicio', almacenero: '40-almacenero-inicio' };
+const porId = Object.fromEntries(PANTALLAS.map((p) => [p.id, p]));
+const marco = document.getElementById('pantalla');
+const imagen = document.getElementById('imagen');
+const lista = document.getElementById('lista');
+let actual = null;
+
+function delRol(rol) { return PANTALLAS.filter((p) => p.rol === rol); }
+
+function mostrar(id) {
+  const p = porId[id] || porId[INICIO.dueno];
+  const cambioRol = !actual || actual.rol !== p.rol;
+  actual = p;
+  imagen.src = 'pantallas/' + p.id + '.webp';
+  imagen.alt = 'Pantalla: ' + p.titulo;
+  marco.querySelectorAll('.zona').forEach((z) => z.remove());
+  for (const [x, y, w, h, destino] of p.zonas) {
+    if (!porId[destino]) continue;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'zona';
+    b.style.cssText = 'left:' + x + '%;top:' + y + '%;width:' + w + '%;height:' + h + '%';
+    b.setAttribute('aria-label', 'Ir a ' + porId[destino].titulo);
+    b.addEventListener('click', (e) => { e.stopPropagation(); mostrar(destino); });
+    marco.appendChild(b);
+  }
+  document.querySelectorAll('.roles button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.rol === p.rol)));
+  if (cambioRol) {
+    lista.innerHTML = delRol(p.rol).map((q) => '<option value="' + q.id + '">' + q.id.slice(0, 2) + ' · ' + q.titulo + '</option>').join('');
+  }
+  lista.value = p.id;
+  if (location.hash !== '#p' + p.id.slice(0, 2)) history.replaceState(null, '', '#p' + p.id.slice(0, 2));
+}
+
+function mover(paso) {
+  const grupo = delRol(actual.rol);
+  const i = grupo.indexOf(actual);
+  mostrar(grupo[(i + paso + grupo.length) % grupo.length].id);
+}
+
+// Precargar las imagenes para que el cambio de pantalla sea inmediato
+PANTALLAS.forEach((p) => { const i = new Image(); i.src = 'pantallas/' + p.id + '.webp'; });
+
+document.querySelectorAll('.roles button').forEach((b) => b.addEventListener('click', () => mostrar(INICIO[b.dataset.rol])));
+document.getElementById('anterior').addEventListener('click', () => mover(-1));
+document.getElementById('siguiente').addEventListener('click', () => mover(1));
+lista.addEventListener('change', () => mostrar(lista.value));
+document.getElementById('verZonas').addEventListener('change', (e) => marco.classList.toggle('mostrar', e.target.checked));
+// Clic fuera de un boton: se resaltan un momento los que si se pueden tocar (como en Figma)
+marco.addEventListener('click', () => {
+  marco.classList.remove('destello');
+  void marco.offsetWidth;
+  marco.classList.add('destello');
+});
+document.addEventListener('keydown', (e) => {
+  if (e.target === lista) return;
+  if (e.key === 'ArrowRight') mover(1);
+  if (e.key === 'ArrowLeft') mover(-1);
+});
+function desdeHash() {
+  const n = location.hash.replace('#p', '');
+  const p = PANTALLAS.find((q) => q.id.startsWith(n + '-'));
+  mostrar(p ? p.id : INICIO.dueno);
+}
+window.addEventListener('hashchange', desdeHash);
+desdeHash();
+</script>
+</body>
+</html>
